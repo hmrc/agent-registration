@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.util
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import play.api.Logger
 
-import java.time.Clock
-
-class Module extends AppModule:
-
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) ::
-    Nil
+trait RequestAwareLogging:
+  val logger: RequestAwareLogger =
+    new RequestAwareLogger(
+      delegateLogger = Logger(getClass)
+    )
