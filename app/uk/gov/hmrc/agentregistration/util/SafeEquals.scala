@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.util
 
-import play.api.Configuration
-import play.api.Environment
-import play.api.inject.Binding
-import play.api.inject.{Module => AppModule}
+/** Simple safe equals so we don't have to import cats
+  */
+object SafeEquals {
 
-import java.time.Clock
+  @SuppressWarnings(Array("org.wartremover.warts.Equals"))
+  implicit class EqualsOps[A](v: A) {
 
-class Module
-extends AppModule:
+    def ===(other: A): Boolean = v == other
+    def =!=(other: A): Boolean = v != other
 
-  override def bindings(
-    environment: Environment,
-    configuration: Configuration
-  ): Seq[Binding[?]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) ::
-      Nil
+  }
+}
