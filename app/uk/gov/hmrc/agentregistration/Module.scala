@@ -16,16 +16,19 @@
 
 package uk.gov.hmrc.agentregistration
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import play.api.Configuration
+import play.api.Environment
+import play.api.inject.Binding
+import play.api.inject.{Module => AppModule}
 
 import java.time.Clock
 
-class Module extends AppModule:
+class Module
+extends AppModule:
 
   override def bindings(
-    environment  : Environment,
+    environment: Environment,
     configuration: Configuration
-  ): Seq[Binding[_]] =
+  ): Seq[Binding[?]] =
     bind[Clock].toInstance(Clock.systemDefaultZone) ::
-    Nil
+      Nil

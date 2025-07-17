@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.config
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import play.api.Configuration
 
 @Singleton
-class AppConfig @Inject()(config: Configuration):
+class AppConfig @Inject() (config: Configuration):
 
   val appName: String = config.get[String]("appName")

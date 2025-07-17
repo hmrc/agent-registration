@@ -16,23 +16,23 @@
 
 package uk.gov.hmrc.agentregistration.util
 
-import play.api.mvc.{Request, RequestHeader}
+import play.api.mvc.Request
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
 
 import javax.inject.Inject
 
-object RequestSupport { 
-  
+object RequestSupport {
+
   implicit def hc(implicit request: RequestHeader): HeaderCarrier = HcProvider.headerCarrier
 
-  /**
-   * This is because we want to give responsibility of creation of HeaderCarrier to the platform code.
-   * If they refactor how hc is created our code will pick it up automatically.
-   */
-  private object HcProvider extends BackendHeaderCarrierProvider { self =>
+  /** This is because we want to give responsibility of creation of HeaderCarrier to the platform code. If they refactor how hc is created our code will pick it
+    * up automatically.
+    */
+  private object HcProvider
+  extends BackendHeaderCarrierProvider { self =>
     def headerCarrier(implicit request: RequestHeader): HeaderCarrier = self.hc(request)
   }
 
 }
-

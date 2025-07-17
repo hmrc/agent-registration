@@ -13,6 +13,7 @@ object WartRemoverSettings {
     Seq(
       (Compile / compile / wartremoverErrors) ++= {
         if (StrictBuilding.strictBuilding.value) Warts.allBut(
+          Wart.Any, //due to scala's string interpolator's `def s(args: Any*): String = ...`
           Wart.DefaultArguments,
           Wart.ImplicitConversion,
           Wart.ImplicitParameter,

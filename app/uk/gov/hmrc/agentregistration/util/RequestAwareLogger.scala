@@ -26,6 +26,7 @@ import RequestSupport._
   *
   * Logged messages are enriched with request-specific context.
   */
+@SuppressWarnings(Array("org.wartremover.warts.Any"))
 class RequestAwareLogger(
   delegateLogger: Logger
 ):
@@ -74,17 +75,18 @@ class RequestAwareLogger(
     Error
   )
 
-  private def context(using request: RequestHeader) = s"[Context: ${request.method} ${request.path}] $sessionId $requestId $userAgent $referer $deviceId"
+  private def context(using request: RequestHeader): String =
+    s"[Context: ${request.method} ${request.path}] $sessionId $requestId $userAgent $referer $deviceId"
 
-  private def sessionId(using request: RequestHeader) = s"[SessionId: ${hc.sessionId.map(_.toString).getOrElse("")}]"
+  private def sessionId(using request: RequestHeader): String = s"[SessionId: ${hc.sessionId.map(_.toString).fold("")(identity)}]"
 
-  private def requestId(using request: RequestHeader) = s"[RequestId: ${hc.requestId.map(_.toString).getOrElse("")}]"
+  private def requestId(using request: RequestHeader): String = s"[RequestId: ${hc.requestId.map(_.toString).fold("")(identity)}]"
 
-  private def referer(using r: RequestHeader) = s"[Referer: ${r.headers.get(HeaderNames.REFERER).getOrElse("")}]"
+  private def referer(using r: RequestHeader): String = s"[Referer: ${r.headers.get(HeaderNames.REFERER).fold("")(identity)}]"
 
-  private def userAgent(using r: RequestHeader) = s"[UserAgent: ${r.headers.get(HeaderNames.USER_AGENT).getOrElse("")}]"
+  private def userAgent(using r: RequestHeader): String = s"[UserAgent: ${r.headers.get(HeaderNames.USER_AGENT).fold("")(identity)}]"
 
-  private def deviceId(using r: RequestHeader) = s"[DeviceId: ${hc.deviceID.getOrElse("")}]"
+  private def deviceId(using r: RequestHeader): String = s"[DeviceId: ${hc.deviceID.fold("")(identity)}]"
 
   private def makeRichMessage(message: String)(using request: RequestHeader): String =
     request match

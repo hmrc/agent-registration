@@ -4,6 +4,7 @@ ThisBuild / majorVersion := 0
 ThisBuild / scalaVersion := "3.6.1"
 ThisBuild / scalacOptions += "-Wconf:msg=Flag.*repeatedly:s"
 val playPort: Int = 22202
+ThisBuild / scalafmtOnCompile := true
 
 val strictBuilding: SettingKey[Boolean] = StrictBuilding.strictBuilding //defining here so it can be set before running sbt like `sbt 'set Global / strictBuilding := true' ...`
 StrictBuilding.strictBuildingSetting

@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentregistration.controllers
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton()
-class MicroserviceHelloWorldController @Inject()(
+class MicroserviceHelloWorldController @Inject() (
   cc: ControllerComponents
-) extends BackendController(cc):
+)
+extends BackendController(cc):
 
-  val hello: Action[AnyContent] =
-    Action:
-      implicit request =>
-        Ok("Hello world")
+  val hello: Action[AnyContent] = Action:
+    implicit request =>
+      Ok("Hello world")
