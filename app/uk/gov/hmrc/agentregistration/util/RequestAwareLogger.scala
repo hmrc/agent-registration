@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentregistration.util
 import play.api.Logger
 import play.api.http.HeaderNames
 import play.api.mvc.RequestHeader
-import RequestSupport._
+import RequestSupport.given
 
 /** A logger which is aware of the request. It will append to the message extra information such as session ID, request ID, user agent, referer, and device ID
   * etc.
