@@ -16,21 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.controllers
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import play.api.http.Status
-import play.api.test.Helpers._
-import play.api.test.FakeRequest
-import play.api.test.Helpers
+import play.api.mvc.ControllerComponents
 
-class MicroserviceHelloWorldControllerSpec
-extends AnyWordSpec
-with Matchers:
+import scala.concurrent.ExecutionContext
 
-  private val fakeRequest = FakeRequest("GET", "/")
-  private val controller = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
-
-  "GET /" should:
-    "return 200" in:
-      val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
+abstract class BackendController(override val controllerComponents: ControllerComponents)
+extends uk.gov.hmrc.play.bootstrap.backend.controller.BackendController(controllerComponents):
+  given ExecutionContext = controllerComponents.executionContext

@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.controllers
+package uk.gov.hmrc.agentregistration.action
 
-import play.api.mvc.Action
+import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import play.api.mvc.DefaultActionBuilder
+import play.api.mvc.Request
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton()
-class MicroserviceHelloWorldController @Inject() (
-  cc: ControllerComponents
-)
-extends BackendController(cc):
+@Singleton
+class Actions @Inject() (
+  actionBuilder: DefaultActionBuilder,
+  authorisedAction: AuthorisedAction
+):
 
-  val hello: Action[AnyContent] = Action:
-    implicit request =>
-      Ok("Hello world")
+  val default: ActionBuilder[Request, AnyContent] = actionBuilder
+
+  val authorised: ActionBuilder[AuthorisedRequest, AnyContent] = default
+    .andThen(authorisedAction)

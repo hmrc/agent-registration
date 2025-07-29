@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.util
+package uk.gov.hmrc.agentregistration.shared.util
 
-/** Simple safe equals so we don't have to import cats
-  */
-object SafeEquals {
-
-  @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-  implicit class EqualsOps[A](v: A) {
-
-    def ===(other: A): Boolean = v == other
-    def =!=(other: A): Boolean = v != other
-
-  }
-}
+object EnumExtensions:
+  extension [E <: reflect.Enum](eenum: E)
+    def toStringHyphenated: String = HyphenTool.camelCaseToHyphenated(eenum.toString)
