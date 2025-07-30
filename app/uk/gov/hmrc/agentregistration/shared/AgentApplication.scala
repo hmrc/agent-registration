@@ -29,7 +29,8 @@ final case class AgentApplication(
   internalUserId: InternalUserId,
   createdAt: Instant,
   applicationState: ApplicationState,
-  utr: Option[Utr]
+  utr: Option[Utr],
+  aboutYourApplication: AboutYourApplication
 ):
 
   /* derived stuff: */
