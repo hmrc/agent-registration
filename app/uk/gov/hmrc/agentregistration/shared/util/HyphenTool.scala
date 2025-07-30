@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.Configuration
-import play.api.Environment
-import play.api.inject.Binding
-import play.api.inject.{Module => AppModule}
+object HyphenTool:
 
-import java.time.Clock
-
-class Module
-extends AppModule:
-
-  override def bindings(
-    environment: Environment,
-    configuration: Configuration
-  ): Seq[Binding[?]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) ::
-      Nil
+  /** Converts a CamelCase string to a hyphen-separated string Example: "SoleTrader" -> "sole-trader"
+    */
+  def camelCaseToHyphenated(input: String): String = {
+    input.replaceAll("([A-Z])", "-$1")
+      .toLowerCase
+      .stripPrefix("-")
+  }

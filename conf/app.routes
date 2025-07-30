@@ -1,3 +1,4 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.agentregistration.controllers.MicroserviceHelloWorldController.hello
+GET         /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplication
+POST        /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
