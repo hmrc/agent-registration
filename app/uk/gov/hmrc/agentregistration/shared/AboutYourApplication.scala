@@ -36,7 +36,9 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 final case class AboutYourApplication(
-  businessType: Option[BusinessType] = None
+  businessType: Option[BusinessType] = None,
+  userRole: Option[UserRole] = None,
+  confirmed: Option[Boolean] = None
 )
 
 object AboutYourApplication:
