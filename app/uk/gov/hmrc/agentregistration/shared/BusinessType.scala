@@ -17,6 +17,8 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
+import uk.gov.hmrc.agentregistration.shared.util.EnumBinder
 import uk.gov.hmrc.agentregistration.shared.util.EnumFormat
 
 enum BusinessType:
@@ -27,4 +29,6 @@ enum BusinessType:
   case LimitedLiabilityPartnership
 
 object BusinessType:
+
   given Format[BusinessType] = EnumFormat.enumFormat[BusinessType]
+  given PathBindable[BusinessType] = EnumBinder.pathBindable[BusinessType]
