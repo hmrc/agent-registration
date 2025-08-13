@@ -31,7 +31,8 @@ final case class AgentApplication(
   applicationState: ApplicationState,
   utr: Option[Utr],
   aboutYourApplication: AboutYourApplication,
-  businessDetails: Option[BusinessDetails]
+  businessDetails: Option[BusinessDetails],
+  amlsDetails: Option[AmlsDetails]
 ):
 
   /* derived stuff: */
@@ -52,6 +53,8 @@ final case class AgentApplication(
   def getUserRole: UserRole = aboutYourApplication.userRole.getOrElse(throw new RuntimeException("user role not defined"))
 
   def getBusinessDetails: BusinessDetails = businessDetails.getOrElse(throw new RuntimeException("business details not defined"))
+
+  def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(throw new RuntimeException("AMLS details not defined"))
 
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]
