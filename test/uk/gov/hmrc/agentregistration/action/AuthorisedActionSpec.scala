@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.action
 
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.mvc.Results.Ok
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.auth.core.InternalError
@@ -41,6 +42,7 @@ extends ISpec:
   "Credential role must be User or Admin or else the action throws UnsupportedCredentialRole exception" in:
     val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
     val notLoggedInRequest: Request[?] = tdAll.request
+    val credentialRoleNotUserNorAdmin = "Assistant"
     AuthStubs.stubAuthorise(
       responseBody =
         // language=JSON
@@ -48,7 +50,7 @@ extends ISpec:
            |{
            |  "authorisedEnrolments": [],
            |  "allEnrolments": [],
-           |  "credentialRole": "Assistant",
+           |  "credentialRole": "$credentialRoleNotUserNorAdmin",
            |  "groupIdentifier": "3E7R-E0V0-5V4N-Q5S0",
            |  "agentInformation": {},
            |  "internalId": "${tdAll.internalUserId.value}"
@@ -95,6 +97,17 @@ extends ISpec:
       .invokeBlock(notLoggedInRequest, _ => fakeResultF)
       .failed
       .futureValue shouldBe InternalError(s"Enrolment Enrolment(HMRC-AS-AGENT,List(),Activated,None) is assigned to user")
+
+    AuthStubs.verifyAuthorise()
+
+  "successfully authorise when user is logged in, credentialRole is User/Admin, and no active HMRC-AS-AGENT enrolment" in:
+    val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
+    val notLoggedInRequest: Request[?] = tdAll.request
+    AuthStubs.stubAuthorise()
+    val result: Result = Ok("AllGood")
+    authorisedAction
+      .invokeBlock(notLoggedInRequest, _ => Future.successful(result))
+      .futureValue shouldBe result
 
     AuthStubs.verifyAuthorise()
 
