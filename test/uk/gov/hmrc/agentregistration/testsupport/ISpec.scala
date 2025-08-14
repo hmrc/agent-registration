@@ -33,8 +33,8 @@ import play.api.inject.guice.GuiceableModule
 import play.api.test.DefaultTestServerFactory
 import play.api.test.TestServerFactory
 import play.core.server.ServerConfig
-import uk.gov.hmrc.agentregistration.shared.testdata.TdAll
 import uk.gov.hmrc.agentregistration.testsupport.RichMatchers
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.WireMockSupport
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.mongo.test.MongoSupport

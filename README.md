@@ -10,7 +10,6 @@ This repository contains code in the `uk.gov.hmrc.agentregistration.shared` pack
 The source code for these shared components is located under:
 ```
 app/uk/gov/hmrc/agentregistration/shared
-test/uk/gov/hmrc/agentregistration/shared
 ```
 
 ## Important

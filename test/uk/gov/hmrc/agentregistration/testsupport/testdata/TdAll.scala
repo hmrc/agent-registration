@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.testdata
-
-import uk.gov.hmrc.agentregistration.shared.testdata.TdAgentApplication
+package uk.gov.hmrc.agentregistration.testsupport.testdata
 
 object TdAll:
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.testdata
+package uk.gov.hmrc.agentregistration.testsupport.testdata
 
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderNames

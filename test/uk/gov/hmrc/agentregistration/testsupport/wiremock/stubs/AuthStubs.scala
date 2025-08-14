@@ -22,7 +22,7 @@ import com.github.tomakehurst.wiremock.client.WireMock as wm
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import play.api.http.Status
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.testdata.TdAll
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
 object AuthStubs {
 
