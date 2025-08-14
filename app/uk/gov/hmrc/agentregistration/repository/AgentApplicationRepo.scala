@@ -41,7 +41,7 @@ final class AgentApplicationRepo @Inject() (
   appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Repo[InternalUserId, AgentApplication](
-  collectionName = "application",
+  collectionName = "agent-application",
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
