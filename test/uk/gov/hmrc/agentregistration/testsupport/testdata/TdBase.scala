@@ -16,17 +16,12 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.CompanyProfile
-import uk.gov.hmrc.agentregistration.shared.FullName
-import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.Utr
 
-import java.time.format.DateTimeFormatter
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 trait TdBase:
 
@@ -38,16 +33,4 @@ trait TdBase:
   lazy val instant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
   lazy val newInstant: Instant = instant.plusSeconds(20) // used when a new application is created from existing one
 
-  lazy val utr: Utr = Utr("1234567895")
   lazy val internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
-  lazy val groupId: GroupId = GroupId("group-id-12345")
-  lazy val nino: String = "AB123456C"
-  lazy val safeId: String = "X00000123456789"
-  lazy val dateOfBirth: LocalDate = LocalDate.of(2000, 1, 1)
-  lazy val firstName: String = "Test"
-  lazy val lastName: String = "Name"
-  lazy val fullName = FullName(firstName, lastName)
-  lazy val companyNumber: String = "1234567890"
-  lazy val companyName: String = "Test Company Name"
-  lazy val companyProfile: CompanyProfile = CompanyProfile(companyNumber, companyName)
-  lazy val postcode: String = "AA1 1AA"
