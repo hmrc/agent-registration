@@ -33,7 +33,7 @@ class ApplicationControllerSpec
 extends ControllerSpec:
 
   "find application returns NO_CONTENT if there is no underlying records" in:
-    given Request[?] = tdAll.request
+    given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val response =
       httpClient
@@ -45,7 +45,7 @@ extends ControllerSpec:
     AuthStubs.verifyAuthorise()
 
   "find application returns Ok and the Application as Json body" in:
-    given Request[?] = tdAll.request
+    given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val repo = app.injector.instanceOf[AgentApplicationRepo]
     val exampleAgentApplication = tdAll.agentApplicationAfterCreated
@@ -63,7 +63,7 @@ extends ControllerSpec:
     AuthStubs.verifyAuthorise()
 
   "upsert application upserts application to mongo and returns OK" in:
-    given Request[?] = tdAll.request
+    given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val repo = app.injector.instanceOf[AgentApplicationRepo]
 

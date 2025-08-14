@@ -28,10 +28,6 @@ object TdSupport:
 
     def withAuthToken(authToken: String = "Bearer f25e5168-04b7-44d5-9dc6-460b2656e2b3"): FakeRequest[T] = r.withHeaders((HeaderNames.authorisation, authToken))
 
-    def withAkamaiReputationHeader(
-      akamaiReputationValue: String = "akamai-reputation-value-123"
-    ): FakeRequest[T] = r.withHeaders(HeaderNames.akamaiReputation -> akamaiReputationValue)
-
     def withRequestId(requestId: String = "request-id-value-123"): FakeRequest[T] = r.withHeaders(HeaderNames.xRequestId -> requestId)
 
     def withTrueClientIp(ip: String = "client-ip-123"): FakeRequest[T] = r.withHeaders(HeaderNames.trueClientIp -> ip)

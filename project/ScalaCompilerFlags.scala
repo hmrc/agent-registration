@@ -3,7 +3,6 @@ object ScalaCompilerFlags {
   val scalaCompilerOptions: Seq[String] = Seq(
     "-explain",
     "-explain-cyclic",
-    "-Wconf:cat=unused:info",
     "-language:implicitConversions",
     "-language:reflectiveCalls",
     "-Wconf:msg=While parsing annotations in:silent",
@@ -14,6 +13,7 @@ object ScalaCompilerFlags {
 //    "-new-syntax",          // Enable significant indentation syntax
 //    "-indent",              // Enable significant indentation syntax
 //    "-source:3.6-migration" // Use Scala 3 migration mode
+    "-Wconf:src=target/.*:s"
   )
 
   val strictScalaCompilerOptions: Seq[String] = Seq(

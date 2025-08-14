@@ -25,8 +25,6 @@ import java.time.Instant
 
 trait TdAgentApplication { dependencies: TdBase =>
 
-  val internalUserId: InternalUserId = InternalUserId("test-internal-user-id2")
-
   private val createdAt: Instant = dependencies.instant
 
   val agentApplicationAfterCreated = AgentApplication(

@@ -41,7 +41,7 @@ extends ISpec:
 
   "Credential role must be User or Admin or else the action throws UnsupportedCredentialRole exception" in:
     val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
-    val notLoggedInRequest: Request[?] = tdAll.request
+    val notLoggedInRequest: Request[?] = tdAll.backendRequest
     val credentialRoleNotUserNorAdmin = "Assistant"
     AuthStubs.stubAuthorise(
       responseBody =
@@ -66,7 +66,7 @@ extends ISpec:
 
   "active HMRC-AS-AGENT enrolment must not be assigned to user or else the action throws AuthorisationException exception" in:
     val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
-    val notLoggedInRequest: Request[?] = tdAll.request
+    val notLoggedInRequest: Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise(
       responseBody =
         // language=JSON
@@ -102,7 +102,7 @@ extends ISpec:
 
   "successfully authorise when user is logged in, credentialRole is User/Admin, and no active HMRC-AS-AGENT enrolment" in:
     val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
-    val notLoggedInRequest: Request[?] = tdAll.request
+    val notLoggedInRequest: Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val result: Result = Ok("AllGood")
     authorisedAction

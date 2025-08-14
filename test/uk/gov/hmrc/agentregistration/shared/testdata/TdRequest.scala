@@ -23,18 +23,16 @@ import TdSupport.*
 
 trait TdRequest:
 
-  lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  lazy val fakeBackendRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
     .withAuthToken()
-    .withAkamaiReputationHeader()
     .withRequestId()
     .withTrueClientIp()
     .withTrueClientPort()
     .withDeviceId()
 
-  lazy val request: Request[?] = fakeRequest
+  lazy val backendRequest: Request[?] = fakeBackendRequest
 
   lazy val requestNotLoggedIn: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-    .withAkamaiReputationHeader()
     .withRequestId()
     .withTrueClientIp()
     .withTrueClientPort()
