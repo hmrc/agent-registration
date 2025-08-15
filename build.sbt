@@ -27,7 +27,6 @@ lazy val microservice = Project("agent-registration", file("."))
       "uk.gov.hmrc.agentregistration"
     )
   )
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
   .settings(commands ++= SbtCommands.commands)
   .settings(SbtUpdatesSettings.sbtUpdatesSettings *)
