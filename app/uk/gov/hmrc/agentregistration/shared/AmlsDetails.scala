@@ -19,8 +19,6 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-import java.time.LocalDate
-
 final case class AmlsDetails(
   supervisoryBody: String
 ) {

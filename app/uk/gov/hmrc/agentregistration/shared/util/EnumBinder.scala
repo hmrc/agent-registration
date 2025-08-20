@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.*
 import play.api.mvc.PathBindable
 import play.api.mvc.QueryStringBindable
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
