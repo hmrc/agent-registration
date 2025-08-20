@@ -64,9 +64,9 @@ final case class SoleTraderDetails(
   dateOfBirth: LocalDate,
   nino: Option[String],
   trn: Option[String]
-  // saPostcode (only when trn)
-  // address (only when trn)
-  // overseas company details (optional and only when trn)
+  // saPostcode (only when trn present)
+  // address (only when trn present)
+  // overseas company details (optional and only when trn present)
 )
 extends BusinessDetails:
   def getNinoOrTrn: String = nino.orElse(trn).getOrElse(throw new RuntimeException("Sole trader missing nino and trn"))
@@ -95,9 +95,9 @@ object FullName:
 
 final case class CompanyProfile(
   companyNumber: String,
-  companyName: String
-  // dateOfIncorporation
-  // unsanitisedCHROAddress
+  companyName: String,
+  dateOfIncorporation: Option[LocalDate] // for some reason an optional field on companies house
+  // unsanitisedCHROAddress: Option[Address]
 )
 
 object CompanyProfile:
