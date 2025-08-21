@@ -19,51 +19,17 @@ The code is meant to be copied from here, and it should override all correspondi
 1. First, delete all files within the shared package in the `agent-registration-frontend` project.
 2. Then, copy the updated files from this repository and paste them into the corresponding package in the `agent-registration-frontend` project.
 
-## Synchronising files
+## Synchronizing files
 
-This will copy shared scala files from this project to the frontend. 
+This will copy shared scala files between projects.
+_Hint: use intellij local history if you screw up._
 
 ```bash
-#!/bin/bash
-
-SOURCE_DIR="./app/uk/gov/hmrc/agentregistration/shared"
-DEST_DIR="../agent-registration-frontend/app/uk/gov/hmrc/agentregistration/shared"
-
-# Remove entire destination directory to ensure clean sync
-rm -rfv "$DEST_DIR"
-
-find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
-    # Get relative path from SOURCE_DIR
-    rel_path="${file#$SOURCE_DIR/}"
-    dest_file="$DEST_DIR/$rel_path"
-    # Create directory structure in destination
-    mkdir -p "$(dirname "$dest_file")"
-    # Copy the file
-    cp -v "$file" "$dest_file"
-done
+./syncSharedFiles.sh BACKEND_TO_FRONTEND
 ```
 
-...or vice versa (from frontend to this project).
-Hint: use intellij local history if you screw up.
-
 ```bash
-#!/bin/bash
-
-DEST_DIR="./app/uk/gov/hmrc/agentregistration/shared"
-SOURCE_DIR="../agent-registration-frontend/app/uk/gov/hmrc/agentregistration/shared"
-
-# Remove entire destination directory to ensure clean sync
-rm -rfv "$DEST_DIR"
-
-find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
-    # Get relative path from SOURCE_DIR
-    rel_path="${file#$SOURCE_DIR/}"
-    dest_file="$DEST_DIR/$rel_path"
-    # Create directory structure in destination
-    mkdir -p "$(dirname "$dest_file")"
-    # Copy the file
-    cp -v "$file" "$dest_file"
-done
+./syncSharedFiles.sh FRONTEND_TO_BACKEND
 ```
 
 ### License
