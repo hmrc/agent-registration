@@ -23,6 +23,7 @@
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+GREY='\033[0;90m'
 NC='\033[0m' # No Color
 
 
@@ -67,11 +68,11 @@ case "$DIRECTION" in
         ;;
 esac
 
-echo "Syncing from $SOURCE_DIR to $DEST_DIR"
-
 # Remove entire destination directory to ensure clean sync
-rm -rfv "$DEST_DIR"
+echo "removing..."
+echo -e "${GREY}$(rm -rfv "$DEST_DIR")${NC}"
 
+echo "copying..."
 find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
     # Get relative path from SOURCE_DIR
     rel_path="${file#$SOURCE_DIR/}"
@@ -79,10 +80,11 @@ find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
     # Create directory structure in destination
     mkdir -p "$(dirname "$dest_file")"
     # Copy the file
-    cp -v "$file" "$dest_file"
+    echo -e "${GREY}$(cp -v "$file" "$dest_file")${NC}"
 done
 
 # Count files for success message
 total_files=$(find "$SOURCE_DIR" -name "*.scala" -type f | wc -l)
+echo -e "Copied $total_files Scala files from $SOURCE_DIR to $DEST_DIR${NC}"
 echo
-echo -e "${GREEN}✓ Successfully synced $total_files Scala files from $SOURCE_DIR to $DEST_DIR${NC}"
+echo -e "${GREEN}✓ All Done${NC}"
