@@ -72,7 +72,6 @@ echo "Syncing from $SOURCE_DIR to $DEST_DIR"
 # Remove entire destination directory to ensure clean sync
 rm -rfv "$DEST_DIR"
 
-file_count=0
 find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
     # Get relative path from SOURCE_DIR
     rel_path="${file#$SOURCE_DIR/}"
@@ -81,7 +80,6 @@ find "$SOURCE_DIR" -name "*.scala" -type f | while read file; do
     mkdir -p "$(dirname "$dest_file")"
     # Copy the file
     cp -v "$file" "$dest_file"
-    ((file_count++))
 done
 
 # Count files for success message
