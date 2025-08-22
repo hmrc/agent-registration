@@ -21,7 +21,7 @@ import play.api.libs.json.Json
 
 final case class AmlsDetails(
   supervisoryBody: String,
-  amlsRegistrationNumber: Option[AmlsRegistrationNumber]
+  amlsRegistrationNumber: Option[AmlsRegistrationNumber] = None
 ) {
   val isHmrc: Boolean = supervisoryBody.contains("HMRC")
 }
