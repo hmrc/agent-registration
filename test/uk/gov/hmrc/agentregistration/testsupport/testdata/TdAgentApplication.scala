@@ -35,7 +35,7 @@ trait TdAgentApplication { dependencies: TdBase =>
     aboutYourApplication = AboutYourApplication(
       businessType = None,
       userRole = None,
-      confirmed = None
+      confirmed = false
     ),
     businessDetails = None,
     amlsDetails = None
