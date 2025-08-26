@@ -19,9 +19,12 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
+import java.time.LocalDate
+
 final case class AmlsDetails(
   supervisoryBody: String,
-  amlsRegistrationNumber: Option[AmlsRegistrationNumber] = None
+  amlsRegistrationNumber: Option[AmlsRegistrationNumber] = None,
+  amlsExpiryDate: Option[LocalDate] = None
 ) {
   val isHmrc: Boolean = supervisoryBody.contains("HMRC")
 }
