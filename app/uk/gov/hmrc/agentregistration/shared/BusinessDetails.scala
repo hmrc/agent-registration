@@ -62,14 +62,14 @@ final case class SoleTraderDetails(
   businessType: BusinessType = SoleTrader,
   fullName: FullName,
   dateOfBirth: LocalDate,
-  nino: Option[String],
+  nino: Option[Nino],
   trn: Option[String]
   // saPostcode (only when trn present)
   // address (only when trn present)
   // overseas company details (optional and only when trn present)
 )
-extends BusinessDetails:
-  def getNinoOrTrn: String = nino.orElse(trn).getOrElse(throw new RuntimeException("Sole trader missing nino and trn"))
+extends BusinessDetails
+//  def getNinoOrTrn: String = nino.orElse(trn).getOrElse(throw new RuntimeException("Sole trader missing nino and trn"))
 
 object SoleTraderDetails:
   given Format[SoleTraderDetails] = Json.format[SoleTraderDetails]

@@ -1,7 +1,7 @@
 object ScalaCompilerFlags {
 
   val scalaCompilerOptions: Seq[String] = Seq(
-    "-explain",
+//    "-explain",
     "-explain-cyclic",
     "-language:implicitConversions",
     "-language:reflectiveCalls",
