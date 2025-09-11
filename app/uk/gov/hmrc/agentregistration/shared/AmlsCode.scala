@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
+import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
-import play.api.libs.json.Json
 
-import java.time.LocalDate
+final case class AmlsCode(value: String)
 
-final case class AmlsDetails(
-  supervisoryBody: AmlsCode,
-  amlsRegistrationNumber: Option[AmlsRegistrationNumber] = None,
-  amlsExpiryDate: Option[LocalDate] = None
-):
-  val isHmrc: Boolean = supervisoryBody.value.contains("HMRC")
-
-object AmlsDetails:
-  implicit val format: Format[AmlsDetails] = Json.format[AmlsDetails]
+object AmlsCode:
+  given format: Format[AmlsCode] = summon[Format[String]].inmap(AmlsCode(_), _.value)
