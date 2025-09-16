@@ -18,15 +18,19 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import upscan.UploadDetails
 
 import java.time.LocalDate
 
 final case class AmlsDetails(
   supervisoryBody: AmlsCode,
   amlsRegistrationNumber: Option[AmlsRegistrationNumber] = None,
-  amlsExpiryDate: Option[LocalDate] = None
+  amlsExpiryDate: Option[LocalDate] = None,
+  amlsEvidence: Option[UploadDetails] = None
 ):
+
   val isHmrc: Boolean = supervisoryBody.value.contains("HMRC")
+  def getAmlsEvidence: UploadDetails = amlsEvidence.getOrElse(throw new RuntimeException("AmlsEvidence missing when required"))
 
 object AmlsDetails:
   implicit val format: Format[AmlsDetails] = Json.format[AmlsDetails]
