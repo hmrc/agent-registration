@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.shared.upscan
 
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+
 final case class UploadDetails(
   reference: Reference,
   status: UploadStatus
 )
 
-object UploadDetails {
-
-  import play.api.libs.json.Format
-  import play.api.libs.json.Json
+object UploadDetails:
 
   given format: Format[UploadDetails] = Json.format[UploadDetails]
-
-}

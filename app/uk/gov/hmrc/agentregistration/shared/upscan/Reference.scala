@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentregistration.shared.upscan
 
-import play.api.libs.json.JsString
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.Format
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
+/** Upscan File Reference
+  */
 final case class Reference(value: String)
 extends AnyVal
 
-object Reference {
+object Reference:
 
-  implicit val referenceReader: Reads[Reference] = Reads.StringReads.map(Reference(_))
-  implicit val referenceWrites: Writes[Reference] = Writes[Reference](x => JsString(x.value))
-
-}
+  given format: Format[Reference] = summon[Format[String]].inmap(Reference(_), _.value)

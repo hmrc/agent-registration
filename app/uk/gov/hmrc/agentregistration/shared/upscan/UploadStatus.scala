@@ -17,53 +17,35 @@
 package uk.gov.hmrc.agentregistration.shared.upscan
 
 import play.api.libs.json.*
-import uk.gov.hmrc.http.StringContextOps
-
-import java.net.URL
 
 sealed trait UploadStatus
+
 object UploadStatus:
 
   case object InProgress
   extends UploadStatus
+
   final case class Failed(failureReason: String)
   extends UploadStatus
+
   final case class UploadedSuccessfully(
     name: String,
     mimeType: String,
-    downloadUrl: URL,
+    downloadUrl: ObjectStoreUrl,
     size: Option[Long],
     checksum: String
   )
   extends UploadStatus
 
-  implicit val urlReads: Reads[URL] = Reads {
-    case JsString(s) =>
-      try JsSuccess(url"$s")
-      catch {
-        case e: Exception => JsError(s"Invalid URL: $s")
+  given OFormat[UploadStatus] =
+    given JsonConfiguration = JsonConfiguration(
+      discriminator = "type",
+      typeNaming = JsonNaming { fullName =>
+        fullName.split('.').last // Extract just the class name
       }
-    case _ => JsError("URL must be a string")
-  }
+    )
+    given OFormat[InProgress.type] = Json.format[InProgress.type]
+    given OFormat[Failed] = Json.format[Failed]
+    given OFormat[UploadedSuccessfully] = Json.format[UploadedSuccessfully]
 
-  implicit val uploadedSuccessfullyReads: Reads[UploadedSuccessfully] = Json.reads[UploadedSuccessfully]
-  implicit val failedReads: Reads[Failed] = Json.reads[Failed]
-
-  implicit val reads: Reads[UploadStatus] = Reads { json =>
-    (json \ "status").validate[String].flatMap {
-      case "InProgress" => JsSuccess(InProgress)
-      case "Failed" => failedReads.reads(json)
-      case "UploadedSuccessfully" => uploadedSuccessfullyReads.reads(json)
-      case other => JsError(s"Unknown type: $other")
-    }
-  }
-
-  implicit val urlWrites: Writes[URL] = Writes(url => JsString(url.toString))
-  implicit val uploadedSuccessfullyWrites: Writes[UploadedSuccessfully] = Json.writes[UploadedSuccessfully]
-  implicit val failedWrites: Writes[Failed] = Json.writes[Failed]
-
-  implicit val writes: Writes[UploadStatus] = Writes {
-    case InProgress => Json.obj("status" -> "InProgress")
-    case u: Failed => failedWrites.writes(u).as[JsObject] + ("status" -> JsString("Failed"))
-    case u: UploadedSuccessfully => uploadedSuccessfullyWrites.writes(u).as[JsObject] + ("status" -> JsString("UploadedSuccessfully"))
-  }
+    Json.format[UploadStatus]
