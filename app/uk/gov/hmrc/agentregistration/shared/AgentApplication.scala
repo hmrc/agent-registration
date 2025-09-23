@@ -60,7 +60,9 @@ final case class AgentApplication(
     getBusinessDetails match
       case sd: SoleTraderDetails => sd.fullName.toString
       case lcd: LimitedCompanyDetails => lcd.companyProfile.companyName
-      case pd: PartnershipDetails => pd.companyProfile.get.companyName
+      // not sure why partnership name as optional but if there's no name return empty string
+      // until we have a requirement to make it mandatory and throw an exception
+      case pd: PartnershipDetails => pd.companyProfile.fold("")(_.companyName)
 
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]
