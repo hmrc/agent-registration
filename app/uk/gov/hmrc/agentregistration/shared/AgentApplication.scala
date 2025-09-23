@@ -56,5 +56,11 @@ final case class AgentApplication(
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(throw new RuntimeException("AMLS details not defined"))
 
+  def getApplicantName: String =
+    getBusinessDetails match
+      case sd: SoleTraderDetails => sd.fullName.toString
+      case lcd: LimitedCompanyDetails => lcd.companyProfile.companyName
+      case pd: PartnershipDetails => pd.companyProfile.get.companyName
+
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]
