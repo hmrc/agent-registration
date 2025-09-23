@@ -56,5 +56,13 @@ final case class AgentApplication(
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(throw new RuntimeException("AMLS details not defined"))
 
+  def getApplicantName: String =
+    getBusinessDetails match
+      case sd: SoleTraderDetails => sd.fullName.toString
+      case lcd: LimitedCompanyDetails => lcd.companyProfile.companyName
+      // not sure why partnership name as optional but if there's no name return empty string
+      // until we have a requirement to make it mandatory and throw an exception
+      case pd: PartnershipDetails => pd.companyProfile.fold("")(_.companyName)
+
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]
