@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 final case class AmlsCode(value: String)
 
 object AmlsCode:
-  given format: Format[AmlsCode] = summon[Format[String]].inmap(AmlsCode(_), _.value)
+  given format: Format[AmlsCode] = ValueClassFormats.makeFormat
