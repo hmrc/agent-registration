@@ -25,10 +25,20 @@ enum BusinessType:
 
   case SoleTrader
   case LimitedCompany
+
   case GeneralPartnership
+  extends BusinessType
+  with BusinessType.Partnership
+
   case LimitedLiabilityPartnership
+  extends BusinessType
+  with BusinessType.Partnership
 
 object BusinessType:
+
+  /** Marking trait for business types that are partnerships.
+    */
+  sealed trait Partnership
 
   given Format[BusinessType] = EnumFormat.enumFormat[BusinessType]
   given PathBindable[BusinessType] = EnumBinder.pathBindable[BusinessType]
