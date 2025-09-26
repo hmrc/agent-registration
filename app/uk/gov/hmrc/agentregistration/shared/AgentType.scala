@@ -26,5 +26,7 @@ enum AgentType:
   case UkTaxAgent
   case NonUkTaxAgent
 
+object AgentType:
+
   given Format[AgentType] = EnumFormat.enumFormat[AgentType]
   given PathBindable[AgentType] = EnumBinder.pathBindable[AgentType]
