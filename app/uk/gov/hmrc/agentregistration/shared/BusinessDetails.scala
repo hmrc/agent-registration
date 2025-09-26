@@ -28,7 +28,7 @@ import java.time.LocalDate
 
 sealed trait BusinessDetails:
 
-  val safeId: String
+  val safeId: SafeId
   val businessType: BusinessType // Duplicated from AgentApplication to simplify json reads
 
 object BusinessDetails:
@@ -48,7 +48,7 @@ object BusinessDetails:
   )
 
 final case class LimitedCompanyDetails(
-  safeId: String,
+  safeId: SafeId,
   businessType: BusinessType = LimitedCompany,
   companyProfile: CompanyProfile
 )
@@ -58,7 +58,7 @@ object LimitedCompanyDetails:
   given Format[LimitedCompanyDetails] = Json.format[LimitedCompanyDetails]
 
 final case class SoleTraderDetails(
-  safeId: String,
+  safeId: SafeId,
   businessType: BusinessType = SoleTrader,
   fullName: FullName,
   dateOfBirth: LocalDate,
@@ -75,7 +75,7 @@ object SoleTraderDetails:
   given Format[SoleTraderDetails] = Json.format[SoleTraderDetails]
 
 final case class PartnershipDetails(
-  safeId: String,
+  safeId: SafeId,
   businessType: BusinessType,
   companyProfile: Option[CompanyProfile],
   postcode: String
