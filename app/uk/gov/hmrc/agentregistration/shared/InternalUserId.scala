@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 /** Internal User Identifier, which comes from the Retrievals
   */
 final case class InternalUserId(value: String)
 
 object InternalUserId:
-  given format: Format[InternalUserId] = summon[Format[String]].inmap(InternalUserId(_), _.value)
+  given format: Format[InternalUserId] = ValueClassFormats.makeFormat

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentregistration.shared.upscan
 
 import play.api.libs.json.*
-import play.api.libs.functional.syntax.*
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 final case class ObjectStoreUrl(private val value: String)
 
@@ -28,4 +28,4 @@ object ObjectStoreUrl:
     require(isFullyQualified, "ObjectStoreUrl must be fully qualified")
     ObjectStoreUrl(uri.toString)
 
-  given format: Format[ObjectStoreUrl] = summon[Format[String]].inmap(ObjectStoreUrl(_), _.value)
+  given format: Format[ObjectStoreUrl] = ValueClassFormats.makeFormat

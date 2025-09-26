@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 final case class GroupId(value: String)
 
 object GroupId:
-  given format: Format[GroupId] = summon[Format[String]].inmap(GroupId(_), _.value)
+  given format: Format[GroupId] = ValueClassFormats.makeFormat

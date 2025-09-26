@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.agentregistration.shared.upscan
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 /** Upscan File Reference
   */
 final case class Reference(value: String)
-extends AnyVal
 
 object Reference:
 
-  given format: Format[Reference] = summon[Format[String]].inmap(Reference(_), _.value)
+  given format: Format[Reference] = ValueClassFormats.makeFormat

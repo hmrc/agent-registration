@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 final case class Utr(value: String)
 
 object Utr:
-  given format: Format[Utr] = summon[Format[String]].inmap(Utr(_), _.value)
+  given format: Format[Utr] = ValueClassFormats.makeFormat
