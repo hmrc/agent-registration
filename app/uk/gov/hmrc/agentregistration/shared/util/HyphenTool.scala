@@ -20,7 +20,7 @@ object HyphenTool:
 
   /** Converts a CamelCase string to a hyphen-separated string Example: "SoleTrader" -> "sole-trader"
     */
-  def camelCaseToHyphenated(input: String): String = {
+  private[util] def camelCaseToHyphenated(input: String): String = {
     input.replaceAll("([A-Z])", "-$1")
       .toLowerCase
       .stripPrefix("-")

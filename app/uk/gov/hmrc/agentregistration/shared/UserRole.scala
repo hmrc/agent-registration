@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.EnumFormat
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum UserRole:
 
@@ -25,4 +25,4 @@ enum UserRole:
   case Authorised
 
 object UserRole:
-  given Format[UserRole] = EnumFormat.enumFormat[UserRole]
+  given Format[UserRole] = JsonFormatsFactory.makeEnumFormat[UserRole]

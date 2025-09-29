@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.upscan
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+object SealedObjectsExtensions:
 
-final case class ObjectStoreUrl(private val value: String)
+  extension [E](e: E)
 
-object ObjectStoreUrl:
-
-  def apply(uri: sttp.model.Uri): ObjectStoreUrl =
-    val isFullyQualified: Boolean = uri.scheme.isDefined && uri.host.isDefined
-    require(isFullyQualified, "ObjectStoreUrl must be fully qualified")
-    ObjectStoreUrl(uri.toString)
-
-  given format: Format[ObjectStoreUrl] = JsonFormatsFactory.makeValueClassFormat
+    inline def toStringHyphenated: String = {
+      val _ = SealedObjects.all[E] // macro enforces E to be a sealed trait/union/etc at call site
+      HyphenTool.camelCaseToHyphenated(e.toString)
+    }

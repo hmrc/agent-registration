@@ -17,9 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 final case class AmlsCode(value: String)
 
 object AmlsCode:
-  given format: Format[AmlsCode] = ValueClassFormats.makeFormat
+  given format: Format[AmlsCode] = JsonFormatsFactory.makeValueClassFormat

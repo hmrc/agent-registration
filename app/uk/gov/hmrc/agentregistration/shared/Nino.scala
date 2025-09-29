@@ -17,9 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 final case class Nino(value: String)
 
 object Nino:
-  given format: Format[Nino] = ValueClassFormats.makeFormat
+  given format: Format[Nino] = JsonFormatsFactory.makeValueClassFormat
