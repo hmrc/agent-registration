@@ -19,10 +19,7 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
-import uk.gov.hmrc.agentregistration.shared.BusinessType.GeneralPartnership
-import uk.gov.hmrc.agentregistration.shared.BusinessType.LimitedCompany
-import uk.gov.hmrc.agentregistration.shared.BusinessType.LimitedLiabilityPartnership
-import uk.gov.hmrc.agentregistration.shared.BusinessType.SoleTrader
+import uk.gov.hmrc.agentregistration.shared.BusinessType.*
 
 import java.time.LocalDate
 
@@ -37,7 +34,8 @@ object BusinessDetails:
       (json \ "businessType").as[BusinessType] match {
         case LimitedCompany => Json.fromJson[LimitedCompanyDetails](json)
         case SoleTrader => Json.fromJson[SoleTraderDetails](json)
-        case GeneralPartnership | LimitedLiabilityPartnership => Json.fromJson[PartnershipDetails](json)
+        case GeneralPartnership | LimitedLiabilityPartnership | LimitedPartnership | ScottishLimitedPartnership | ScottishPartnership =>
+          Json.fromJson[PartnershipDetails](json)
       }
     },
     {
