@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
 
 final case class Nino(value: String)
 
 object Nino:
-  given format: Format[Nino] = summon[Format[String]].inmap(Nino(_), _.value)
+  given format: Format[Nino] = ValueClassFormats.makeFormat
