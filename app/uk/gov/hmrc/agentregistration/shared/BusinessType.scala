@@ -21,6 +21,8 @@ import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.EnumBinder
 import uk.gov.hmrc.agentregistration.shared.util.EnumFormat
 
+import scala.annotation.nowarn
+
 enum BusinessType:
 
   case SoleTrader
@@ -34,11 +36,28 @@ enum BusinessType:
   extends BusinessType
   with BusinessType.Partnership
 
+  case LimitedPartnership
+  extends BusinessType
+  with BusinessType.Partnership
+
+  case ScottishLimitedPartnership
+  extends BusinessType
+  with BusinessType.Partnership
+
+  case ScottishPartnership
+  extends BusinessType
+  with BusinessType.Partnership
+
 object BusinessType:
 
   /** Marking trait for business types that are partnerships.
     */
   sealed trait Partnership
+
+  val partnershipTypes: Seq[BusinessType] =
+    BusinessType.values.toIndexedSeq.collect {
+      case p: BusinessType.Partnership => p
+    }: @nowarn( /*scala3 bug?*/ "msg=Unreachable case")
 
   given Format[BusinessType] = EnumFormat.enumFormat[BusinessType]
   given PathBindable[BusinessType] = EnumBinder.pathBindable[BusinessType]
