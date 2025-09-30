@@ -20,6 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.BusinessType.*
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.*
 
 import java.time.LocalDate
 

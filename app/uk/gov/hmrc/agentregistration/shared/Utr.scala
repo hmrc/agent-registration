@@ -17,9 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 final case class Utr(value: String)
 
 object Utr:
-  given format: Format[Utr] = ValueClassFormats.makeFormat
+  given format: Format[Utr] = JsonFormatsFactory.makeValueClassFormat

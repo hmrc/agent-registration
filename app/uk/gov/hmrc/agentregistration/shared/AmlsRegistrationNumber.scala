@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 final case class AmlsRegistrationNumber(value: String)
 
@@ -40,6 +40,6 @@ object AmlsRegistrationNumber {
 
   def apply(value: String): AmlsRegistrationNumber = new AmlsRegistrationNumber(value.trim)
 
-  implicit val format: Format[AmlsRegistrationNumber] = ValueClassFormats.makeFormat
+  implicit val format: Format[AmlsRegistrationNumber] = JsonFormatsFactory.makeValueClassFormat
 
 }

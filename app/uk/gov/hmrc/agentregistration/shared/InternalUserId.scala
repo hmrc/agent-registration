@@ -17,11 +17,11 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassFormats
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 /** Internal User Identifier, which comes from the Retrievals
   */
 final case class InternalUserId(value: String)
 
 object InternalUserId:
-  given format: Format[InternalUserId] = ValueClassFormats.makeFormat
+  given format: Format[InternalUserId] = JsonFormatsFactory.makeValueClassFormat

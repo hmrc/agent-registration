@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.EnumFormat
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum ApplicationState:
 
@@ -25,4 +25,4 @@ enum ApplicationState:
   case Submitted
 
 object ApplicationState:
-  given Format[ApplicationState] = EnumFormat.enumFormat[ApplicationState]
+  given Format[ApplicationState] = JsonFormatsFactory.makeEnumFormat[ApplicationState]

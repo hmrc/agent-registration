@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.upscan
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 
-final case class ObjectStoreUrl(private val value: String)
+class EnumValuesSpec
+extends UnitSpec:
 
-object ObjectStoreUrl:
+  "EnumObjects.all[A] should return all enums values of A" in:
+    sealed trait M
 
-  def apply(uri: sttp.model.Uri): ObjectStoreUrl =
-    val isFullyQualified: Boolean = uri.scheme.isDefined && uri.host.isDefined
-    require(isFullyQualified, "ObjectStoreUrl must be fully qualified")
-    ObjectStoreUrl(uri.toString)
+    enum A:
+      case A1
+      extends A,
+      M
+      case A2
 
-  given format: Format[ObjectStoreUrl] = JsonFormatsFactory.makeValueClassFormat
+    EnumValues.all[A] shouldBe A.values

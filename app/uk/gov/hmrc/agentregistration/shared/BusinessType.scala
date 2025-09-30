@@ -18,46 +18,45 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
 import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentregistration.shared.util.EnumBinder
-import uk.gov.hmrc.agentregistration.shared.util.EnumFormat
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.PathBindableFactory
+import uk.gov.hmrc.agentregistration.shared.util.SealedObjects
 
-import scala.annotation.nowarn
-
-enum BusinessType:
-
-  case SoleTrader
-  case LimitedCompany
-
-  case GeneralPartnership
-  extends BusinessType
-  with BusinessType.Partnership
-
-  case LimitedLiabilityPartnership
-  extends BusinessType
-  with BusinessType.Partnership
-
-  case LimitedPartnership
-  extends BusinessType
-  with BusinessType.Partnership
-
-  case ScottishLimitedPartnership
-  extends BusinessType
-  with BusinessType.Partnership
-
-  case ScottishPartnership
-  extends BusinessType
-  with BusinessType.Partnership
+sealed trait BusinessType
 
 object BusinessType:
 
-  /** Marking trait for business types that are partnerships.
+  case object SoleTrader
+  extends BusinessType
+
+  case object LimitedCompany
+  extends BusinessType
+
+  val values: Seq[BusinessType] = SealedObjects.all[BusinessType]
+
+  /** Business Types that are Partnerships.
     */
   sealed trait Partnership
+  extends BusinessType
 
-  val partnershipTypes: Seq[BusinessType] =
-    BusinessType.values.toIndexedSeq.collect {
-      case p: BusinessType.Partnership => p
-    }: @nowarn( /*scala3 bug?*/ "msg=Unreachable case")
+  object Partnership:
 
-  given Format[BusinessType] = EnumFormat.enumFormat[BusinessType]
-  given PathBindable[BusinessType] = EnumBinder.pathBindable[BusinessType]
+    case object GeneralPartnership
+    extends BusinessType.Partnership
+
+    case object LimitedLiabilityPartnership
+    extends BusinessType.Partnership
+
+    case object LimitedPartnership
+    extends BusinessType.Partnership
+
+    case object ScottishLimitedPartnership
+    extends BusinessType.Partnership
+
+    case object ScottishPartnership
+    extends BusinessType.Partnership
+
+    val values: Seq[Partnership] = SealedObjects.all[Partnership]
+
+  given Format[BusinessType] = JsonFormatsFactory.makeSealedObjectFormat[BusinessType]
+  given PathBindable[BusinessType] = PathBindableFactory.makeSealedObjectPathBindable[BusinessType]
