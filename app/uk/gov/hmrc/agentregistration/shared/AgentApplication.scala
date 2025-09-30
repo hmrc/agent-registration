@@ -30,7 +30,6 @@ final case class AgentApplication(
   createdAt: Instant,
   applicationState: ApplicationState,
   utr: Option[Utr],
-  aboutYourApplication: AboutYourApplication,
   businessDetails: Option[BusinessDetails],
   amlsDetails: Option[AmlsDetails]
 ):
@@ -47,10 +46,6 @@ final case class AgentApplication(
   def getUtr(using request: RequestHeader): Utr = utr.getOrElse(
     throw RuntimeException(s"Expected 'utr' to be defined but it was None [${internalUserId.toString}] ")
   )
-
-  def getBusinessType: BusinessType = aboutYourApplication.businessType.getOrElse(throw new RuntimeException("business type not defined"))
-
-  def getUserRole: UserRole = aboutYourApplication.userRole.getOrElse(throw new RuntimeException("user role not defined"))
 
   def getBusinessDetails: BusinessDetails = businessDetails.getOrElse(throw new RuntimeException("business details not defined"))
 
