@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.AboutYourApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
@@ -32,11 +31,6 @@ trait TdAgentApplication { dependencies: TdBase =>
     createdAt = createdAt,
     applicationState = ApplicationState.InProgress,
     utr = None,
-    aboutYourApplication = AboutYourApplication(
-      businessType = None,
-      userRole = None,
-      confirmed = false
-    ),
     businessDetails = None,
     amlsDetails = None
   )
