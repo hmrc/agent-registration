@@ -18,11 +18,11 @@ package uk.gov.hmrc.agentregistration.shared.util
 
 import scala.quoted.*
 
-/** Sealed Object is a type that all instances are objects
-  */
+/** */
 object SealedObjects:
 
-  /** Collects all singleton objects (case objects or objects) that conform to the queried type T.
+  /** Collects all singleton objects (case objects or objects) that conform to the queried type `T`. `T` is a SealedObject type, that is a sealed type that all
+    * instances are objects.
     *
     * Supported T:
     *   - A sealed trait

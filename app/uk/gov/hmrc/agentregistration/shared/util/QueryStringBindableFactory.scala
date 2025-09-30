@@ -29,7 +29,7 @@ object QueryStringBindableFactory:
 
   inline def makeSealedObjectQueryStringBindable[E](using
     classTag: ClassTag[E]
-  ): QueryStringBindable[E] = queryStringBindable(SealedObjects.all[E]) // macro enforces sealed trait/union/etc at call site
+  ): QueryStringBindable[E] = queryStringBindable(SealedObjects.all[E]) // macro enforces E to be SealedObject type at call site
 
   /** Creates a [[play.api.mvc.QueryStringBindable]] for enums and sealed case objects.
     *

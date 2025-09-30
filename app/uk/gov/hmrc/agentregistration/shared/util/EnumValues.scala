@@ -20,9 +20,7 @@ import scala.quoted.*
 
 object EnumValues:
 
-  /** Lists all values of a Scala 3 enum type T.
-    *   - Compiles only if T is an enum; otherwise aborts with an error.
-    *   - Returns values in declaration order.
+  /** Lists all values of a Scala 3 enum type T. Compiles only if `T` is an enum; otherwise aborts with an error.
     */
   inline def all[T]: Seq[T] = ${ allEnumImpl[T] }
 

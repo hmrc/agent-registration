@@ -21,6 +21,6 @@ object SealedObjectsExtensions:
   extension [E](e: E)
 
     inline def toStringHyphenated: String = {
-      val _ = SealedObjects.all[E] // macro enforces E to be a sealed trait/union/etc at call site
+      val _ = SealedObjects.all[E] // macro enforces E to be SealedObject type at call site
       HyphenTool.camelCaseToHyphenated(e.toString)
     }

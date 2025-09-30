@@ -25,7 +25,7 @@ object PathBindableFactory:
 
   inline def pathBindable[E <: reflect.Enum](using classTag: ClassTag[E]): PathBindable[E] = pathBindable(EnumValues.all[E]) // macro enforces scala3 enum at call site
 
-  inline def makeSealedObjectPathBindable[E](using classTag: ClassTag[E]): PathBindable[E] = pathBindable(SealedObjects.all[E]) // macro enforces sealed trait/union/etc at call site
+  inline def makeSealedObjectPathBindable[E](using classTag: ClassTag[E]): PathBindable[E] = pathBindable(SealedObjects.all[E]) // macro enforces E to be SealedObject type at call site
 
   /** Creates a [[play.api.mvc.PathBindable]] for type E based on a sequence of values.
     *
