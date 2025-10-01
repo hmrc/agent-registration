@@ -60,3 +60,4 @@ object BusinessType:
 
   given Format[BusinessType] = JsonFormatsFactory.makeSealedObjectFormat[BusinessType]
   given PathBindable[BusinessType] = PathBindableFactory.makeSealedObjectPathBindable[BusinessType]
+  given PathBindable[BusinessType.Partnership] = PathBindableFactory.makeSealedObjectPathBindable[BusinessType.Partnership]
