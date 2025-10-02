@@ -31,6 +31,7 @@ final case class AgentApplication(
   applicationState: ApplicationState,
   utr: Option[Utr],
   businessDetails: Option[BusinessDetails],
+  applicantContactDetails: Option[ApplicantContactDetails],
   amlsDetails: Option[AmlsDetails]
 ):
 
@@ -48,6 +49,10 @@ final case class AgentApplication(
   )
 
   def getBusinessDetails: BusinessDetails = businessDetails.getOrElse(throw new RuntimeException("business details not defined"))
+
+  def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrElse(
+    throw new RuntimeException("applicant contact details not defined")
+  )
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(throw new RuntimeException("AMLS details not defined"))
 
