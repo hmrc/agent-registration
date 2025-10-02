@@ -20,7 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 final case class ApplicantContactDetails(
-  llpRole: LlpRole
+  applicantRoleInLlp: AppicantRoleInLlp
 )
 
 object ApplicantContactDetails:
