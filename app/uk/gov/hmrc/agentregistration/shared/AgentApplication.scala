@@ -57,7 +57,7 @@ final case class AgentApplication(
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(throw new RuntimeException("AMLS details not defined"))
 
-  def getApplicantName: String =
+  def getApplicantBusinessName: String =
     getBusinessDetails match
       case sd: SoleTraderDetails => sd.fullName.toString
       case lcd: LimitedCompanyDetails => lcd.companyProfile.companyName
