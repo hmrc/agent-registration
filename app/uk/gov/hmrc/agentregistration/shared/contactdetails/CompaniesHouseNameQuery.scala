@@ -27,8 +27,6 @@ final case class CompaniesHouseNameQuery(
 object CompaniesHouseNameQuery:
 
   implicit val format: Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
-  // TODO: this is a basic sense check in the absence of any business requirements and is as used in:
-  // https://github.com/hmrc/pension-scheme-return-frontend/blob/d4075c7805e8975c8d5cfaf3174362dd5fe92c81/app/forms/NameDOBFormProvider.scala#L30
   private val nameRegex = "^[a-zA-Z\\-' ]+$"
   def isValidName(name: String): Boolean = name.matches(nameRegex)
   def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))
