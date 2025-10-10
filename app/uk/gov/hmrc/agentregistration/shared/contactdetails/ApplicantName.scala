@@ -49,8 +49,13 @@ object ApplicantName:
   extends ApplicantName:
     override val role: ApplicantRoleInLlp.Authorised.type = ApplicantRoleInLlp.Authorised
 
+  @nowarn
   given format: Format[ApplicantName] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[NameOfMember] = Json.format[NameOfMember]
     given OFormat[NameOfAuthorised] = Json.format[NameOfAuthorised]
-    Json.format[ApplicantName]: @nowarn("msg=Unreachable case except for null")
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emitted by Play Json macro"""
+    Json.format[ApplicantName]
