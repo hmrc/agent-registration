@@ -23,6 +23,8 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.ApplicantRoleInLlp
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
+import scala.annotation.nowarn
+
 sealed trait ApplicantName:
 
   val role: ApplicantRoleInLlp
@@ -51,4 +53,4 @@ object ApplicantName:
     given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[NameOfMember] = Json.format[NameOfMember]
     given OFormat[NameOfAuthorised] = Json.format[NameOfAuthorised]
-    Json.format[ApplicantName]
+    Json.format[ApplicantName]: @nowarn("msg=Unreachable case except for null")
