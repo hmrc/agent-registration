@@ -27,6 +27,4 @@ final case class CompaniesHouseNameQuery(
 object CompaniesHouseNameQuery:
 
   implicit val format: Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
-  private val nameRegex = "^[a-zA-Z\\-' ]+$"
-  def isValidName(name: String): Boolean = name.matches(nameRegex)
   def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))
