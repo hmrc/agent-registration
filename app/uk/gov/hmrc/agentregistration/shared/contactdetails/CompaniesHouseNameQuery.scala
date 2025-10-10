@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.contactdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
