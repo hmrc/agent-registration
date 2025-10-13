@@ -36,6 +36,9 @@ sealed trait ApplicantName:
 
 object ApplicantName:
 
+  private val nameRegex = "^[a-zA-Z\\-' ]+$"
+  def isValidName(name: String): Boolean = name.matches(nameRegex)
+
   final case class NameOfMember(
     memberNameQuery: Option[CompaniesHouseNameQuery] = None,
     companiesHouseOfficer: Option[CompaniesHouseOfficer] = None
