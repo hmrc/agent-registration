@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.contactdetails
+package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-final case class ApplicantContactDetails(
-  applicantName: ApplicantName,
-  telephoneNumber: Option[TelephoneNumber] = None
-)
+final case class TelephoneNumber(value: String)
 
-object ApplicantContactDetails:
-  given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]
+object TelephoneNumber:
+
+  private val telephoneRegex = "^[0-9\\-()\\+ ]+$"
+  def isValid(value: String): Boolean = value.matches(telephoneRegex)
+  given format: Format[TelephoneNumber] = JsonFormatsFactory.makeValueClassFormat
