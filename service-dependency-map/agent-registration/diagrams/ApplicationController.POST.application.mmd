@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant AgentRegistration
+    participant Database
+
+    Upstream->>+AgentRegistration: POST /application
+    AgentRegistration->>+Database: Upsert: Insert or update agent application by internal user ID
+    Database-->>-AgentRegistration: Operation result
+    AgentRegistration-->>-Upstream: 200 OK with empty response

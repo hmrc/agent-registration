@@ -1,0 +1,89 @@
+{
+    "serviceName": "agent-registration",
+    "collections": [
+        {
+            "name": "agent-application",
+            "repositoryFile": "AgentApplicationRepo.scala",
+            "purpose": "This is the primary collection for storing agent registration applications. It manages the complete lifecycle of an agent's application to register with HMRC, from initial creation through submission. The collection supports the agent registration workflow by storing all application data including business details, contact information, Anti-Money Laundering Supervision (AMLS) details, and application state.",
+            "schema": [
+                {
+                    "field": "_id",
+                    "description": "The internal user ID from Government Gateway, used as the primary key."
+                },
+                {
+                    "field": "internalUserId",
+                    "description": "The authenticated user's internal identifier from Government Gateway."
+                },
+                {
+                    "field": "createdAt",
+                    "description": "Timestamp when the application was initially created."
+                },
+                {
+                    "field": "lastUpdated",
+                    "description": "Automatically generated timestamp for the last modification (used for TTL index expiration)."
+                },
+                {
+                    "field": "applicationState",
+                    "description": "Current state of the application (InProgress or Submitted)."
+                },
+                {
+                    "field": "utr",
+                    "description": "Optional Unique Taxpayer Reference number for the business."
+                },
+                {
+                    "field": "businessDetails",
+                    "description": "Optional business information including business type (sole trader, limited company, or partnership) and associated details."
+                },
+                {
+                    "field": "applicantContactDetails",
+                    "description": "Optional contact information for the person submitting the application."
+                },
+                {
+                    "field": "amlsDetails",
+                    "description": "Optional Anti-Money Laundering Supervision details including supervisory body, registration number, expiry date, and evidence."
+                }
+            ],
+            "sampleDocument": {
+                "_id": "123456789012345678",
+                "internalUserId": "123456789012345678",
+                "createdAt": {
+                    "$date": "2025-10-15T09:00:00.000Z"
+                },
+                "lastUpdated": {
+                    "$date": "2025-10-16T10:30:00.000Z"
+                },
+                "applicationState": "InProgress",
+                "utr": "1234567890",
+                "businessDetails": {
+                    "safeId": "XE0001234567890",
+                    "businessType": "LimitedCompany",
+                    "companyProfile": {
+                        "companyName": "Example Agent Services Ltd",
+                        "companyNumber": "12345678",
+                        "dateOfIncorporation": {
+                            "$date": "2020-01-15T00:00:00.000Z"
+                        },
+                        "companyStatus": "Active"
+                    }
+                },
+                "applicantContactDetails": {
+                    "applicantName": {
+                        "firstName": "John",
+                        "lastName": "Smith"
+                    }
+                },
+                "amlsDetails": {
+                    "supervisoryBody": "FCA",
+                    "amlsRegistrationNumber": "12345678",
+                    "amlsExpiryDate": {
+                        "$date": "2026-12-31T00:00:00.000Z"
+                    },
+                    "amlsEvidence": {
+                        "reference": "evidence-ref-123",
+                        "uploadStatus": "UploadedSuccessfully"
+                    }
+                }
+            }
+        }
+    ]
+}
