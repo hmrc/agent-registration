@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.contactdetails
+package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-final case class CompaniesHouseNameQuery(
-  firstName: String,
-  lastName: String
-)
+final case class TelephoneNumber(value: String):
+  def isValid: Boolean = value.matches("^[0-9-()+ ]+$")
 
-object CompaniesHouseNameQuery:
+object TelephoneNumber:
 
-  given Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
-  def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))
+  given format: Format[TelephoneNumber] = JsonFormatsFactory.makeValueClassFormat

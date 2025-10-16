@@ -18,9 +18,11 @@ package uk.gov.hmrc.agentregistration.shared.contactdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 
 final case class ApplicantContactDetails(
-  applicantName: ApplicantName
+  applicantName: ApplicantName,
+  telephoneNumber: Option[TelephoneNumber] = None
 )
 
 object ApplicantContactDetails:
