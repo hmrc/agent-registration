@@ -1,0 +1,38 @@
+{
+    "microservice": "agent-registration",
+    "controller": "ApplicationController",
+    "apis": [
+        {
+            "endpoint": "GET /application",
+            "description": "Retrieves an agent application by the authenticated user's internal user ID",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "Database",
+                    "service": null,
+                    "method": null,
+                    "path": null,
+                    "database": "agent-application",
+                    "operation": "Read",
+                    "description": "Find agent application by internal user ID"
+                }
+            ]
+        },
+        {
+            "endpoint": "POST /application",
+            "description": "Creates or updates an agent application for the authenticated user",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "Database",
+                    "service": null,
+                    "method": null,
+                    "path": null,
+                    "database": "agent-application",
+                    "operation": "Upsert",
+                    "description": "Insert or update agent application by internal user ID"
+                }
+            ]
+        }
+    ]
+}
