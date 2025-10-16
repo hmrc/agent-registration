@@ -19,10 +19,9 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-final case class TelephoneNumber(value: String)
+final case class TelephoneNumber(value: String):
+  def isValid: Boolean = value.matches("^[0-9-()+ ]+$")
 
 object TelephoneNumber:
 
-  private val telephoneRegex = "^[0-9\\-()\\+ ]+$"
-  def isValid(value: String): Boolean = value.matches(telephoneRegex)
   given format: Format[TelephoneNumber] = JsonFormatsFactory.makeValueClassFormat

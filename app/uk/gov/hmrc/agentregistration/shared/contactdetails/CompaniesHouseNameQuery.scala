@@ -26,5 +26,5 @@ final case class CompaniesHouseNameQuery(
 
 object CompaniesHouseNameQuery:
 
-  implicit val format: Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
+  given Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
   def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))

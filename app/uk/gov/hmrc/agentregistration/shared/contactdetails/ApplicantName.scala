@@ -23,6 +23,7 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.ApplicantRoleInLlp
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName.NameOfMember
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
 import scala.annotation.nowarn
 
@@ -34,6 +35,10 @@ sealed trait ApplicantName:
     this match
       case t: T => Some(t)
       case _ => None
+
+  def asExpected[T <: ApplicantName](using ct: reflect.ClassTag[T]): T = as[T].getOrThrowExpectedDataMissing(
+    s"Expected type ${ct.runtimeClass.getSimpleName} but got ${this.getClass.getSimpleName}"
+  )
 
 object ApplicantName:
 
