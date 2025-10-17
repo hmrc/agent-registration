@@ -76,5 +76,12 @@ final case class AgentApplication(
         )
       case _: SoleTraderDetails => throw new RuntimeException("company registration number not applicable for sole traders")
 
+  def getApplicantEmailToVerify: EmailAddress = getApplicantContactDetails
+    .emailAddress
+    .map(_.emailToVerify)
+    .getOrThrowExpectedDataMissing(
+      "A verify email call has been made but no email to verify is present."
+    )
+
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]

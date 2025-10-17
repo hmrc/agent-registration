@@ -22,8 +22,15 @@ import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 
 final case class ApplicantContactDetails(
   applicantName: ApplicantName,
-  telephoneNumber: Option[TelephoneNumber] = None
-)
+  telephoneNumber: Option[TelephoneNumber] = None,
+  emailAddress: Option[ApplicantEmailAddress] = None
+):
+  val isComplete: Boolean =
+    applicantName.match {
+      case ApplicantName.NameOfMember(_, Some(_)) => true
+      case ApplicantName.NameOfAuthorised(Some(_)) => true
+      case _ => false
+    } && telephoneNumber.isDefined && emailAddress.exists(_.isVerified)
 
 object ApplicantContactDetails:
   given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]
