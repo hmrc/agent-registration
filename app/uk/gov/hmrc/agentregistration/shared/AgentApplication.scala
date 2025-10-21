@@ -20,6 +20,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
+import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
 import java.time.Clock
@@ -75,6 +76,12 @@ final case class AgentApplication(
             .getOrThrowExpectedDataMissing("company registration number not defined")
         )
       case _: SoleTraderDetails => throw new RuntimeException("company registration number not applicable for sole traders")
+
+  def getApplicantEmailAddress: ApplicantEmailAddress = getApplicantContactDetails
+    .applicantEmailAddress
+    .getOrThrowExpectedDataMissing(
+      "Applicant email address is not defined"
+    )
 
 object AgentApplication:
   given format: OFormat[AgentApplication] = Json.format[AgentApplication]
