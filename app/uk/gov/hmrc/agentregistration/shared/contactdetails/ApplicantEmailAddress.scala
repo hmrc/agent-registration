@@ -20,10 +20,9 @@ import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
 final case class ApplicantEmailAddress(
-  emailToVerify: EmailAddress,
-  verifiedEmail: Option[EmailAddress] = None
-):
-  val isVerified: Boolean = verifiedEmail.contains(emailToVerify)
+  emailAddress: EmailAddress,
+  isVerified: Boolean = false
+)
 
 object ApplicantEmailAddress:
 

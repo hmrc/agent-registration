@@ -20,6 +20,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
+import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
 import java.time.Clock
@@ -76,11 +77,10 @@ final case class AgentApplication(
         )
       case _: SoleTraderDetails => throw new RuntimeException("company registration number not applicable for sole traders")
 
-  def getApplicantEmailToVerify: EmailAddress = getApplicantContactDetails
-    .emailAddress
-    .map(_.emailToVerify)
+  def getApplicantEmailAddress: ApplicantEmailAddress = getApplicantContactDetails
+    .applicantEmailAddress
     .getOrThrowExpectedDataMissing(
-      "A verify email call has been made but no email to verify is present."
+      "Applicant email address is not defined"
     )
 
 object AgentApplication:
