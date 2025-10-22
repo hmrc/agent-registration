@@ -22,7 +22,8 @@ import uk.gov.hmrc.agentregistration.shared.EmailAddress
 final case class ApplicantEmailAddress(
   emailAddress: EmailAddress,
   isVerified: Boolean
-)
+):
+  val verifiedEmailAddress: Option[EmailAddress] = if isVerified then Some(emailAddress) else None
 
 object ApplicantEmailAddress:
 
