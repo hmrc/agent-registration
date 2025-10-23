@@ -66,7 +66,7 @@ object AgentApplicationRepoHelp:
       indexOptions = IndexOptions().expireAfter(cacheTtl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
     ),
     IndexModel(
-      keys = Indexes.ascending("utr"),
-      IndexOptions().name("utr")
+      keys = Indexes.ascending("linkId"),
+      IndexOptions().name("linkId")
     )
   )
