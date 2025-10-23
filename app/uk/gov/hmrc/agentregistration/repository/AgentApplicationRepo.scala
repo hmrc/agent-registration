@@ -68,5 +68,9 @@ object AgentApplicationRepoHelp:
     IndexModel(
       keys = Indexes.ascending("utr"),
       IndexOptions().name("utr")
+    ),
+    IndexModel(
+      keys = Indexes.ascending("linkId"),
+      IndexOptions().name("linkId")
     )
   )

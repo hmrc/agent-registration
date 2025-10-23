@@ -25,12 +25,19 @@ final case class ApplicantContactDetails(
   telephoneNumber: Option[TelephoneNumber] = None,
   applicantEmailAddress: Option[ApplicantEmailAddress] = None
 ):
+
   val isComplete: Boolean =
     applicantName.match {
       case ApplicantName.NameOfMember(_, Some(_)) => true
       case ApplicantName.NameOfAuthorised(Some(_)) => true
       case _ => false
     } && telephoneNumber.isDefined && applicantEmailAddress.exists(_.isVerified)
+
+  def getApplicantName: String =
+    applicantName match
+      case ApplicantName.NameOfMember(_, Some(officer)) => officer.name
+      case ApplicantName.NameOfAuthorised(Some(name)) => name
+      case _ => throw new IllegalStateException("Applicant name missing")
 
 object ApplicantContactDetails:
   given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]
