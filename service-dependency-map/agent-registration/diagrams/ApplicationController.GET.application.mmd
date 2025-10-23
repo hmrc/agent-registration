@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant AgentRegistration
+    participant Database
+
+    Upstream->>+AgentRegistration: GET /application
+    AgentRegistration->>+Database: Read: Find agent application by internal user ID
+    Database-->>-AgentRegistration: Agent application data or None
+    AgentRegistration-->>-Upstream: 200 OK with application data or 204 No Content
