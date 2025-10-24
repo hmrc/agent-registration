@@ -20,3 +20,6 @@ object RequiredDataExtensions:
 
   extension [T](t: Option[T])
     inline def getOrThrowExpectedDataMissing(message: => String): T = t.getOrElse(throw new IllegalStateException(s"Expected data was missing: $message"))
+
+  extension [T](t: T)
+    def throwExpectedDataMissing(message: String): Nothing = throw new IllegalStateException(s"Expected data was missing: $message")
