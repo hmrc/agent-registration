@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.contactdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
@@ -35,6 +36,18 @@ final case class ApplicantContactDetails(
     } && telephoneNumber.isDefined && applicantEmailAddress.exists(_.isVerified)
 
   def getApplicantEmailAddress: ApplicantEmailAddress = applicantEmailAddress.getOrThrowExpectedDataMissing("ApplicantEmailAddress")
+
+  def getApplicantName: String =
+    applicantName match
+      case ApplicantName.NameOfMember(_, Some(officer)) => officer.name
+      case ApplicantName.NameOfAuthorised(Some(name)) => name
+      case _ => throw new IllegalStateException("Applicant name missing")
+
+  def getTelephoneNumber: TelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number missing")
+  def getVerifiedEmail: EmailAddress = applicantEmailAddress
+    .getOrThrowExpectedDataMissing("Email verification expected to have been done")
+    .verifiedEmailAddress
+    .getOrThrowExpectedDataMissing("Email not verified")
 
 object ApplicantContactDetails:
   given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]
