@@ -35,6 +35,8 @@ final case class ApplicantContactDetails(
       case _ => false
     } && telephoneNumber.isDefined && applicantEmailAddress.exists(_.isVerified)
 
+  def getApplicantEmailAddress: ApplicantEmailAddress = applicantEmailAddress.getOrThrowExpectedDataMissing("ApplicantEmailAddress")
+
   def getApplicantName: String =
     applicantName match
       case ApplicantName.NameOfMember(_, Some(officer)) => officer.name
