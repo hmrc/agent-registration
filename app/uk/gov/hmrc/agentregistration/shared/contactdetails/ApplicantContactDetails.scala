@@ -49,7 +49,5 @@ final case class ApplicantContactDetails(
     .verifiedEmailAddress
     .getOrThrowExpectedDataMissing("Email not verified")
 
-  def getApplicantEmailAddress: ApplicantEmailAddress = applicantEmailAddress.getOrThrowExpectedDataMissing("ApplicantEmailAddress")
-
 object ApplicantContactDetails:
   given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]
