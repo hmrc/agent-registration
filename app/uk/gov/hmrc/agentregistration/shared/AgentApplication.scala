@@ -16,72 +16,117 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import play.api.mvc.RequestHeader
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
-import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
+import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
 import java.time.Clock
 import java.time.Instant
+import scala.annotation.nowarn
 
 /** Agent (Registration) Application. This case class represents the data entered by a user for registering as an agent.
   */
-final case class AgentApplication(
-  internalUserId: InternalUserId,
-  createdAt: Instant,
-  applicationState: ApplicationState,
-  utr: Option[Utr],
-  businessDetails: Option[BusinessDetails],
-  applicantContactDetails: Option[ApplicantContactDetails],
-  amlsDetails: Option[AmlsDetails]
-):
+sealed trait AgentApplication:
+
+  def internalUserId: InternalUserId
+  def groupId: GroupId
+  def createdAt: Instant
+  def applicationState: ApplicationState
+  def businessType: BusinessType
+  def amlsDetails: Option[AmlsDetails]
+
+  //  /** Updates the application state to the next state */
+  //  def updateApplicationState: AgentApplication =
+  //    this match
+  //      case st: AgentApplicationSoleTrader => st.copy(applicationState = nextApplicationState)
+  //      case llp: ApplicationLlp => llp.copy(applicationState = nextApplicationState)
 
   /* derived stuff: */
+
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
+
   val hasFinished: Boolean =
     applicationState match
       case ApplicationState.Submitted => true
-      case _ => false
+      case ApplicationState.Started => false
+      case ApplicationState.GrsDataReceived => false
 
   val isInProgress: Boolean = !hasFinished
 
-  def getUtr(using request: RequestHeader): Utr = utr
-    .getOrThrowExpectedDataMissing(s"Expected 'utr' to be defined but it was None [${internalUserId.toString}] ")
+  def isGrsDataReceived: Boolean =
+    applicationState match
+      case ApplicationState.Started => false
+      case ApplicationState.GrsDataReceived => true
+      case ApplicationState.Submitted => true
 
-  def getBusinessDetails: BusinessDetails = businessDetails
-    .getOrThrowExpectedDataMissing("business details not defined")
+  def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
-  def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails
-    .getOrThrowExpectedDataMissing("applicant contact details not defined")
+  private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
+    this match
+      case t: T => Some(t)
+      case _ => None
 
-  def getAmlsDetails: AmlsDetails = amlsDetails.getOrThrowExpectedDataMissing("AMLS details not defined")
+  private def asExpected[T <: AgentApplication](using ct: reflect.ClassTag[T]): T = as[T].getOrThrowExpectedDataMissing(
+    s"The application is not of the expected type. Expected: ${ct.runtimeClass.getSimpleName}, Got: ${this.getClass.getSimpleName}"
+  )
 
-  def getApplicantBusinessName: String =
-    getBusinessDetails match
-      case sd: SoleTraderDetails => sd.fullName.toString
-      case lcd: LimitedCompanyDetails => lcd.companyProfile.companyName
-      // not sure why partnership name as optional but if there's no name return empty string
-      // until we have a requirement to make it mandatory and throw an exception
-      case pd: PartnershipDetails => pd.companyProfile.fold("")(_.companyName)
+  def asLlpApplication: AgentApplicationLlp = asExpected[AgentApplicationLlp]
 
-  def getCompanyRegistrationNumber: Crn =
-    getBusinessDetails match
-      case lcd: LimitedCompanyDetails => Crn(lcd.companyProfile.companyNumber)
-      case pd: PartnershipDetails =>
-        Crn(
-          pd.companyProfile
-            .map(_.companyNumber)
-            .getOrThrowExpectedDataMissing("company registration number not defined")
-        )
-      case _: SoleTraderDetails => throw new RuntimeException("company registration number not applicable for sole traders")
+/** Sole Trader Application. This case class represents the data entered by a user for registering as a sole trader.
+  */
+final case class AgentApplicationSoleTrader(
+  override val internalUserId: InternalUserId,
+  override val groupId: GroupId,
+  override val createdAt: Instant,
+  override val applicationState: ApplicationState,
+  userRole: Option[UserRole] = None,
+  businessDetails: Option[BusinessDetailsSoleTrader],
+  override val amlsDetails: Option[AmlsDetails]
+)
+extends AgentApplication:
 
-  def getApplicantEmailAddress: ApplicantEmailAddress = getApplicantContactDetails
-    .applicantEmailAddress
-    .getOrThrowExpectedDataMissing(
-      "Applicant email address is not defined"
-    )
+  override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
+  def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
+  def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
+
+/** Application Applicatoin for Limited Liability Partnership (Llp). This case class represents the data entered by a user for registering as an Llp.
+  */
+final case class AgentApplicationLlp(
+  override val internalUserId: InternalUserId,
+  override val groupId: GroupId,
+  override val createdAt: Instant,
+  override val applicationState: ApplicationState,
+  businessDetails: Option[BusinessDetailsLlp],
+  applicantContactDetails: Option[ApplicantContactDetails],
+  override val amlsDetails: Option[AmlsDetails]
+)
+extends AgentApplication:
+
+  override val businessType: BusinessType.Partnership.LimitedLiabilityPartnership.type = BusinessType.Partnership.LimitedLiabilityPartnership
+
+  def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("ApplicantContactDetails")
+  def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
+  def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
 
 object AgentApplication:
-  given format: OFormat[AgentApplication] = Json.format[AgentApplication]
+
+  @nowarn()
+  given format: OFormat[AgentApplication] =
+    given OFormat[AgentApplicationSoleTrader] = Json.format[AgentApplicationSoleTrader]
+    given OFormat[AgentApplicationLlp] = Json.format[AgentApplicationLlp]
+    given JsonConfiguration = JsonConfig.jsonConfiguration
+
+    val dontDeleteMe = """
+                         |Don't delete me.
+                         |I will emit a warning so `@nowarn` can be applied to address below
+                         |`Unreachable case except for null` problem emited by Play Json macro"""
+
+    Json.format[AgentApplication]
+
+private inline def expectedDataNotDefinedError(key: String): Nothing = throw new RuntimeException(s"Expected $key to be defined")

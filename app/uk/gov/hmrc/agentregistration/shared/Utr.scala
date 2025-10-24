@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
+//TODO: Delete this
 final case class Utr(value: String)
 
 object Utr:

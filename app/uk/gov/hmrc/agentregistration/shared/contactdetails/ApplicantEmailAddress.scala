@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
 final case class ApplicantEmailAddress(
   emailAddress: EmailAddress,
-  isVerified: Boolean = false
+  isVerified: Boolean
 )
 
 object ApplicantEmailAddress:

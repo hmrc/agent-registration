@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
+/** Company Registration Number (Crn)
+  */
 final case class Crn(value: String)
 
 object Crn:

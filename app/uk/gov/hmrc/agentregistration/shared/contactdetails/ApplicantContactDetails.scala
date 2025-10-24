@@ -19,18 +19,22 @@ package uk.gov.hmrc.agentregistration.shared.contactdetails
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
+import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
 
 final case class ApplicantContactDetails(
   applicantName: ApplicantName,
   telephoneNumber: Option[TelephoneNumber] = None,
   applicantEmailAddress: Option[ApplicantEmailAddress] = None
 ):
+
   val isComplete: Boolean =
     applicantName.match {
       case ApplicantName.NameOfMember(_, Some(_)) => true
       case ApplicantName.NameOfAuthorised(Some(_)) => true
       case _ => false
     } && telephoneNumber.isDefined && applicantEmailAddress.exists(_.isVerified)
+
+  def getApplicantEmailAddress: ApplicantEmailAddress = applicantEmailAddress.getOrThrowExpectedDataMissing("ApplicantEmailAddress")
 
 object ApplicantContactDetails:
   given format: Format[ApplicantContactDetails] = Json.format[ApplicantContactDetails]

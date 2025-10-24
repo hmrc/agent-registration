@@ -16,14 +16,12 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-/** SafeId (aka BusinessPartnerId in Etmp systems), is an unique identifier retrieved from the Grs that identifies the business entity being currently
-  * registered.
+/** Corporation Tax (Ct) Unique Taxpayer Reference (Utr)
   */
-final case class SafeId(value: String)
+final case class CtUtr(value: String)
 
-object SafeId:
-  given format: Format[SafeId] = JsonFormatsFactory.makeValueClassFormat
+object CtUtr:
+  given format: Format[CtUtr] = JsonFormatsFactory.makeValueClassFormat
