@@ -30,6 +30,7 @@ sealed trait BusinessDetails:
   val businessType: BusinessType // Duplicated from AgentApplication to simplify json reads
 
 object BusinessDetails:
+
   given Format[BusinessDetails] = Format(
     { json =>
       (json \ "businessType").as[BusinessType] match {
@@ -53,6 +54,15 @@ final case class LimitedCompanyDetails(
 )
 extends BusinessDetails
 
+final case class BusinessDetailsLlp(
+  safeId: SafeId,
+  saUtr: SaUtr,
+  companyProfile: CompanyProfile
+)
+
+object BusinessDetailsLlp:
+  given Format[BusinessDetailsLlp] = Json.format[BusinessDetailsLlp]
+
 object LimitedCompanyDetails:
   given Format[LimitedCompanyDetails] = Json.format[LimitedCompanyDetails]
 
@@ -73,6 +83,22 @@ extends BusinessDetails
 object SoleTraderDetails:
   given Format[SoleTraderDetails] = Json.format[SoleTraderDetails]
 
+final case class BusinessDetailsSoleTrader(
+  safeId: SafeId,
+  saUtr: SaUtr,
+  fullName: FullName,
+  dateOfBirth: LocalDate,
+  nino: Option[Nino],
+  trn: Option[String]
+  // saPostcode (only when trn present)
+  // address (only when trn present)
+  // overseas company details (optional and only when trn present)
+)
+//  def getNinoOrTrn: String = nino.orElse(trn).getOrElse(throw new RuntimeException("Sole trader missing nino and trn"))
+
+object BusinessDetailsSoleTrader:
+  given Format[BusinessDetailsSoleTrader] = Json.format[BusinessDetailsSoleTrader]
+
 final case class PartnershipDetails(
   safeId: SafeId,
   businessType: BusinessType,
@@ -84,6 +110,16 @@ extends BusinessDetails
 object PartnershipDetails:
   given Format[PartnershipDetails] = Json.format[PartnershipDetails]
 
+final case class BusinessDetailsPartnership(
+  safeId: SafeId,
+  saUtr: SaUtr,
+  companyProfile: Option[CompanyProfile],
+  postcode: String
+)
+
+object BusinessDetailsPartnership:
+  given Format[BusinessDetailsPartnership] = Json.format[BusinessDetailsPartnership]
+
 final case class FullName(
   firstName: String,
   lastName: String
@@ -93,7 +129,7 @@ object FullName:
   given Format[FullName] = Json.format[FullName]
 
 final case class CompanyProfile(
-  companyNumber: String,
+  companyNumber: Crn,
   companyName: String,
   dateOfIncorporation: Option[LocalDate] // for some reason an optional field on companies house
   // unsanitisedCHROAddress: Option[Address]

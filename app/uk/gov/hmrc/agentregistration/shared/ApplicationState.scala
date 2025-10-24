@@ -21,7 +21,8 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum ApplicationState:
 
-  case InProgress
+  case Started
+  case GrsDataReceived
   case Submitted
 
 object ApplicationState:
