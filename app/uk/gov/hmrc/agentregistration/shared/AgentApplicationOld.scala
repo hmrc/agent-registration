@@ -20,7 +20,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
-import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 import java.time.Clock
 import java.time.Instant

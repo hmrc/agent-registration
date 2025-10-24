@@ -24,7 +24,7 @@ import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 import java.time.Clock
 import java.time.Instant

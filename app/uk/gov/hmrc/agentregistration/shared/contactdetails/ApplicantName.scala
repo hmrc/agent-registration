@@ -23,7 +23,7 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.ApplicantRoleInLlp
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName.NameOfMember
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-import uk.gov.hmrc.agentregistration.shared.util.RequiredDataExtensions.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 import scala.annotation.nowarn
 
