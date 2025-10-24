@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 
@@ -26,11 +26,11 @@ trait TdAgentApplication { dependencies: TdBase =>
 
   private val createdAt: Instant = dependencies.instant
 
-  val agentApplicationAfterCreated = AgentApplication(
+  val llpApplicationAfterCreated: AgentApplicationLlp = AgentApplicationLlp(
     internalUserId = internalUserId,
+    groupId = groupId,
     createdAt = createdAt,
-    applicationState = ApplicationState.InProgress,
-    utr = None,
+    applicationState = ApplicationState.Started,
     businessDetails = None,
     applicantContactDetails = None,
     amlsDetails = None
