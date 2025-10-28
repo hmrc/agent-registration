@@ -61,9 +61,9 @@ extends BackendController(cc):
             .upsert(request.body)
             .map(_ => Ok(""))
 
-  def findApplicationByLinkId(linkId: String): Action[AnyContent] = Action.async: request =>
+  def findApplicationByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
     agentApplicationRepo
-      .findByLinkId(LinkId(linkId))
+      .findByLinkId(linkId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent

@@ -17,7 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 /** LinkId is a unique identifier used by the frontend to build shareable web links for distribution to the signatories of the application
   */
@@ -25,3 +27,5 @@ final case class LinkId(value: String)
 
 object LinkId:
   given format: Format[LinkId] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[LinkId] =
+      ValueClassBinder.valueClassBinder[LinkId](_.value)

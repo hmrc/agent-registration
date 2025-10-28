@@ -24,7 +24,8 @@ lazy val microservice = Project("agent-registration", file("."))
     },
     Test / parallelExecution := true,
     routesImport ++= Seq(
-      "uk.gov.hmrc.agentregistration"
+      "uk.gov.hmrc.agentregistration",
+      "uk.gov.hmrc.agentregistration.RoutesExports.*"
     )
   )
   .settings(CodeCoverageSettings.settings *)
