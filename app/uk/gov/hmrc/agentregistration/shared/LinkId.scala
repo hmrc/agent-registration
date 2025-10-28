@@ -26,6 +26,6 @@ import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 final case class LinkId(value: String)
 
 object LinkId:
+
   given format: Format[LinkId] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[LinkId] =
-      ValueClassBinder.valueClassBinder[LinkId](_.value)
+  given pathBindable: PathBindable[LinkId] = ValueClassBinder.valueClassBinder[LinkId](_.value)

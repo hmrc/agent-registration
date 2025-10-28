@@ -81,3 +81,32 @@ extends ControllerSpec:
 
     repo.findById(tdAll.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "after http request there should be records in mongo"
     AuthStubs.verifyAuthorise()
+
+  "find application by linkId returns NO_CONTENT if there is no underlying records" in:
+
+    given Request[?] = tdAll.backendRequest
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/linkId/${tdAll.linkId.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.NO_CONTENT
+    response.body shouldBe ""
+
+  "find application by linkId returns Ok and the Application as Json body" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    val repo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication = tdAll.llpApplicationAfterCreated
+    repo.upsert(exampleAgentApplication).futureValue
+    repo.findById(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/linkId/${tdAll.linkId.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val agentApplication = response.json.as[AgentApplication]
+    agentApplication shouldBe exampleAgentApplication
