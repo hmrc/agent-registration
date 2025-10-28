@@ -1,4 +1,5 @@
 # microservice specific routes
 
 GET         /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplication
+GET         /application/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationByLinkId(linkId: LinkId)
 POST        /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication

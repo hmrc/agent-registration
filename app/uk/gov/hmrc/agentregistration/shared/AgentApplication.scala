@@ -35,6 +35,7 @@ import scala.annotation.nowarn
 sealed trait AgentApplication:
 
   def internalUserId: InternalUserId
+  def linkId: LinkId
   def groupId: GroupId
   def createdAt: Instant
   def applicationState: ApplicationState
@@ -82,6 +83,7 @@ sealed trait AgentApplication:
   */
 final case class AgentApplicationSoleTrader(
   override val internalUserId: InternalUserId,
+  override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
   override val applicationState: ApplicationState,
@@ -99,6 +101,7 @@ extends AgentApplication:
   */
 final case class AgentApplicationLlp(
   override val internalUserId: InternalUserId,
+  override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
   override val applicationState: ApplicationState,
