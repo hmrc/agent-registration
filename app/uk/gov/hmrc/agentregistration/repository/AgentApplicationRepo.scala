@@ -67,6 +67,8 @@ object AgentApplicationRepoHelp:
     ),
     IndexModel(
       keys = Indexes.ascending("linkId"),
-      IndexOptions().name("linkId")
+      IndexOptions()
+        .unique(true)
+        .name("linkId")
     )
   )
