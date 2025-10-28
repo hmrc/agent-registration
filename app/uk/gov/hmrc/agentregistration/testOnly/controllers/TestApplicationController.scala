@@ -57,13 +57,6 @@ extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
 
-  def findApplicationByLinkId(linkId: String): Action[AnyContent] = Action.async: request =>
-    agentApplicationRepo
-      .findByLinkId(LinkId(linkId))
-      .map:
-        case Some(agentApplication) => Ok(Json.toJson(agentApplication))
-        case None => NoContent
-
   def createTestApplication: Action[AnyContent] = Action
     .async:
       implicit request =>
