@@ -4,4 +4,7 @@ GET         /application             uk.gov.hmrc.agentregistration.controllers.A
 GET         /application/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationByLinkId(linkId: LinkId)
 POST        /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
+GET         /provideddetails/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.providedetails.ProvideDetailsController.findProvidedDetails(linkId: LinkId)
+POST        /provideddetails                    uk.gov.hmrc.agentregistration.controllers.providedetails.ProvideDetailsController.upsertApplication
+
 GET         /business-partner-record/utr/:utr   uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
