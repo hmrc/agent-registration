@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.shared
 
-object RoutesExports:
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-  export uk.gov.hmrc.agentregistration.shared.LinkId
-  export uk.gov.hmrc.agentregistration.shared.Utr
+final case class DesRegistrationResponse(
+  organisationName: Option[String],
+  address: DesBusinessAddress,
+  emailAddress: Option[String],
+  primaryPhoneNumber: Option[String]
+)
+
+object DesRegistrationResponse:
+  given format: Format[DesRegistrationResponse] = Json.format[DesRegistrationResponse]
