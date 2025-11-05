@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.Format
-import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
+import play.api.libs.json.Json
 
-final case class Utr(value: String)
+final case class AgentBusinessName(
+  agentBusinessName: String,
+  otherAgentBusinessName: Option[String]
+):
+  def getAgentBusinessName: String = otherAgentBusinessName
+    .getOrElse(agentBusinessName)
 
-object Utr:
+object AgentBusinessName:
 
-  given format: Format[Utr] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[Utr] = ValueClassBinder.valueClassBinder[Utr](_.value)
+  val regex = "^[A-Za-z0-9 -,.'/]*$" // the DesTextRegex from agent-subscription-frontend without ampersands as they are always stripped out from business names
+  def isValidEntry(value: String): Boolean = value.matches(regex)
+  given format: Format[AgentBusinessName] = Json.format[AgentBusinessName]

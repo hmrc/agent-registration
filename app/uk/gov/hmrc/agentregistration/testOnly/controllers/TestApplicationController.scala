@@ -88,5 +88,6 @@ extends BackendController(cc):
         isVerified = true
       ))
     )),
-    amlsDetails = None
+    amlsDetails = None,
+    agentDetails = None
   )

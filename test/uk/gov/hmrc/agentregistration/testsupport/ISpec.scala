@@ -67,6 +67,7 @@ extends AnyFreeSpecLike,
       "auditing.enabled" -> false,
       "auditing.traceRequests" -> false,
       "microservice.services.auth.port" -> WireMockSupport.port,
+      "microservice.services.des.port" -> WireMockSupport.port,
       "mongodb.uri" -> mongoUri
     ) ++ configOverrides
 
