@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository.providedetails
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.agentregistration.shared.{InternalUserId, LinkId}
 
-final case class ProvideDetailsId(
-                              internalUserId: InternalUserId,
-                              linkId: LinkId
-                            )
+import org.bson.types.ObjectId
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 
-object ProvideDetailsId:
-  given OFormat[ProvideDetailsId] = Json.format[ProvideDetailsId]
+import javax.inject.Singleton
+
+@Singleton
+class AgentApplicationIdGenerator:
+  def nextApplicationId(): AgentApplicationId = AgentApplicationId(ObjectId.get().toHexString)
+
