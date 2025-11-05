@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.GroupId
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
@@ -38,4 +38,6 @@ trait TdBase:
 
   lazy val internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
   lazy val linkId: LinkId = LinkId("link-id-12345")
+  lazy val agentApplicationId: AgentApplicationId = AgentApplicationId("agent-application-id-12345")
+
   def groupId: GroupId = GroupId("group-id-12345")

@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.testsupport.testdata
+package uk.gov.hmrc.agentregistration.shared.llp
 
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
-import uk.gov.hmrc.agentregistration.shared.ApplicationState
+import play.api.libs.json.*
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
-
 import java.time.Instant
 
-trait TdAgentApplication { dependencies: TdBase =>
+/** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
+  */
+final case class MemberProvidedDetails(
+  _id: MemberProvidedDetailsId,
+  internalUserId: InternalUserId,
+  createdAt: Instant,
+  applicationId: AgentApplicationId
+):
+  val memberProvidedDetailsId: MemberProvidedDetailsId = _id
 
-  private val createdAt: Instant = dependencies.instant
-
-  val llpApplicationAfterCreated: AgentApplicationLlp = AgentApplicationLlp(
-    _id = agentApplicationId,
-    internalUserId = internalUserId,
-    linkId = linkId,
-    groupId = groupId,
-    createdAt = createdAt,
-    applicationState = ApplicationState.Started,
-    businessDetails = None,
-    applicantContactDetails = None,
-    amlsDetails = None
-  )
-
-}
+object MemberProvidedDetails:
+  given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]

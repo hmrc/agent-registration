@@ -25,6 +25,8 @@ import org.mongodb.scala.result.DeleteResult
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -79,6 +81,18 @@ extends PlayMongoRepository[A](
     .deleteOne(
       filter = Filters.eq("_id", idString.idString(i))
     ).headOption()
+
+  def findByInternalUserId(internalUserId: InternalUserId): Future[Option[A]] = collection
+    .find(
+      filter = Filters.eq("internalUserId", internalUserId.value)
+    )
+    .headOption()
+
+  def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
+    .find(
+      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+    )
+    .headOption()
 
   def findByLinkId(linkId: LinkId): Future[Option[A]] = collection
     .find(
