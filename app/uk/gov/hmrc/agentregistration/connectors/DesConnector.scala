@@ -70,7 +70,6 @@ class DesConnector @Inject() (
     rh: RequestHeader
   ): Future[Option[DesRegistrationResponse]] = getRegistrationJson(utr).map {
     case Some(r) =>
-      println(s"DES response JSON: $r")
       Some(
         DesRegistrationResponse(
           organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
