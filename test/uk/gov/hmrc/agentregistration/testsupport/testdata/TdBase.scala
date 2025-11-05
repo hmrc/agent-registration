@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.GroupId
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
@@ -42,4 +42,6 @@ trait TdBase:
   lazy val utr: Utr = Utr("1234567890")
   lazy val email: String = "test@example.com"
   lazy val telephoneNumber: String = "01234567890"
+  lazy val agentApplicationId: AgentApplicationId = AgentApplicationId("agent-application-id-12345")
+
   def groupId: GroupId = GroupId("group-id-12345")

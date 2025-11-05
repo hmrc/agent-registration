@@ -50,7 +50,7 @@ extends ControllerSpec:
     val repo = app.injector.instanceOf[AgentApplicationRepo]
     val exampleAgentApplication = tdAll.llpApplicationAfterCreated
     repo.upsert(exampleAgentApplication).futureValue
-    repo.findById(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+    repo.findByInternalUserId(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
     val response =
       httpClient
@@ -67,7 +67,7 @@ extends ControllerSpec:
     AuthStubs.stubAuthorise()
     val repo = app.injector.instanceOf[AgentApplicationRepo]
 
-    repo.findById(tdAll.internalUserId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
+    repo.findByInternalUserId(tdAll.internalUserId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
     val exampleAgentApplication: AgentApplication = tdAll.llpApplicationAfterCreated
 
     val response =
@@ -79,7 +79,9 @@ extends ControllerSpec:
     response.status shouldBe Status.OK
     response.body shouldBe ""
 
-    repo.findById(tdAll.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "after http request there should be records in mongo"
+    repo.findByInternalUserId(
+      tdAll.internalUserId
+    ).futureValue.value shouldBe exampleAgentApplication withClue "after http request there should be records in mongo"
     AuthStubs.verifyAuthorise()
 
   "find application by linkId returns NO_CONTENT if there is no underlying records" in:
@@ -100,7 +102,7 @@ extends ControllerSpec:
     val repo = app.injector.instanceOf[AgentApplicationRepo]
     val exampleAgentApplication = tdAll.llpApplicationAfterCreated
     repo.upsert(exampleAgentApplication).futureValue
-    repo.findById(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+    repo.findByInternalUserId(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
     val response =
       httpClient

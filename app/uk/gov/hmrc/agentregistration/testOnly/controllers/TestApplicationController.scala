@@ -39,6 +39,7 @@ import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
+import uk.gov.hmrc.agentregistration.shared.util.AgentApplicationIdGenerator
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.Instant
@@ -51,7 +52,8 @@ import scala.concurrent.ExecutionContext
 class TestApplicationController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  agentApplicationRepo: AgentApplicationRepo
+  agentApplicationRepo: AgentApplicationRepo,
+  agentApplicationIdGenerator: AgentApplicationIdGenerator
 )
 extends BackendController(cc):
 
@@ -66,6 +68,7 @@ extends BackendController(cc):
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
 
   private def makeSubmittedApplication(): AgentApplication = AgentApplicationLlp(
+    _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     groupId = GroupId(value = UUID.randomUUID().toString),
