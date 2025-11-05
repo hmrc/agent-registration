@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.action.providedetails
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import play.api.mvc.*
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
@@ -26,49 +27,40 @@ import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class ProvideDetailsRequest[A](
+class IndividualAuthorisedRequest[A](
   val internalUserId: InternalUserId,
   val request: Request[A]
 )
 extends WrappedRequest[A](request)
 
 @Singleton
-class ProvideDetailsAction @Inject() (
+class IndividualAuthorisedAction @Inject() (
   af: AuthorisedFunctions,
   appConfig: AppConfig,
   cc: MessagesControllerComponents
 )
-extends ActionRefiner[Request, ProvideDetailsRequest]
+extends ActionRefiner[Request, IndividualAuthorisedRequest]
 with RequestAwareLogging:
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, ProvideDetailsRequest[A]]] =
+  override protected def refine[A](request: Request[A]): Future[Either[Result, IndividualAuthorisedRequest[A]]] =
     given r: Request[A] = request
 
     af.authorised(
       AuthProviders(GovernmentGateway) and AffinityGroup.Individual
     ).retrieve(
       Retrievals.allEnrolments
-        and Retrievals.affinityGroup
         and Retrievals.internalId
     ).apply:
-      case allEnrolments ~ affinityGroup ~ maybeInternalId =>
-        if isUnsupportedAffinityGroup(affinityGroup) then
-          Future.failed(UnsupportedAffinityGroup(s"UnsupportedAffinityGroup: $affinityGroup"))
-        else
-          Future.successful(Right(new ProvideDetailsRequest(
-            internalUserId = maybeInternalId
-              .map(InternalUserId.apply)
-              .getOrElse(throw RuntimeException("Retrievals for internalId is missing")),
-            request = request
-          )))
+      case allEnrolments ~ maybeInternalId =>
+        Future.successful(Right(new IndividualAuthorisedRequest(
+          internalUserId = maybeInternalId
+            .map(InternalUserId.apply)
+            .getOrElse(throw RuntimeException("Retrievals for internalId is missing")),
+          request = request
+        )))
 
   private given ExecutionContext = cc.executionContext
   override protected def executionContext: ExecutionContext = cc.executionContext
-
-  private def isUnsupportedAffinityGroup[A](maybeAffinityGroup: Option[AffinityGroup])(using request: RequestHeader) =
-    val supportedAffinityGroups: Set[AffinityGroup] = Set(AffinityGroup.Individual)
-    val affinityGroup: AffinityGroup = maybeAffinityGroup.getOrElse(throw RuntimeException("Retrievals for AffinityGroup is missing"))
-    !supportedAffinityGroups.contains(affinityGroup)
-

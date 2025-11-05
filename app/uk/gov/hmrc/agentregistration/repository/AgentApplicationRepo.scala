@@ -23,6 +23,7 @@ import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
@@ -40,7 +41,7 @@ final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
   appConfig: AppConfig
 )(using ec: ExecutionContext)
-extends Repo[InternalUserId, AgentApplication](
+extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
@@ -52,18 +53,24 @@ extends Repo[InternalUserId, AgentApplication](
 // about cyclic reference error during compilation ...
 object AgentApplicationRepoHelp:
 
-  given IdString[InternalUserId] =
-    new IdString[InternalUserId]:
-      override def idString(i: InternalUserId): String = i.value
+  given IdString[AgentApplicationId] =
+    new IdString[AgentApplicationId]:
+      override def idString(i: AgentApplicationId): String = i.value
 
-  given IdExtractor[AgentApplication, InternalUserId] =
-    new IdExtractor[AgentApplication, InternalUserId]:
-      override def id(agentApplication: AgentApplication): InternalUserId = agentApplication.internalUserId
+  given IdExtractor[AgentApplication, AgentApplicationId] =
+    new IdExtractor[AgentApplication, AgentApplicationId]:
+      override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
 
   def indexes(cacheTtl: FiniteDuration): Seq[IndexModel] = Seq(
     IndexModel(
       keys = Indexes.ascending("lastUpdated"),
       indexOptions = IndexOptions().expireAfter(cacheTtl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
+    ),
+    IndexModel(
+      keys = Indexes.ascending("internalUserId"),
+      IndexOptions()
+        .unique(true)
+        .name("internalUserId")
     ),
     IndexModel(
       keys = Indexes.ascending("linkId"),

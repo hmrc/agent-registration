@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository.providedetails
+package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.agentregistration.shared.{InternalUserId, LinkId}
+import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-final case class ProvideDetailsId(
-                              internalUserId: InternalUserId,
-                              linkId: LinkId
-                            )
+/** Agent application Identifier, which is unique for an application
+  */
+final case class AgentApplicationId(value: String)
 
-object ProvideDetailsId:
-  given OFormat[ProvideDetailsId] = Json.format[ProvideDetailsId]
+object AgentApplicationId:
+  given format: Format[AgentApplicationId] = JsonFormatsFactory.makeValueClassFormat

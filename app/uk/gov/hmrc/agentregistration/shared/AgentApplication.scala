@@ -34,6 +34,7 @@ import scala.annotation.nowarn
   */
 sealed trait AgentApplication:
 
+  def _id: AgentApplicationId
   def internalUserId: InternalUserId
   def linkId: LinkId
   def groupId: GroupId
@@ -49,7 +50,7 @@ sealed trait AgentApplication:
   //      case llp: ApplicationLlp => llp.copy(applicationState = nextApplicationState)
 
   /* derived stuff: */
-
+  val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
 
   val hasFinished: Boolean =
@@ -82,6 +83,7 @@ sealed trait AgentApplication:
 /** Sole Trader Application. This case class represents the data entered by a user for registering as a sole trader.
   */
 final case class AgentApplicationSoleTrader(
+  override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
   override val linkId: LinkId,
   override val groupId: GroupId,
@@ -100,6 +102,7 @@ extends AgentApplication:
 /** Application Applicatoin for Limited Liability Partnership (Llp). This case class represents the data entered by a user for registering as an Llp.
   */
 final case class AgentApplicationLlp(
+  override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
   override val linkId: LinkId,
   override val groupId: GroupId,

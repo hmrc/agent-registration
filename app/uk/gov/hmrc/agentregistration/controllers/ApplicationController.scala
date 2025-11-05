@@ -33,6 +33,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 
+//TODO - rethink agentApplicationId and internalUserId -
+// now sort of same think used in different context find and upsert use different field - ask for trouble
+
 @Singleton()
 class ApplicationController @Inject() (
   cc: ControllerComponents,
@@ -45,21 +48,19 @@ extends BackendController(cc):
 
   val findApplication: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
     agentApplicationRepo
-      .findById(request.internalUserId)
+      .findByInternalUserId(request.internalUserId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
   val upsertApplication: Action[AgentApplication] =
-    actions
-      .authorised
-      .async(parse.json[AgentApplication]):
-        implicit request =>
-          val agentApplication: AgentApplication = request.body
-          ensureInternalUserId(agentApplication)
-          agentApplicationRepo
-            .upsert(request.body)
-            .map(_ => Ok(""))
+    actions.authorised.async(parse.json[AgentApplication]):
+      implicit request =>
+        val agentApplication: AgentApplication = request.body
+        ensureInternalUserId(agentApplication)
+        agentApplicationRepo
+          .upsert(request.body)
+          .map(_ => Ok(""))
 
   def findApplicationByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
     agentApplicationRepo

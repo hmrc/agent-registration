@@ -20,8 +20,8 @@ import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
 import play.api.mvc.DefaultActionBuilder
 import play.api.mvc.Request
-import uk.gov.hmrc.agentregistration.action.providedetails.ProvideDetailsAction
-import uk.gov.hmrc.agentregistration.action.providedetails.ProvideDetailsRequest
+import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedAction
+import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,7 +30,7 @@ import javax.inject.Singleton
 class Actions @Inject() (
   actionBuilder: DefaultActionBuilder,
   authorisedAction: AuthorisedAction,
-  provideDetailsAction: ProvideDetailsAction
+  individualAuthorisedAction: IndividualAuthorisedAction
 ):
 
   val default: ActionBuilder[Request, AnyContent] = actionBuilder
@@ -38,5 +38,5 @@ class Actions @Inject() (
   val authorised: ActionBuilder[AuthorisedRequest, AnyContent] = default
     .andThen(authorisedAction)
 
-  val individualAuthorised: ActionBuilder[ProvideDetailsRequest, AnyContent] = default
-    .andThen(provideDetailsAction)
+  val individualAuthorised: ActionBuilder[IndividualAuthorisedRequest, AnyContent] = default
+    .andThen(individualAuthorisedAction)
