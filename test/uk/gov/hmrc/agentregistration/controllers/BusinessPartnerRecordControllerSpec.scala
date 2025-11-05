@@ -53,7 +53,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     DesStubs.stubGetBusinessPartnerRecord(
-      utr = tdAll.utr.value,
+      utr = tdAll.utr,
       desRegistrationResponse = desRegistrationResponse
     )
     val response =
@@ -65,3 +65,4 @@ extends ControllerSpec:
     val responseAsDesRegistrationResponse = response.json.as[DesRegistrationResponse]
     responseAsDesRegistrationResponse shouldBe desRegistrationResponse
     AuthStubs.verifyAuthorise()
+    DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)

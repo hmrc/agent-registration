@@ -23,24 +23,25 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.DesRegistrationResponse
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 
 object DesStubs {
 
   def stubGetBusinessPartnerRecord(
-    utr: String,
+    utr: Utr,
     desRegistrationResponse: DesRegistrationResponse
   ): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.POST,
-    urlPattern = wm.urlMatching(s"/registration/individual/utr/$utr"),
+    urlPattern = wm.urlMatching(s"/registration/individual/utr/${utr.value}"),
     requestBody = Some(expectedRequestBody),
     responseStatus = Status.OK,
     responseBody = expectedResponseBody(utr, desRegistrationResponse)
   )
 
   private def expectedResponseBody(
-    utr: String,
+    utr: Utr,
     desRegistrationResponse: DesRegistrationResponse
   ) =
     // language=JSON
@@ -49,8 +50,8 @@ object DesStubs {
         "businessPartnerExists" : true,
         "safeId" : "X00000123456789",
         "agentReferenceNumber" : "",
-        "uniqueTaxReference" : "$utr",
-        "utr" : "$utr",
+        "uniqueTaxReference" : "${utr.value}",
+        "utr" : "${utr.value}",
         "urn" : "",
         "nino" : "",
         "eori" : "",
@@ -88,6 +89,15 @@ object DesStubs {
       |  "isAnAgent": false
       |}
       |""".stripMargin
+  )
+
+  def verifyGetBusinessPartnerRecord(
+    utr: Utr,
+    count: Int = 1
+  ): Unit = StubMaker.verify(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching(s"/registration/individual/utr/${utr.value}"),
+    count = count
   )
 
 }
