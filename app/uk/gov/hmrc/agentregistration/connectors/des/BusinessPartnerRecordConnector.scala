@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.connectors
+package uk.gov.hmrc.agentregistration.connectors.des
 
 import play.api.http.Status.*
 import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordRequest
+import uk.gov.hmrc.agentregistration.connectors.des.HeadersConfig
 import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
-import uk.gov.hmrc.agentregistration.shared.DesRegistrationResponse
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.util.RequestSupport.given
 import uk.gov.hmrc.http.*
@@ -36,14 +38,14 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-final case class DesRegistrationRequest(
+final case class BusinessPartnerRecordRequest(
   requiresNameMatch: Boolean = false,
   regime: String = "ITSA",
   isAnAgent: Boolean
 )
 
-object DesRegistrationRequest {
-  implicit val formats: Format[DesRegistrationRequest] = Json.format[DesRegistrationRequest]
+object BusinessPartnerRecordRequest {
+  implicit val formats: Format[BusinessPartnerRecordRequest] = Json.format[BusinessPartnerRecordRequest]
 }
 
 final case class HeadersConfig(
@@ -52,7 +54,7 @@ final case class HeadersConfig(
 )
 
 @Singleton
-class DesConnector @Inject() (
+class BusinessPartnerRecordConnector @Inject() (
   appConfig: AppConfig,
   http: HttpClientV2
 )(using val ec: ExecutionContext) {
@@ -68,10 +70,10 @@ class DesConnector @Inject() (
     utr: Utr
   )(implicit
     rh: RequestHeader
-  ): Future[Option[DesRegistrationResponse]] = getRegistrationJson(utr).map {
+  ): Future[Option[BusinessPartnerRecordResponse]] = getRegistrationJson(utr).map {
     case Some(r) =>
       Some(
-        DesRegistrationResponse(
+        BusinessPartnerRecordResponse(
           organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
           address =
             (r \ "address").validate[DesBusinessAddress] match {
@@ -95,7 +97,7 @@ class DesConnector @Inject() (
     http
       .post(url)
       .setHeader(headersConfig.explicitHeaders*)
-      .withBody(Json.toJson(DesRegistrationRequest(isAnAgent = false)))
+      .withBody(Json.toJson(BusinessPartnerRecordRequest(isAnAgent = false)))
       .execute[HttpResponse]
       .map { response =>
         response.status match {

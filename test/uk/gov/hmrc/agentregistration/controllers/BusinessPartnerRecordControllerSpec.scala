@@ -22,7 +22,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
-import uk.gov.hmrc.agentregistration.shared.DesRegistrationResponse
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.DesStubs
@@ -35,7 +35,7 @@ import uk.gov.hmrc.http.StringContextOps
 class BusinessPartnerRecordControllerSpec
 extends ControllerSpec:
 
-  val desRegistrationResponse: DesRegistrationResponse = DesRegistrationResponse(
+  val desRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
     organisationName = Some("Test Company Name"),
     address = DesBusinessAddress(
       addressLine1 = "Line 1",
@@ -62,7 +62,7 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
-    val responseAsDesRegistrationResponse = response.json.as[DesRegistrationResponse]
+    val responseAsDesRegistrationResponse = response.json.as[BusinessPartnerRecordResponse]
     responseAsDesRegistrationResponse shouldBe desRegistrationResponse
     AuthStubs.verifyAuthorise()
     DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)

@@ -19,12 +19,12 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-final case class DesRegistrationResponse(
+final case class BusinessPartnerRecordResponse(
   organisationName: Option[String],
   address: DesBusinessAddress,
   emailAddress: Option[String],
   primaryPhoneNumber: Option[String]
 )
 
-object DesRegistrationResponse:
-  given format: Format[DesRegistrationResponse] = Json.format[DesRegistrationResponse]
+object BusinessPartnerRecordResponse:
+  given format: Format[BusinessPartnerRecordResponse] = Json.format[BusinessPartnerRecordResponse]

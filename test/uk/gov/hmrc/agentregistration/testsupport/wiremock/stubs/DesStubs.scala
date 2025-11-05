@@ -21,7 +21,7 @@ import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.DesRegistrationResponse
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
@@ -31,7 +31,7 @@ object DesStubs {
 
   def stubGetBusinessPartnerRecord(
     utr: Utr,
-    desRegistrationResponse: DesRegistrationResponse
+    desRegistrationResponse: BusinessPartnerRecordResponse
   ): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = wm.urlMatching(s"/registration/individual/utr/${utr.value}"),
@@ -42,7 +42,7 @@ object DesStubs {
 
   private def expectedResponseBody(
     utr: Utr,
-    desRegistrationResponse: DesRegistrationResponse
+    desRegistrationResponse: BusinessPartnerRecordResponse
   ) =
     // language=JSON
     s"""

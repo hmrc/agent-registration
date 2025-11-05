@@ -21,7 +21,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
-import uk.gov.hmrc.agentregistration.connectors.DesConnector
+import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordConnector
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext
 class BusinessPartnerRecordController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  desConnector: DesConnector
+  businessPartnerRecordConnector: BusinessPartnerRecordConnector
 )
 extends BackendController(cc):
 
@@ -43,6 +43,6 @@ extends BackendController(cc):
     .authorised
     .async:
       implicit request =>
-        desConnector
+        businessPartnerRecordConnector
           .getBusinessPartnerRecord(utr)
           .map(bpr => Ok(Json.toJson(bpr)))
