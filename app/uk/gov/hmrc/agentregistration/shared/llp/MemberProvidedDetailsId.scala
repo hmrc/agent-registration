@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.shared.llp
 
+import org.bson.types.ObjectId
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+
+import javax.inject.Singleton
 
 /** Member provided details Identifier, which is unique for an member provided details
   */
@@ -25,3 +28,7 @@ final case class MemberProvidedDetailsId(value: String)
 
 object MemberProvidedDetailsId:
   given format: Format[MemberProvidedDetailsId] = JsonFormatsFactory.makeValueClassFormat
+
+@Singleton
+class MemberProvidedDetailsIdGenerator:
+  def nextMemberProvidedDetailsId(): MemberProvidedDetailsId = MemberProvidedDetailsId(ObjectId.get().toHexString)

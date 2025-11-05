@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
+import org.bson.types.ObjectId
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+
+import javax.inject.Singleton
 
 /** Agent application Identifier, which is unique for an application
   */
@@ -25,3 +28,7 @@ final case class AgentApplicationId(value: String)
 
 object AgentApplicationId:
   given format: Format[AgentApplicationId] = JsonFormatsFactory.makeValueClassFormat
+
+@Singleton
+class AgentApplicationIdGenerator:
+  def nextApplicationId(): AgentApplicationId = AgentApplicationId(ObjectId.get().toHexString)
