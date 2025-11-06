@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
-
 import org.bson.types.ObjectId
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 
@@ -25,4 +24,3 @@ import javax.inject.Singleton
 @Singleton
 class AgentApplicationIdGenerator:
   def nextApplicationId(): AgentApplicationId = AgentApplicationId(ObjectId.get().toHexString)
-

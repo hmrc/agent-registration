@@ -19,6 +19,9 @@ package uk.gov.hmrc.agentregistration.shared.llp
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
+
 import java.time.Instant
 
 /** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
@@ -27,9 +30,13 @@ final case class MemberProvidedDetails(
   _id: MemberProvidedDetailsId,
   internalUserId: InternalUserId,
   createdAt: Instant,
+  providedDetailsState: ProvidedDetailsState,
   applicationId: AgentApplicationId
 ):
+
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
+  val hasFinished: Boolean = if providedDetailsState === Finished then true else false
+  val isInProgress: Boolean = !hasFinished
 
 object MemberProvidedDetails:
   given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
