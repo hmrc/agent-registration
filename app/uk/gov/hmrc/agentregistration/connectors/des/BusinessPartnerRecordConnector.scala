@@ -21,10 +21,9 @@ import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordRequest
-import uk.gov.hmrc.agentregistration.connectors.des.HeadersConfig
-import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
+import uk.gov.hmrc.agentregistration.connectors.des.config.DesHeaderConfig
 import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
+import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.util.RequestSupport.given
 import uk.gov.hmrc.http.*
@@ -32,7 +31,6 @@ import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.net.URL
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -48,29 +46,20 @@ object BusinessPartnerRecordRequest {
   implicit val formats: Format[BusinessPartnerRecordRequest] = Json.format[BusinessPartnerRecordRequest]
 }
 
-final case class HeadersConfig(
-  hc: HeaderCarrier,
-  explicitHeaders: Seq[(String, String)]
-)
-
 @Singleton
 class BusinessPartnerRecordConnector @Inject() (
   appConfig: AppConfig,
-  http: HttpClientV2
+  http: HttpClientV2,
+  desHeaderConfig: DesHeaderConfig
 )(using val ec: ExecutionContext) {
 
   val baseUrl: String = appConfig.desBaseUrl
-  private val environment: String = appConfig.desEnvironment
-  val authToken: String = appConfig.desAuthToken
-
-  private val Environment = "Environment"
-  private val CorrelationId = "CorrelationId"
 
   def getBusinessPartnerRecord(
     utr: Utr
   )(implicit
     rh: RequestHeader
-  ): Future[Option[BusinessPartnerRecordResponse]] = getRegistrationJson(utr).map {
+  ): Future[Option[BusinessPartnerRecordResponse]] = getBusinessPartnerRecordJson(utr).map {
     case Some(r) =>
       Some(
         BusinessPartnerRecordResponse(
@@ -89,11 +78,11 @@ class BusinessPartnerRecordConnector @Inject() (
     case _ => None
   }
 
-  private def getRegistrationJson(
+  private def getBusinessPartnerRecordJson(
     utr: Utr
   )(implicit rh: RequestHeader): Future[Option[JsValue]] = {
     val url: URL = url"$baseUrl/registration/individual/utr/${utr.value}"
-    val headersConfig = makeHeadersConfig(url)
+    val headersConfig = desHeaderConfig.makeHeaders(url)
     http
       .post(url)
       .setHeader(headersConfig.explicitHeaders*)
@@ -111,27 +100,6 @@ class BusinessPartnerRecordConnector @Inject() (
         }
       }
       .recover { case badRequest: BadRequestException => throw new Exception(s"400 Bad Request response from DES for utr ${utr.value}", badRequest) }
-  }
-
-  private def makeHeadersConfig(url: URL)(implicit hc: HeaderCarrier): HeadersConfig = {
-    val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
-    val baseHeaders = Seq(
-      Environment -> s"$environment",
-      CorrelationId -> UUID.randomUUID().toString
-    )
-    val additionalHeaders =
-      if (isInternalHost)
-        Seq.empty
-      else
-        Seq(
-          HeaderNames.authorisation -> s"Bearer $authToken",
-          HeaderNames.xRequestId -> hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
-        ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
-
-    HeadersConfig(
-      if (isInternalHost) then hc.copy(authorization = Some(Authorization(s"Bearer $authToken"))) else hc,
-      baseHeaders ++ additionalHeaders
-    )
   }
 
 }
