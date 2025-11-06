@@ -23,7 +23,6 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.matching.Regex
 
 @Singleton
 class AppConfig @Inject() (
@@ -37,7 +36,6 @@ class AppConfig @Inject() (
   val desBaseUrl: String = servicesConfig.baseUrl("des")
   val desEnvironment: String = servicesConfig.getString("microservice.services.des.environment")
   val desAuthToken: String = servicesConfig.getString("microservice.services.des.authorization-token")
-  val internalHostPatterns: Seq[Regex] = configuration.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
 
   object AgentApplicationRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-repo-ttl", servicesConfig)
