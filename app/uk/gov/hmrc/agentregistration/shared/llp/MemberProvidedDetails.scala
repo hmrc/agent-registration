@@ -23,6 +23,8 @@ import java.time.Instant
 
 /** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
   */
+
+//TODO WG - de do not need state here as well
 final case class MemberProvidedDetails(
   _id: MemberProvidedDetailsId,
   internalUserId: InternalUserId,
