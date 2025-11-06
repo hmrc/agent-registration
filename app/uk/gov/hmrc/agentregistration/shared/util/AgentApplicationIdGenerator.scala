@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.llp
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.*
+
+import org.bson.types.ObjectId
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import java.time.Instant
 
-/** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
-  */
-final case class MemberProvidedDetails(
-  _id: MemberProvidedDetailsId,
-  internalUserId: InternalUserId,
-  createdAt: Instant,
-  applicationId: AgentApplicationId
-):
-  val memberProvidedDetailsId: MemberProvidedDetailsId = _id
+import javax.inject.Singleton
 
-object MemberProvidedDetails:
-  given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
+@Singleton
+class AgentApplicationIdGenerator:
+  def nextApplicationId(): AgentApplicationId = AgentApplicationId(ObjectId.get().toHexString)
+
