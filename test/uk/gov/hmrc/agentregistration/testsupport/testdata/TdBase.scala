@@ -39,6 +39,8 @@ trait TdBase:
 
   lazy val internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
   lazy val linkId: LinkId = LinkId("link-id-12345")
+  lazy val agentApplicationId: AgentApplicationId = AgentApplicationId("agent-application-id-12345")
+
   lazy val utr: Utr = Utr("1234567890")
   lazy val email: String = "test@example.com"
   lazy val telephoneNumber: String = "01234567890"
