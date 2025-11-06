@@ -27,6 +27,7 @@ trait TdAgentApplication { dependencies: TdBase =>
   private val createdAt: Instant = dependencies.instant
 
   val llpApplicationAfterCreated: AgentApplicationLlp = AgentApplicationLlp(
+    _id = agentApplicationId,
     internalUserId = internalUserId,
     linkId = linkId,
     groupId = groupId,
@@ -34,8 +35,7 @@ trait TdAgentApplication { dependencies: TdBase =>
     applicationState = ApplicationState.Started,
     businessDetails = None,
     applicantContactDetails = None,
-    amlsDetails = None,
-    agentDetails = None
+    amlsDetails = None
   )
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository
+package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -22,9 +22,12 @@ import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.repository.Repo
+import uk.gov.hmrc.agentregistration.repository.providedetails
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.ProvidedDetailsRepoHelp.given
+import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails.given
+import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -33,37 +36,34 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import AgentApplicationRepoHelp.given
 
 @Singleton
-final class AgentApplicationRepo @Inject() (
+final class MemeberProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
   appConfig: AppConfig
 )(using ec: ExecutionContext)
-extends Repo[AgentApplicationId, AgentApplication](
-  collectionName = "agent-application",
+extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
+  collectionName = "llp-member-provided-details",
   mongoComponent = mongoComponent,
-  indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
+  indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
+  extraCodecs = Seq(Codecs.playFormatCodec(MemberProvidedDetails.format)),
   replaceIndexes = true
 )
 
-// when named it AgentApplicationRepo, Scala 3 compiler complains
-// about cyclic reference error during compilation ...
-object AgentApplicationRepoHelp:
+object ProvidedDetailsRepoHelp:
 
-  given IdString[AgentApplicationId] =
-    new IdString[AgentApplicationId]:
-      override def idString(i: AgentApplicationId): String = i.value
+  given IdString[MemberProvidedDetailsId] =
+    new IdString[MemberProvidedDetailsId]:
+      override def idString(i: MemberProvidedDetailsId): String = i.value
 
-  given IdExtractor[AgentApplication, AgentApplicationId] =
-    new IdExtractor[AgentApplication, AgentApplicationId]:
-      override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
+  given IdExtractor[MemberProvidedDetails, MemberProvidedDetailsId] =
+    new IdExtractor[MemberProvidedDetails, MemberProvidedDetailsId]:
+      override def id(memberProvidedDetails: MemberProvidedDetails): MemberProvidedDetailsId = memberProvidedDetails.memberProvidedDetailsId
 
-  def indexes(cacheTtl: FiniteDuration): Seq[IndexModel] = Seq(
+  def indexes(ttl: FiniteDuration): Seq[IndexModel] = Seq(
     IndexModel(
-      keys = Indexes.ascending("lastUpdated"),
-      indexOptions = IndexOptions().expireAfter(cacheTtl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
+      Indexes.ascending("lastUpdated"),
+      IndexOptions().expireAfter(ttl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
     ),
     IndexModel(
       keys = Indexes.ascending("internalUserId"),
@@ -72,9 +72,9 @@ object AgentApplicationRepoHelp:
         .name("internalUserId")
     ),
     IndexModel(
-      keys = Indexes.ascending("linkId"),
+      keys = Indexes.ascending("applicationId"),
       IndexOptions()
         .unique(true)
-        .name("linkId")
+        .name("applicationId")
     )
   )

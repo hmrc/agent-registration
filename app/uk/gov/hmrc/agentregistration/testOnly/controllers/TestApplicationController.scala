@@ -23,19 +23,20 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationIdGenerator
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
+import uk.gov.hmrc.agentregistration.shared.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.Crn
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.agentregistration.shared.BusinessDetailsLlp
+import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.SafeId
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
-import uk.gov.hmrc.agentregistration.shared.SaUtr
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
@@ -51,7 +52,8 @@ import scala.concurrent.ExecutionContext
 class TestApplicationController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  agentApplicationRepo: AgentApplicationRepo
+  agentApplicationRepo: AgentApplicationRepo,
+  agentApplicationIdGenerator: AgentApplicationIdGenerator
 )
 extends BackendController(cc):
 
@@ -66,6 +68,7 @@ extends BackendController(cc):
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
 
   private def makeSubmittedApplication(): AgentApplication = AgentApplicationLlp(
+    _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     groupId = GroupId(value = UUID.randomUUID().toString),
@@ -88,6 +91,5 @@ extends BackendController(cc):
         isVerified = true
       ))
     )),
-    amlsDetails = None,
-    agentDetails = None
+    amlsDetails = None
   )
