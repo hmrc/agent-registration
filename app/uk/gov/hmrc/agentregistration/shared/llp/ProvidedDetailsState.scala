@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.util.llp
+package uk.gov.hmrc.agentregistration.shared.llp
 
-import org.bson.types.ObjectId
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
+import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-import javax.inject.Singleton
+enum ProvidedDetailsState:
 
-@Singleton
-class MemberProvidedDetailsIdGenerator:
-  def nextMemberProvidedDetailsId(): MemberProvidedDetailsId = MemberProvidedDetailsId(ObjectId.get().toHexString)
+  case Started
+  case Finished
+
+object ProvidedDetailsState:
+  given Format[ProvidedDetailsState] = JsonFormatsFactory.makeEnumFormat[ProvidedDetailsState]
