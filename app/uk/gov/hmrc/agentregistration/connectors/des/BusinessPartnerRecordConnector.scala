@@ -21,7 +21,6 @@ import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.connectors.des.config.DesHeaderConfig
 import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.Utr
@@ -31,6 +30,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.net.URL
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -49,8 +49,7 @@ object BusinessPartnerRecordRequest {
 @Singleton
 class BusinessPartnerRecordConnector @Inject() (
   appConfig: AppConfig,
-  http: HttpClientV2,
-  desHeaderConfig: DesHeaderConfig
+  http: HttpClientV2
 )(using val ec: ExecutionContext) {
 
   val baseUrl: String = appConfig.desBaseUrl
@@ -82,10 +81,13 @@ class BusinessPartnerRecordConnector @Inject() (
     utr: Utr
   )(implicit rh: RequestHeader): Future[Option[JsValue]] = {
     val url: URL = url"$baseUrl/registration/individual/utr/${utr.value}"
-    val headersConfig = desHeaderConfig.makeHeaders(url)
     http
       .post(url)
-      .setHeader(headersConfig.explicitHeaders*)
+      .setHeader(Seq(
+        HeaderNames.authorisation -> s"Bearer ${appConfig.desAuthToken}",
+        "Environment" -> s"${appConfig.desEnvironment}",
+        "CorrelationId" -> UUID.randomUUID().toString
+      )*)
       .withBody(Json.toJson(BusinessPartnerRecordRequest(isAnAgent = false)))
       .execute[HttpResponse]
       .map { response =>
