@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.Format
-import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
+import play.api.libs.json.Json
 
-final case class Utr(value: String)
+final case class AgentDetails(
+  businessName: AgentBusinessName
+):
+  def isComplete: Boolean = businessName.agentBusinessName.nonEmpty || businessName.otherAgentBusinessName.nonEmpty
 
-object Utr:
-
-  given format: Format[Utr] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[Utr] = ValueClassBinder.valueClassBinder[Utr](_.value)
+object AgentDetails:
+  given format: Format[AgentDetails] = Json.format[AgentDetails]

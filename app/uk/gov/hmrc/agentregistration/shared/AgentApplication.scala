@@ -22,6 +22,7 @@ import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
+import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
@@ -41,6 +42,7 @@ sealed trait AgentApplication:
   def applicationState: ApplicationState
   def businessType: BusinessType
   def amlsDetails: Option[AmlsDetails]
+  def agentDetails: Option[AgentDetails]
 
   //  /** Updates the application state to the next state */
   //  def updateApplicationState: AgentApplication =
@@ -89,7 +91,8 @@ final case class AgentApplicationSoleTrader(
   override val applicationState: ApplicationState,
   userRole: Option[UserRole] = None,
   businessDetails: Option[BusinessDetailsSoleTrader],
-  override val amlsDetails: Option[AmlsDetails]
+  override val amlsDetails: Option[AmlsDetails],
+  override val agentDetails: Option[AgentDetails]
 )
 extends AgentApplication:
 
@@ -107,7 +110,8 @@ final case class AgentApplicationLlp(
   override val applicationState: ApplicationState,
   businessDetails: Option[BusinessDetailsLlp],
   applicantContactDetails: Option[ApplicantContactDetails],
-  override val amlsDetails: Option[AmlsDetails]
+  override val amlsDetails: Option[AmlsDetails],
+  override val agentDetails: Option[AgentDetails]
 )
 extends AgentApplication:
 
@@ -116,6 +120,7 @@ extends AgentApplication:
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("ApplicantContactDetails")
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
+  def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
 object AgentApplication:
 
