@@ -17,13 +17,14 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
-import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
+import play.api.libs.json.Json
 
-final case class Utr(value: String)
+final case class BusinessPartnerRecordResponse(
+  organisationName: Option[String],
+  address: DesBusinessAddress,
+  emailAddress: Option[String],
+  primaryPhoneNumber: Option[String]
+)
 
-object Utr:
-
-  given format: Format[Utr] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[Utr] = ValueClassBinder.valueClassBinder[Utr](_.value)
+object BusinessPartnerRecordResponse:
+  given format: Format[BusinessPartnerRecordResponse] = Json.format[BusinessPartnerRecordResponse]
