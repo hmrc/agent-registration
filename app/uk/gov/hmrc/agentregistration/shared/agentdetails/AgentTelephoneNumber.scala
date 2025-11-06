@@ -18,18 +18,15 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 
-final case class AgentDetails(
-  businessName: AgentBusinessName,
-  telephoneNumber: Option[AgentTelephoneNumber] = None
+final case class AgentTelephoneNumber(
+  agentTelephoneNumber: String,
+  otherAgentTelephoneNumber: Option[String]
 ):
+  def getAgentTelephoneNumber: String = otherAgentTelephoneNumber
+    .getOrElse(agentTelephoneNumber)
 
-  def isComplete: Boolean =
-    (businessName.agentBusinessName.nonEmpty || businessName.otherAgentBusinessName.nonEmpty)
-      && telephoneNumber.isDefined
+object AgentTelephoneNumber:
 
-  def getTelephoneNumber: AgentTelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number is missing")
-
-object AgentDetails:
-  given format: Format[AgentDetails] = Json.format[AgentDetails]
+  given format: Format[AgentTelephoneNumber] = Json.format[AgentTelephoneNumber]
+  def isValid(number: String): Boolean = number.matches("^[0-9-+()#x]{1,24}$")
