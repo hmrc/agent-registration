@@ -20,7 +20,7 @@ import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 final case class TelephoneNumber(value: String):
-  def isValid: Boolean = value.matches("^[0-9-()+ ]+$")
+  def isValid: Boolean = value.matches("^[0-9 -+()#x]{1,24}$")
 
 object TelephoneNumber:
 
