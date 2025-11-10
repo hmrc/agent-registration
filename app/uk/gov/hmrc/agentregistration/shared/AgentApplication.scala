@@ -43,6 +43,7 @@ sealed trait AgentApplication:
   def applicationState: ApplicationState
   def businessType: BusinessType
   def amlsDetails: Option[AmlsDetails]
+  def agentDetails: Option[AgentDetails]
 
   //  /** Updates the application state to the next state */
   //  def updateApplicationState: AgentApplication =
@@ -92,7 +93,8 @@ final case class AgentApplicationSoleTrader(
   override val applicationState: ApplicationState,
   userRole: Option[UserRole] = None,
   businessDetails: Option[BusinessDetailsSoleTrader],
-  override val amlsDetails: Option[AmlsDetails]
+  override val amlsDetails: Option[AmlsDetails],
+  override val agentDetails: Option[AgentDetails]
 )
 extends AgentApplication:
 
@@ -111,7 +113,8 @@ final case class AgentApplicationLlp(
   override val applicationState: ApplicationState,
   businessDetails: Option[BusinessDetailsLlp],
   applicantContactDetails: Option[ApplicantContactDetails],
-  override val amlsDetails: Option[AmlsDetails]
+  override val amlsDetails: Option[AmlsDetails],
+  override val agentDetails: Option[AgentDetails]
 )
 extends AgentApplication:
 
@@ -120,6 +123,7 @@ extends AgentApplication:
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("ApplicantContactDetails")
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
+  def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
 object AgentApplication:
 
