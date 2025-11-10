@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.contactdetails
+package uk.gov.hmrc.agentregistration.shared.llp
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseNameQuery
+import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficer
 
-final case class CompaniesHouseNameQuery(
-  firstName: String,
-  lastName: String
+final case class CompaniesHouseMatch(
+  memberNameQuery: CompaniesHouseNameQuery,
+  companiesHouseOfficer: Option[CompaniesHouseOfficer] = None
 )
 
-object CompaniesHouseNameQuery:
-
-  given Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
-  def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))
+object CompaniesHouseMatch:
+  given format: Format[CompaniesHouseMatch] = Json.format[CompaniesHouseMatch]

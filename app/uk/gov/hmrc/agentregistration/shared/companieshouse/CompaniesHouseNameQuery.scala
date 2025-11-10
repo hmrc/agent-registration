@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.contactdetails
+package uk.gov.hmrc.agentregistration.shared.companieshouse
 
-import play.api.libs.json.*
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-final case class CompaniesHouseDateOfBirth(
-  day: Option[Int],
-  month: Int,
-  year: Int
+final case class CompaniesHouseNameQuery(
+  firstName: String,
+  lastName: String
 )
 
-object CompaniesHouseDateOfBirth:
-  given format: Format[CompaniesHouseDateOfBirth] = Json.format[CompaniesHouseDateOfBirth]
+object CompaniesHouseNameQuery:
+
+  given Format[CompaniesHouseNameQuery] = Json.format[CompaniesHouseNameQuery]
+  def unapply(q: CompaniesHouseNameQuery): Option[(String, String)] = Some((q.firstName, q.lastName))

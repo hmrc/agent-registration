@@ -31,7 +31,8 @@ final case class MemberProvidedDetails(
   internalUserId: InternalUserId,
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
-  applicationId: AgentApplicationId
+  applicationId: AgentApplicationId,
+  companiesHouseMatch: Option[CompaniesHouseMatch] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id

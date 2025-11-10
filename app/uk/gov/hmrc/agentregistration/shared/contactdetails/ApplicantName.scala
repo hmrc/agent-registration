@@ -21,6 +21,8 @@ import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.ApplicantRoleInLlp
+import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseNameQuery
+import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficer
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName.NameOfMember
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
