@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.llp
+package uk.gov.hmrc.agentregistration.shared.companieshouse
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseNameQuery
-import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficer
 
 final case class CompaniesHouseMatch(
   memberNameQuery: CompaniesHouseNameQuery,

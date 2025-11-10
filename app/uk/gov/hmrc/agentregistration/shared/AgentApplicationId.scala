@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentregistration.shared
 
 import org.bson.types.ObjectId
 import play.api.libs.json.Format
-import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import javax.inject.Singleton
@@ -28,9 +27,7 @@ import javax.inject.Singleton
 final case class AgentApplicationId(value: String)
 
 object AgentApplicationId:
-
   given format: Format[AgentApplicationId] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[AgentApplicationId] = PathBindable.bindableString.transform(AgentApplicationId(_), _.value)
 
 @Singleton
 class AgentApplicationIdGenerator:
