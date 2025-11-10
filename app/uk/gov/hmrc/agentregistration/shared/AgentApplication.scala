@@ -120,6 +120,7 @@ extends AgentApplication:
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("ApplicantContactDetails")
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
+  def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
 object AgentApplication:
 
