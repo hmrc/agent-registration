@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.GroupId
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
@@ -38,6 +38,7 @@ trait TdBase:
   lazy val newInstant: Instant = instant.plusSeconds(20) // used when a new application is created from existing one
 
   lazy val internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
+  lazy val agentApplicationId: AgentApplicationId = AgentApplicationId("agent-application-id-12345")
   lazy val linkId: LinkId = LinkId("link-id-12345")
   lazy val utr: Utr = Utr("1234567890")
   lazy val email: String = "test@example.com"

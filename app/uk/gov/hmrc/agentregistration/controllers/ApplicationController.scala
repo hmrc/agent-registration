@@ -45,7 +45,7 @@ extends BackendController(cc):
 
   val findApplication: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
     agentApplicationRepo
-      .findById(request.internalUserId)
+      .findByInternalUserId(request.internalUserId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent

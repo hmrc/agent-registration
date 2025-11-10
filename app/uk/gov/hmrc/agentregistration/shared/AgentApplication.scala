@@ -35,6 +35,7 @@ import scala.annotation.nowarn
   */
 sealed trait AgentApplication:
 
+  def _id: AgentApplicationId
   def internalUserId: InternalUserId
   def linkId: LinkId
   def groupId: GroupId
@@ -42,7 +43,6 @@ sealed trait AgentApplication:
   def applicationState: ApplicationState
   def businessType: BusinessType
   def amlsDetails: Option[AmlsDetails]
-  def agentDetails: Option[AgentDetails]
 
   //  /** Updates the application state to the next state */
   //  def updateApplicationState: AgentApplication =
@@ -51,7 +51,7 @@ sealed trait AgentApplication:
   //      case llp: ApplicationLlp => llp.copy(applicationState = nextApplicationState)
 
   /* derived stuff: */
-
+  val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
 
   val hasFinished: Boolean =
@@ -84,6 +84,7 @@ sealed trait AgentApplication:
 /** Sole Trader Application. This case class represents the data entered by a user for registering as a sole trader.
   */
 final case class AgentApplicationSoleTrader(
+  override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
   override val linkId: LinkId,
   override val groupId: GroupId,
@@ -91,8 +92,7 @@ final case class AgentApplicationSoleTrader(
   override val applicationState: ApplicationState,
   userRole: Option[UserRole] = None,
   businessDetails: Option[BusinessDetailsSoleTrader],
-  override val amlsDetails: Option[AmlsDetails],
-  override val agentDetails: Option[AgentDetails]
+  override val amlsDetails: Option[AmlsDetails]
 )
 extends AgentApplication:
 
@@ -103,6 +103,7 @@ extends AgentApplication:
 /** Application Applicatoin for Limited Liability Partnership (Llp). This case class represents the data entered by a user for registering as an Llp.
   */
 final case class AgentApplicationLlp(
+  override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
   override val linkId: LinkId,
   override val groupId: GroupId,
@@ -110,8 +111,7 @@ final case class AgentApplicationLlp(
   override val applicationState: ApplicationState,
   businessDetails: Option[BusinessDetailsLlp],
   applicantContactDetails: Option[ApplicantContactDetails],
-  override val amlsDetails: Option[AmlsDetails],
-  override val agentDetails: Option[AgentDetails]
+  override val amlsDetails: Option[AmlsDetails]
 )
 extends AgentApplication:
 
@@ -120,7 +120,6 @@ extends AgentApplication:
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("ApplicantContactDetails")
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
-  def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
 object AgentApplication:
 
