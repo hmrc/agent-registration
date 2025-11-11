@@ -31,7 +31,7 @@ final case class MemberProvidedDetails(
   internalUserId: InternalUserId,
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
-  applicationId: AgentApplicationId
+  agentApplicationId: AgentApplicationId
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id

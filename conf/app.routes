@@ -6,8 +6,6 @@ POST        /application             uk.gov.hmrc.agentregistration.controllers.A
 
 GET         /business-partner-record/utr/:utr   uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
 
-GET         /member-provided-details uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findMemberProvidedDetails()
-#GET         /member-provided-details/agent-applicationId/:agentApplicationId              uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findMemberProvidedDetailsByApplicationId(agentApplicationId: AgentApplicationId)
-#GET         /member-provided-details/member-provided-detailsId/:memberProvidedDetailsId   uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findMemberProvidedDetailsByMemberProvidedDetailsId(memberProvidedDetailsId: MemberProvidedDetailsId)
+GET         /member-provided-details/agent-applicationId/:agentApplicationId              uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findMemberProvidedDetailsByApplicationId(agentApplicationId: AgentApplicationId)
 POST        /member-provided-details uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.upsertMemberProvidedDetails
 

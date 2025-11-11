@@ -20,3 +20,4 @@ object RoutesExports:
 
   export uk.gov.hmrc.agentregistration.shared.LinkId
   export uk.gov.hmrc.agentregistration.shared.Utr
+  export uk.gov.hmrc.agentregistration.shared.AgentApplicationId
