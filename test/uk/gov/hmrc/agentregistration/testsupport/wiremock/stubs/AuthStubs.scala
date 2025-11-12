@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs
 
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 import com.github.tomakehurst.wiremock.client.WireMock as wm
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 
 object AuthStubs {
 
@@ -31,7 +31,17 @@ object AuthStubs {
   ): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = wm.urlMatching("/auth/authorise"),
-    requestBody = Some(expectedRequestBody),
+    requestBody = Some(expectedRequestBodyAgent),
+    responseStatus = Status.OK,
+    responseBody = responseBody
+  )
+
+  def stubAuthoriseIndividual(
+    responseBody: String = responseBodyAsIndividual()
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching("/auth/authorise"),
+    requestBody = Some(expectedRequestBodyIndividual),
     responseStatus = Status.OK,
     responseBody = responseBody
   )
@@ -45,37 +55,80 @@ object AuthStubs {
   def responseBodyAsCleanAgent(internalUserId: InternalUserId = TdAll.tdAll.internalUserId): String =
     // language=JSON
     s"""
-       |{
-       |  "authorisedEnrolments": [],
-       |  "allEnrolments": [],
-       |  "credentialRole": "User",
-       |  "groupIdentifier": "3E7R-E0V0-5V4N-Q5S0",
-       |  "agentInformation": {},
-       |  "internalId": "${internalUserId.value}"
-       |}
-       |""".stripMargin
+       {
+         "authorisedEnrolments": [],
+         "allEnrolments": [],
+         "credentialRole": "User",
+         "groupIdentifier": "3E7R-E0V0-5V4N-Q5S0",
+         "agentInformation": {},
+         "internalId": "${internalUserId.value}"
+       }
+    """
 
-  private val expectedRequestBody: StringValuePattern = wm.equalToJson(
+  private def responseBodyAsIndividual(
+    internalUserId: InternalUserId = TdAll.tdAll.internalUserId
+  ): String = {
     // language=JSON
     """
-      |{
-      |  "authorise": [
-      |    {
-      |      "authProviders": [
-      |        "GovernmentGateway"
-      |      ]
-      |    },
-      |    {
-      |      "affinityGroup": "Agent"
-      |    }
-      |  ],
-      |  "retrieve": [
-      |    "allEnrolments",
-      |    "credentialRole",
-      |    "internalId"
-      |  ]
-      |}
-      |""".stripMargin
+    {
+     "allEnrolments": [{
+       "key": "MTD-IT",
+       "identifiers": [{
+         "key": "AnyIdentifier",
+         "value": "AnyValue"
+       }]
+     }],
+     "groupIdentifier": "3E7R-E0V0-5V4N-Q5S0",
+     "affinityGroup": "Individual",
+     "confidenceLevel": 250,
+     "internalId": "${internalUserId.value}"
+    }
+    """
+  }
+
+  private val expectedRequestBodyAgent: StringValuePattern = wm.equalToJson(
+    // language=JSON
+    """
+    {
+      "authorise": [
+        {
+          "authProviders": [
+            "GovernmentGateway"
+          ]
+        },
+        {
+          "affinityGroup": "Agent"
+        }
+      ],
+      "retrieve": [
+        "allEnrolments",
+        "credentialRole",
+        "internalId"
+      ]
+    }
+    """
+  )
+
+  private val expectedRequestBodyIndividual: StringValuePattern = wm.equalToJson(
+    // language=JSON
+    """
+    {
+      "authorise": [
+      {
+        "authProviders": [
+          "GovernmentGateway"
+        ]
+      },
+      {
+        "affinityGroup": "Individual"
+      }
+      ],
+      "retrieve": [
+        "allEnrolments",
+        "internalId"
+      ]
+    }
+    """
   )
 
 }
