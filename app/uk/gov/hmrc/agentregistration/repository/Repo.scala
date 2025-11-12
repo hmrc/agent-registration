@@ -94,20 +94,20 @@ extends PlayMongoRepository[A](
     )
     .headOption()
 
-  def findAllByInternalUserId(internalUserId: InternalUserId): Future[List[A]] = collection
+  def findAll(internalUserId: InternalUserId): Future[List[A]] = collection
     .find(
       filter = Filters.eq("internalUserId", internalUserId.value)
     )
     .toFuture()
     .map(_.toList)
 
-  def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
+  def find(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
     .find(
       filter = Filters.eq("agentApplicationId", agentApplicationId.value)
     )
     .headOption()
 
-  def findByInternalUserIdAndAgentApplicationId(
+  def find(
     internalUserId: InternalUserId,
     agentApplicationId: AgentApplicationId
   ): Future[Option[A]] = collection

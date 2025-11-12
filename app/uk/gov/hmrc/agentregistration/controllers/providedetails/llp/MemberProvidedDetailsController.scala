@@ -45,7 +45,7 @@ extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
 
-  val upsertMemberProvidedDetails: Action[MemberProvidedDetails] =
+  val upsert: Action[MemberProvidedDetails] =
     actions.individualAuthorised.async(parse.json[MemberProvidedDetails]):
       implicit request =>
         val memberProvidedDetails: MemberProvidedDetails = request.body
@@ -54,9 +54,9 @@ extends BackendController(cc):
           .upsert(request.body)
           .map(_ => Ok(""))
 
-  def findMemberProvidedDetailsByApplicationId(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def find(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
-      .findByInternalUserIdAndAgentApplicationId(request.internalUserId, agentApplicationId)
+      .find(request.internalUserId, agentApplicationId)
       .map {
         case Some(memberProvidedDetails) => Ok(Json.toJson(memberProvidedDetails))
         case None => NoContent

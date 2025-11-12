@@ -42,7 +42,7 @@ extends ControllerSpec:
 
     val response =
       httpClient
-        .get(url"$baseUrl/agent-registration/member-provided-details/agent-applicationId/${agentApplicationId.value}")
+        .get(url"$baseUrl/agent-registration/member-provided-details/by-agent-applicationId/${agentApplicationId.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.NO_CONTENT
@@ -57,13 +57,13 @@ extends ControllerSpec:
     val repo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
     val memberProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
     repo.upsert(memberProvidedDetailsStarted).futureValue
-    repo.findByAgentApplicationId(
+    repo.find(
       memberProvidedDetailsStarted.agentApplicationId
     ).futureValue.value shouldBe memberProvidedDetailsStarted withClue "sanity check"
 
     val response =
       httpClient
-        .get(url"$baseUrl/agent-registration/member-provided-details/agent-applicationId/${agentApplicationId.value}")
+        .get(url"$baseUrl/agent-registration/member-provided-details/by-agent-applicationId/${agentApplicationId.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
@@ -78,7 +78,7 @@ extends ControllerSpec:
     IndividualAuthStubs.stubAuthorise()
     val repo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
 
-    repo.findByAgentApplicationId(tdAll.agentApplicationId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
+    repo.find(tdAll.agentApplicationId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
     val memberProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
 
     val response =
@@ -91,6 +91,6 @@ extends ControllerSpec:
     response.body shouldBe ""
 
     repo
-      .findByAgentApplicationId(tdAll.agentApplicationId)
+      .find(tdAll.agentApplicationId)
       .futureValue.value shouldBe memberProvidedDetailsStarted withClue "after http request there should be records in mongo"
     IndividualAuthStubs.verifyAuthorise()
