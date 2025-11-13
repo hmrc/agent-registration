@@ -54,13 +54,20 @@ extends BackendController(cc):
           .upsert(request.body)
           .map(_ => Ok(""))
 
-  def find(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
       .find(request.internalUserId, agentApplicationId)
       .map {
         case Some(memberProvidedDetails) => Ok(Json.toJson(memberProvidedDetails))
         case None => NoContent
       }
+
+  val findAll: Action[AnyContent] = actions.individualAuthorised.async: request =>
+    memeberProvidedDetailsRepo
+      .findAll(request.internalUserId)
+      .map:
+        case Nil => NoContent
+        case memberProvidedDetails => Ok(Json.toJson(memberProvidedDetails))
 
   private def ensureInternalUserId(memberProvidedDetails: MemberProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
     if memberProvidedDetails.internalUserId =!= request.internalUserId then

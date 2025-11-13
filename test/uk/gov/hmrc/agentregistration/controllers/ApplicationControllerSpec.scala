@@ -112,3 +112,21 @@ extends ControllerSpec:
     response.status shouldBe Status.OK
     val agentApplication = response.json.as[AgentApplication]
     agentApplication shouldBe exampleAgentApplication
+
+  "find application by agentApplicationId/ID returns Ok and the Application as Json body" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    val repo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication = tdAll.llpApplicationAfterCreated
+    repo.upsert(exampleAgentApplication).futureValue
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/by-agent-applicationId/${tdAll.agentApplicationId.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val agentApplication = response.json.as[AgentApplication]
+    agentApplication shouldBe exampleAgentApplication

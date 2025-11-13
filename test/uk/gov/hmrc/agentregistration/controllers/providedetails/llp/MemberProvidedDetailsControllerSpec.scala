@@ -21,8 +21,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.MemeberProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.agentApplicationId
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.internalUserId
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.providedetails.IndividualAuthStubs
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
@@ -31,6 +33,7 @@ import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import play.api.libs.ws.JsonBodyWritables.given
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 
 class MemberProvidedDetailsControllerSpec
 extends ControllerSpec:
@@ -68,6 +71,37 @@ extends ControllerSpec:
         .futureValue
     response.status shouldBe Status.OK
     val memberProvidedDetails = response.json.as[MemberProvidedDetails]
+    memberProvidedDetails shouldBe memberProvidedDetailsStarted
+    IndividualAuthStubs.verifyAuthorise()
+
+  "find all member provided details for auth user returns Ok and the MemberProvidedDetails as Json body" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    IndividualAuthStubs.stubAuthorise()
+    val repo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
+    val memberProvidedDetailsStarted = List(
+      tdAll.providedDetailsLlp.afterStarted,
+      tdAll.providedDetailsLlp.afterStarted.copy(
+        _id = MemberProvidedDetailsId("member-provided-details-id-67890"),
+        agentApplicationId = AgentApplicationId(value = "another-agent-application-id")
+      )
+    )
+
+    memberProvidedDetailsStarted.foreach { memberProvidedDetails =>
+      repo.upsert(memberProvidedDetails).futureValue
+    }
+
+    repo.findAll(internalUserId)
+      .futureValue shouldBe memberProvidedDetailsStarted withClue "sanity check"
+
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/member-provided-details")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val memberProvidedDetails = response.json.as[List[MemberProvidedDetails]]
     memberProvidedDetails shouldBe memberProvidedDetailsStarted
     IndividualAuthStubs.verifyAuthorise()
 
