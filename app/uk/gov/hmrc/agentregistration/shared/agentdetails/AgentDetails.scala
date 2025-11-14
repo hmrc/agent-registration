@@ -22,14 +22,17 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 
 final case class AgentDetails(
   businessName: AgentBusinessName,
-  telephoneNumber: Option[AgentTelephoneNumber] = None
+  telephoneNumber: Option[AgentTelephoneNumber] = None,
+  agentEmailAddress: Option[AgentVerifiedEmailAddress] = None
 ):
 
   def isComplete: Boolean =
     (businessName.agentBusinessName.nonEmpty || businessName.otherAgentBusinessName.nonEmpty)
       && telephoneNumber.isDefined
+      && agentEmailAddress.exists(_.isVerified)
 
   def getTelephoneNumber: AgentTelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number is missing")
+  def getAgentEmailAddress: AgentVerifiedEmailAddress = agentEmailAddress.getOrThrowExpectedDataMissing("Email address is missing")
 
 object AgentDetails:
   given format: Format[AgentDetails] = Json.format[AgentDetails]
