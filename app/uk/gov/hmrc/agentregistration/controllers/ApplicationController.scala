@@ -69,7 +69,7 @@ extends BackendController(cc):
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  def findApplicationById(agentApplicationId: AgentApplicationId): Action[AnyContent] = Action.async: request =>
+  def findApplicationById(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     agentApplicationRepo
       .findById(agentApplicationId)
       .map:

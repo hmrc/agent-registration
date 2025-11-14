@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.contactdetails
+package uk.gov.hmrc.agentregistration.shared.companieshouse
 
-import play.api.libs.json.*
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-final case class CompaniesHouseOfficer(
-  name: String,
-  dateOfBirth: Option[CompaniesHouseDateOfBirth]
+final case class CompaniesHouseMatch(
+  memberNameQuery: CompaniesHouseNameQuery,
+  companiesHouseOfficer: Option[CompaniesHouseOfficer] = None
 )
 
-object CompaniesHouseOfficer:
-
-  given Format[CompaniesHouseOfficer] = Json.format[CompaniesHouseOfficer]
+object CompaniesHouseMatch:
+  given format: Format[CompaniesHouseMatch] = Json.format[CompaniesHouseMatch]

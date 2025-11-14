@@ -113,9 +113,24 @@ extends ControllerSpec:
     val agentApplication = response.json.as[AgentApplication]
     agentApplication shouldBe exampleAgentApplication
 
-  "find application by agentApplicationId/ID returns Ok and the Application as Json body" in:
+  "find application by agentApplicationId returns NO_CONTENT if there is no underlying records" in:
 
     given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthoriseIndividual()
+
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/by-agent-application-id/${tdAll.agentApplicationId.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.NO_CONTENT
+    response.body shouldBe ""
+    AuthStubs.verifyAuthorise()
+
+  "find application by agentApplicationId returns Ok and the Application as Json body" in:
+
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthoriseIndividual()
 
     val repo = app.injector.instanceOf[AgentApplicationRepo]
     val exampleAgentApplication = tdAll.llpApplicationAfterCreated
@@ -124,9 +139,10 @@ extends ControllerSpec:
 
     val response =
       httpClient
-        .get(url"$baseUrl/agent-registration/application/by-agent-applicationId/${tdAll.agentApplicationId.value}")
+        .get(url"$baseUrl/agent-registration/application/by-agent-application-id/${tdAll.agentApplicationId.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
     val agentApplication = response.json.as[AgentApplication]
     agentApplication shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
