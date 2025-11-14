@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
+import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 
 import java.time.Instant
 
@@ -39,6 +40,9 @@ final case class MemberProvidedDetails(
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
   val hasFinished: Boolean = if providedDetailsState === Finished then true else false
   val isInProgress: Boolean = !hasFinished
+  def getCompaniesHouseMatch: CompaniesHouseMatch = companiesHouseMatch.getOrThrowExpectedDataMissing(
+    "Companies house query is missing for member provided details"
+  )
 
 object MemberProvidedDetails:
   given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
