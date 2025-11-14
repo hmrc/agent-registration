@@ -94,9 +94,28 @@ extends PlayMongoRepository[A](
     )
     .headOption()
 
-  def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
+  def findAll(internalUserId: InternalUserId): Future[List[A]] = collection
+    .find(
+      filter = Filters.eq("internalUserId", internalUserId.value)
+    )
+    .toFuture()
+    .map(_.toList)
+
+  def find(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
     .find(
       filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+    )
+    .headOption()
+
+  def find(
+    internalUserId: InternalUserId,
+    agentApplicationId: AgentApplicationId
+  ): Future[Option[A]] = collection
+    .find(
+      Filters.and(
+        Filters.eq("internalUserId", internalUserId.value),
+        Filters.eq("agentApplicationId", agentApplicationId.value)
+      )
     )
     .headOption()
 

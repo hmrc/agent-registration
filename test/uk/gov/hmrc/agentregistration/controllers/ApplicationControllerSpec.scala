@@ -135,7 +135,7 @@ extends ControllerSpec:
     val repo = app.injector.instanceOf[AgentApplicationRepo]
     val exampleAgentApplication = tdAll.llpApplicationAfterCreated
     repo.upsert(exampleAgentApplication).futureValue
-    repo.findByInternalUserId(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
     val response =
       httpClient

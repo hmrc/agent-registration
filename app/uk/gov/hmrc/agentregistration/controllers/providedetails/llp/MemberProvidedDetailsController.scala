@@ -45,14 +45,7 @@ extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
 
-  def findMemberProvidedDetails(): Action[AnyContent] = actions.individualAuthorised.async: (request: IndividualAuthorisedRequest[AnyContent]) =>
-    memeberProvidedDetailsRepo
-      .findByInternalUserId(request.internalUserId)
-      .map:
-        case Some(memberProvidedDetails) => Ok(Json.toJson(memberProvidedDetails))
-        case None => NoContent
-
-  val upsertMemberProvidedDetails: Action[MemberProvidedDetails] =
+  val upsert: Action[MemberProvidedDetails] =
     actions.individualAuthorised.async(parse.json[MemberProvidedDetails]):
       implicit request =>
         val memberProvidedDetails: MemberProvidedDetails = request.body
@@ -61,15 +54,20 @@ extends BackendController(cc):
           .upsert(request.body)
           .map(_ => Ok(""))
 
-  def findMemberProvidedDetailsByApplicationId(agentApplicationId: AgentApplicationId): Action[AnyContent] = Action.async: request =>
+  def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
-      .findByAgentApplicationId(agentApplicationId)
-      .map(providedDetailsList => Ok(Json.toJson(providedDetailsList)))
+      .find(request.internalUserId, agentApplicationId)
+      .map {
+        case Some(memberProvidedDetails) => Ok(Json.toJson(memberProvidedDetails))
+        case None => NoContent
+      }
 
-  def findMemberProvidedDetailsByMemberProvidedDetailsId(memberProvidedDetailsId: MemberProvidedDetailsId): Action[AnyContent] = Action.async: request =>
+  val findAll: Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
-      .findById(memberProvidedDetailsId)
-      .map(providedDetailsList => Ok(Json.toJson(providedDetailsList)))
+      .findAll(request.internalUserId)
+      .map:
+        case Nil => NoContent
+        case memberProvidedDetails => Ok(Json.toJson(memberProvidedDetails))
 
   private def ensureInternalUserId(memberProvidedDetails: MemberProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
     if memberProvidedDetails.internalUserId =!= request.internalUserId then

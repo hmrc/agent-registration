@@ -32,7 +32,7 @@ final case class MemberProvidedDetails(
   internalUserId: InternalUserId,
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
-  applicationId: AgentApplicationId,
+  agentApplicationId: AgentApplicationId,
   companiesHouseMatch: Option[CompaniesHouseMatch] = None
 ):
 

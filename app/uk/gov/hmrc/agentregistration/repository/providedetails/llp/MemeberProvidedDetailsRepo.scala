@@ -66,15 +66,9 @@ object ProvidedDetailsRepoHelp:
       IndexOptions().expireAfter(ttl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
     ),
     IndexModel(
-      keys = Indexes.ascending("internalUserId"),
+      Indexes.ascending("internalUserId", "agentApplicationId"),
       IndexOptions()
         .unique(true)
-        .name("internalUserId")
-    ),
-    IndexModel(
-      keys = Indexes.ascending("applicationId"),
-      IndexOptions()
-        .unique(true)
-        .name("applicationId")
+        .name("internalUserId_applicationId_unique")
     )
   )
