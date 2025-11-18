@@ -80,7 +80,8 @@ extends BackendController(cc):
       companyProfile = CompanyProfile(
         companyNumber = Crn("12345566"),
         companyName = "Test Partnership LLP",
-        dateOfIncorporation = None
+        dateOfIncorporation = None,
+        unsanitisedCHROAddress = None
       )
     )),
     applicantContactDetails = Some(ApplicantContactDetails(

@@ -26,7 +26,16 @@ final case class DesBusinessAddress(
   addressLine4: Option[String] = None,
   postalCode: Option[String],
   countryCode: String
-)
+):
+  def toValueString: String = Seq(
+    this.addressLine1.trim,
+    this.addressLine2.getOrElse("").trim,
+    this.addressLine3.getOrElse("").trim,
+    this.addressLine4.getOrElse("").trim,
+    this.postalCode.getOrElse("").trim,
+    this.countryCode.trim
+  )
+    .filter(_.nonEmpty).mkString(", ")
 
 object DesBusinessAddress:
   given format: Format[DesBusinessAddress] = Json.format[DesBusinessAddress]

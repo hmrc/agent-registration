@@ -83,11 +83,11 @@ object DesStubs {
   private val expectedRequestBody: StringValuePattern = wm.equalToJson(
     // language=JSON
     """
-      |{
-      |  "requiresNameMatch": false,
-      |  "regime": "ITSA",
-      |  "isAnAgent": false
-      |}
+      {
+        "requiresNameMatch": false,
+        "regime": "ITSA",
+        "isAnAgent": false
+      }
       |""".stripMargin
   )
 

@@ -54,6 +54,10 @@ sealed trait AgentApplication:
   /* derived stuff: */
   val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
+  lazy val utr: Utr =
+    businessType match
+      case BusinessType.Partnership.LimitedLiabilityPartnership => asLlpApplication.getBusinessDetails.saUtr.asUtr
+      case _ => expectedDataNotDefinedError("utr is only defined for Llp applications")
 
   val hasFinished: Boolean =
     applicationState match
