@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AddressLookupFrontendAddress
+import uk.gov.hmrc.agentregistration.shared.util.StringOps
 
 final case class AgentCorrespondenceAddress(
   addressLine1: String,
@@ -28,11 +29,18 @@ final case class AgentCorrespondenceAddress(
   countryCode: String
 ):
 
+  /** Render the address as a single comma-separated string.
+    *
+    * Useful for storing in hidden form fields or serialising to a compact single-line representation.
+    *
+    * @return
+    *   a comma-separated single-line representation of the address
+    */
   def toValueString: String = Seq(
-    Some(addressLine1),
-    addressLine2,
-    addressLine3,
-    addressLine4,
+    Some(StringOps.replaceCommasWithSpaces(addressLine1)),
+    addressLine2.map(StringOps.replaceCommasWithSpaces),
+    addressLine3.map(StringOps.replaceCommasWithSpaces),
+    addressLine4.map(StringOps.replaceCommasWithSpaces),
     postalCode,
     Some(countryCode)
   ).flatten.mkString(", ")
@@ -49,7 +57,13 @@ final case class AgentCorrespondenceAddress(
 object AgentCorrespondenceAddress:
 
   given format: Format[AgentCorrespondenceAddress] = Json.format[AgentCorrespondenceAddress]
-  def fromString(address: String): AgentCorrespondenceAddress = {
+
+  /* Parse from a string created by toValueString on either Companies House
+   * Registered Office addresses (ChroAddress) or the BPR addresses (DesBusinessAddress).
+   * Both produce a string with address lines separated by commas. Input lines will have
+   * had commas found in individual source lines replaced with spaces so this is a safe operation.
+   */
+  def fromValueString(address: String): AgentCorrespondenceAddress = {
     val parts = address.split(",").map(_.trim)
     if (parts.length == 6) then
       AgentCorrespondenceAddress(
@@ -82,6 +96,15 @@ object AgentCorrespondenceAddress:
       throw new IllegalArgumentException(s"Cannot parse CorrespondenceAddress from string: $address")
   }
 
+  /** Create an `AgentCorrespondenceAddress` from an `AddressLookupFrontendAddress`.
+    *
+    * Only the first four lines from the ALF address are used to remain compatible with this type.
+    *
+    * @param address
+    *   the Address Lookup Frontend address
+    * @return
+    *   reconstructed `AgentCorrespondenceAddress`
+    */
   def fromAddressLookupAddress(address: AddressLookupFrontendAddress): AgentCorrespondenceAddress = {
     val lines = address.lines
     AgentCorrespondenceAddress(

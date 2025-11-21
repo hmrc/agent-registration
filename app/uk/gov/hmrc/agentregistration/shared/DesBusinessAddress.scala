@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Json
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.StringOps
 
 final case class DesBusinessAddress(
   addressLine1: String,
@@ -28,10 +29,10 @@ final case class DesBusinessAddress(
   countryCode: String
 ):
   def toValueString: String = Seq(
-    this.addressLine1.trim,
-    this.addressLine2.getOrElse("").trim,
-    this.addressLine3.getOrElse("").trim,
-    this.addressLine4.getOrElse("").trim,
+    StringOps.replaceCommasWithSpaces(this.addressLine1).trim,
+    this.addressLine2.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    this.addressLine3.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    this.addressLine4.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
     this.postalCode.getOrElse("").trim,
     this.countryCode.trim
   )

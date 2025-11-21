@@ -18,6 +18,14 @@ package uk.gov.hmrc.agentregistration.shared.companieshouse
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.util.StringOps
+
+/** As returned to GRS by Companies House as the Companies House Registered Office (CHRO) address can contain care_of, po_box and premises fields which are not
+  * part of the standard AgentCorrespondenceAddress model we subscribe agents with so when we map ChroAddress to a value string, compatible with
+  * AgentCorrespondenceAddress, we concatenate these fields into a single line without commas to avoid losing data.
+  *
+  * We never have to map CorrespondenceAddress back to ChroAddress so this one-way mapping is sufficient.
+  */
 
 final case class ChroAddress(
   address_line_1: Option[String] = None,
@@ -33,18 +41,18 @@ final case class ChroAddress(
   // concat address fields into a single string to use in radio values and labels
   def toValueString: String = Seq(
     // concatenate optional care_of, po_box, premises values into a single line to
-    // ensure serialisation to CorrespondenceAddress
+    // ensure they are included in any serialisation to AgentCorrespondenceAddress
     Seq(
-      care_of.getOrElse("").trim,
-      po_box.getOrElse("").trim,
-      premises.getOrElse("").trim
+      care_of.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+      po_box.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+      premises.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim
     )
       .filter(_.nonEmpty).mkString(" "),
-    address_line_1.getOrElse("").trim,
-    address_line_2.getOrElse("").trim,
-    locality.getOrElse("").trim,
-    postal_code.getOrElse("").trim,
-    country.getOrElse("").trim
+    address_line_1.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    address_line_2.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    locality.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    postal_code.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
+    country.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim
   )
     .filter(_.nonEmpty).mkString(", ")
 
