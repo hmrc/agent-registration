@@ -43,16 +43,16 @@ final case class ChroAddress(
     // concatenate optional care_of, po_box, premises values into a single line to
     // ensure they are included in any serialisation to AgentCorrespondenceAddress
     Seq(
-      care_of.getOrElse("").replaceCommaWithSpaces.trim,
-      po_box.getOrElse("").replaceCommaWithSpaces.trim,
-      premises.getOrElse("").replaceCommaWithSpaces.trim
+      care_of.getOrElse("").replaceCommasWithSpaces.trim,
+      po_box.getOrElse("").replaceCommasWithSpaces.trim,
+      premises.getOrElse("").replaceCommasWithSpaces.trim
     )
       .filter(_.nonEmpty).mkString(" "),
-    address_line_1.getOrElse("").replaceCommaWithSpaces,
-    address_line_2.getOrElse("").replaceCommaWithSpaces.trim,
-    locality.getOrElse("").replaceCommaWithSpaces.trim,
-    postal_code.getOrElse("").replaceCommaWithSpaces.trim,
-    country.getOrElse("").replaceCommaWithSpaces.trim
+    address_line_1.getOrElse("").replaceCommasWithSpaces,
+    address_line_2.getOrElse("").replaceCommasWithSpaces.trim,
+    locality.getOrElse("").replaceCommasWithSpaces.trim,
+    postal_code.getOrElse("").replaceCommasWithSpaces.trim,
+    country.getOrElse("").replaceCommasWithSpaces.trim
   )
     .filter(_.nonEmpty).mkString(", ")
 

@@ -24,4 +24,4 @@ object StringExtensions:
     inline def canonicalise: String = s.trim.replaceAll("\\s+", " ")
 
     /* Replaces commas with spaces and then canonicalise the string */
-    inline def replaceCommaWithSpaces: String = s.replaceAll(",", " ").canonicalise
+    inline def replaceCommasWithSpaces: String = s.replaceAll(",", " ").canonicalise
