@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AddressLookupFrontendAddress
-import uk.gov.hmrc.agentregistration.shared.util.StringOps
+import uk.gov.hmrc.agentregistration.shared.util.StringExtensions.replaceCommaWithSpaces
 
 final case class AgentCorrespondenceAddress(
   addressLine1: String,
@@ -31,17 +31,19 @@ final case class AgentCorrespondenceAddress(
 
   /** Render the address as a single comma-separated string.
     *
-    * Useful for storing in hidden form fields or serialising to a compact single-line representation.
+    * Useful for comparing to other addresses stored in this format such as radio values.
+    * Commas within address lines are replaced with spaces to avoid mis-alignment of fields,
+    * so for example the line "12a, Baker Street" becomes "12a Baker Street".
     *
     * @return
     *   a comma-separated single-line representation of the address
     */
   def toValueString: String = Seq(
-    Some(StringOps.replaceCommasWithSpaces(addressLine1)),
-    addressLine2.map(StringOps.replaceCommasWithSpaces),
-    addressLine3.map(StringOps.replaceCommasWithSpaces),
-    addressLine4.map(StringOps.replaceCommasWithSpaces),
-    postalCode,
+    Some(addressLine1.replaceCommasWithSpaces),
+    addressLine2.replaceCommasWithSpaces,
+    addressLine3.replaceCommasWithSpaces,
+    addressLine4.replaceCommasWithSpaces,
+    postalCode.replaceCommasWithSpaces,
     Some(countryCode)
   ).flatten.mkString(", ")
 

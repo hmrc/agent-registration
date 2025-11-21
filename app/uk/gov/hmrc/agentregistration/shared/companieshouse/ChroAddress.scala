@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.companieshouse
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.util.StringOps
+import uk.gov.hmrc.agentregistration.shared.util.StringExtensions.*
 
 /** As returned to GRS by Companies House as the Companies House Registered Office (CHRO) address can contain care_of, po_box and premises fields which are not
   * part of the standard AgentCorrespondenceAddress model we subscribe agents with so when we map ChroAddress to a value string, compatible with
@@ -43,16 +43,16 @@ final case class ChroAddress(
     // concatenate optional care_of, po_box, premises values into a single line to
     // ensure they are included in any serialisation to AgentCorrespondenceAddress
     Seq(
-      care_of.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-      po_box.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-      premises.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim
+      care_of.getOrElse("").replaceCommaWithSpaces.trim,
+      po_box.getOrElse("").replaceCommaWithSpaces.trim,
+      premises.getOrElse("").replaceCommaWithSpaces.trim
     )
       .filter(_.nonEmpty).mkString(" "),
-    address_line_1.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-    address_line_2.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-    locality.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-    postal_code.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim,
-    country.map(StringOps.replaceCommasWithSpaces).getOrElse("").trim
+    address_line_1.getOrElse("").replaceCommaWithSpaces,
+    address_line_2.getOrElse("").replaceCommaWithSpaces.trim,
+    locality.getOrElse("").replaceCommaWithSpaces.trim,
+    postal_code.getOrElse("").replaceCommaWithSpaces.trim,
+    country.getOrElse("").replaceCommaWithSpaces.trim
   )
     .filter(_.nonEmpty).mkString(", ")
 
