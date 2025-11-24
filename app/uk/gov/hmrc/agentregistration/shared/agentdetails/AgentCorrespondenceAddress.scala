@@ -65,9 +65,10 @@ object AgentCorrespondenceAddress:
    * Both produce a string with address lines separated by commas. Input lines will have
    * had commas found in individual source lines replaced with spaces so this is a safe operation.
    */
-  def fromValueString(address: String): AgentCorrespondenceAddress = {
+  def fromValueString(address: String): AgentCorrespondenceAddress =
     val parts = address.split(",").map(_.trim)
-    if (parts.length == 6) then
+    if parts.length == 6
+    then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
         addressLine2 = parts.lift(1),
@@ -76,7 +77,8 @@ object AgentCorrespondenceAddress:
         postalCode = parts.lift(4),
         countryCode = parts.lift(5).getOrElse("")
       )
-    else if (parts.length == 5) then
+    else if parts.length == 5
+    then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
         addressLine2 = parts.lift(1),
@@ -85,7 +87,8 @@ object AgentCorrespondenceAddress:
         postalCode = parts.lift(3),
         countryCode = parts.lift(4).getOrElse("")
       )
-    else if (parts.length == 4) then
+    else if parts.length == 4
+    then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
         addressLine2 = parts.lift(1),
@@ -96,7 +99,6 @@ object AgentCorrespondenceAddress:
       )
     else
       throw new IllegalArgumentException(s"Cannot parse CorrespondenceAddress from string: $address")
-  }
 
   /** Create an `AgentCorrespondenceAddress` from an `AddressLookupFrontendAddress`.
     *
