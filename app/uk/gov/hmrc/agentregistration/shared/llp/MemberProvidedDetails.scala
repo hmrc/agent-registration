@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentregistration.shared.llp
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.Nino
+import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
@@ -34,7 +36,9 @@ final case class MemberProvidedDetails(
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
   agentApplicationId: AgentApplicationId,
-  companiesHouseMatch: Option[CompaniesHouseMatch] = None
+  companiesHouseMatch: Option[CompaniesHouseMatch] = None,
+  nino: Option[Nino] = None,
+  saUtr: Option[SaUtr] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
