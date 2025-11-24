@@ -21,7 +21,8 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 /** Self Assessment (Sa) Unique Taxpayer Reference (Utr)
   */
-final case class SaUtr(value: String)
+final case class SaUtr(value: String):
+  def asUtr: Utr = Utr(value)
 
 object SaUtr:
   given format: Format[SaUtr] = JsonFormatsFactory.makeValueClassFormat

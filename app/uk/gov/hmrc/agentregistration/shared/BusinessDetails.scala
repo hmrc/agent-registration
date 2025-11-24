@@ -21,6 +21,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.BusinessType.*
 import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.*
+import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
 
 import java.time.LocalDate
 
@@ -131,8 +132,8 @@ object FullName:
 final case class CompanyProfile(
   companyNumber: Crn,
   companyName: String,
-  dateOfIncorporation: Option[LocalDate] // for some reason an optional field on companies house
-  // unsanitisedCHROAddress: Option[Address]
+  dateOfIncorporation: Option[LocalDate],
+  unsanitisedCHROAddress: Option[ChroAddress]
 )
 
 object CompanyProfile:

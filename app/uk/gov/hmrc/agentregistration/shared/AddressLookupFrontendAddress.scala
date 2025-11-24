@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,20 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import play.api.libs.json.*
 
-/** Corporation Tax (Ct) Unique Taxpayer Reference (Utr)
-  */
-final case class CtUtr(value: String):
-  def asUtr: Utr = Utr(value)
+final case class Country(
+  code: String,
+  name: Option[String]
+)
 
-object CtUtr:
-  given format: Format[CtUtr] = JsonFormatsFactory.makeValueClassFormat
+final case class AddressLookupFrontendAddress(
+  lines: Seq[String],
+  postcode: Option[String],
+  country: Country
+)
+
+object AddressLookupFrontendAddress:
+
+  given formatCountry: OFormat[Country] = Json.format[Country]
+  given formatAddressLookupAddress: OFormat[AddressLookupFrontendAddress] = Json.format[AddressLookupFrontendAddress]

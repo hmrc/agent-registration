@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+object StringExtensions:
 
-/** Corporation Tax (Ct) Unique Taxpayer Reference (Utr)
-  */
-final case class CtUtr(value: String):
-  def asUtr: Utr = Utr(value)
+  extension (s: String)
 
-object CtUtr:
-  given format: Format[CtUtr] = JsonFormatsFactory.makeValueClassFormat
+    /* Removes leading/trailing spaces and replaces multiple spaces with a single space */
+    inline def canonicalise: String = s.trim.replaceAll("\\s+", " ")
+
+    /* Replaces commas with spaces and then canonicalise the string */
+    inline def replaceCommasWithSpaces: String = s.replaceAll(",", " ").canonicalise
