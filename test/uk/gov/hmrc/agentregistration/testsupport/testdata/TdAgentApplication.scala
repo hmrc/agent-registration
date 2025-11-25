@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.testsupport.testdata
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 
 import java.time.Instant
 
@@ -36,7 +37,8 @@ trait TdAgentApplication { dependencies: TdBase =>
     businessDetails = None,
     applicantContactDetails = None,
     amlsDetails = None,
-    agentDetails = None
+    agentDetails = None,
+    hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet
   )
 
 }
