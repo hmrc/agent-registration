@@ -39,9 +39,9 @@ final case class MemberProvidedDetails(
   agentApplicationId: AgentApplicationId,
   companiesHouseMatch: Option[CompaniesHouseMatch] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
-  nino: Option[Nino] = None,
-  saUtr: Option[SaUtr] = None
-):
+  ninoWithSource: Option[NinoWithSource] = None,
+  saUtrWithSource: Option[SaUtrWithSource] = None
+                                      ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
   val hasFinished: Boolean = if providedDetailsState === Finished then true else false
