@@ -21,8 +21,12 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 final case class NinoWithSource(
-  nino: Nino,
+  nino: Option[Nino],
   source: MemberIdentifiersSource
 )
 object NinoWithSource:
+
   given Format[NinoWithSource] = Json.format[NinoWithSource]
+
+  def applyUserSupplied(nino: String): NinoWithSource = NinoWithSource(Some(Nino(nino)), MemberIdentifiersSource.UserSupplied)
+  def applyUserDoNotHaveNino(): NinoWithSource = NinoWithSource(None, MemberIdentifiersSource.UserSupplied)

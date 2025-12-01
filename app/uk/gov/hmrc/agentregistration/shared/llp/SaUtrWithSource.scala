@@ -21,7 +21,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 final case class SaUtrWithSource(
-  saUtr: SaUtr,
+  saUtr: Option[SaUtr],
   source: MemberIdentifiersSource
 )
 object SaUtrWithSource:
