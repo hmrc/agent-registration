@@ -92,7 +92,7 @@ class BusinessPartnerRecordConnector @Inject() (
       .execute[HttpResponse]
       .map { response =>
         response.status match {
-          case OK => Option(response.json)
+          case OK => Some(response.json)
           case NOT_FOUND => None
           case error =>
             throw UpstreamErrorResponse(

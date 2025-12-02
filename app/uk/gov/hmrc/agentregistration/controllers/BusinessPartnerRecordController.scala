@@ -45,4 +45,6 @@ extends BackendController(cc):
       implicit request =>
         businessPartnerRecordConnector
           .getBusinessPartnerRecord(utr)
-          .map(bpr => Ok(Json.toJson(bpr)))
+          .map:
+            case Some(bpr) => Ok(Json.toJson(bpr))
+            case None => NoContent
