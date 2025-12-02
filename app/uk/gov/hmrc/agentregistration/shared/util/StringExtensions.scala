@@ -23,5 +23,7 @@ object StringExtensions:
     /* Removes leading/trailing spaces and replaces multiple spaces with a single space */
     inline def canonicalise: String = s.trim.replaceAll("\\s+", " ")
 
+    inline def stripAllWhiteSpace: String = s.trim.replaceAll("\\s", "")
+
     /* Replaces commas with spaces and then canonicalise the string */
     inline def replaceCommasWithSpaces: String = s.replaceAll(",", " ").canonicalise
