@@ -34,17 +34,12 @@ object MemberSaUtr:
   final case class FromCitizenDetails(saUtr: SaUtr)
   extends MemberSaUtr
 
-  // Json formatters
-  private given OFormat[NotProvided.type] = Json.format[NotProvided.type]
-
-  private given OFormat[Provided] = Json.format[Provided]
-
-  private given OFormat[FromAuth] = Json.format[FromAuth]
-
-  private given OFormat[FromCitizenDetails] = Json.format[FromCitizenDetails]
-
   @nowarn()
   given OFormat[MemberSaUtr] =
+    given OFormat[NotProvided.type] = Json.format[NotProvided.type]
+    given OFormat[Provided] = Json.format[Provided]
+    given OFormat[FromAuth] = Json.format[FromAuth]
+    given OFormat[FromCitizenDetails] = Json.format[FromCitizenDetails]
     given JsonConfiguration = JsonConfiguration(
       discriminator = "type",
       typeNaming = JsonNaming { fullName =>

@@ -31,15 +31,11 @@ object MemberNino:
   final case class FromAuth(nino: Nino)
   extends MemberNino
 
-  // Json formatters
-  private given OFormat[NotProvided.type] = Json.format[NotProvided.type]
-
-  private given OFormat[Provided] = Json.format[Provided]
-
-  private given OFormat[FromAuth] = Json.format[FromAuth]
-
   @nowarn()
   given OFormat[MemberNino] =
+    given OFormat[NotProvided.type] = Json.format[NotProvided.type]
+    given OFormat[Provided] = Json.format[Provided]
+    given OFormat[FromAuth] = Json.format[FromAuth]
     given JsonConfiguration = JsonConfiguration(
       discriminator = "type",
       typeNaming = JsonNaming { fullName =>
