@@ -34,6 +34,5 @@ object LinkId:
   given pathBindable: PathBindable[LinkId] = ValueClassBinder.valueClassBinder[LinkId](_.value)
 
 @Singleton
-class LinkIdGenerator {
+class LinkIdGenerator:
   def nextLinkId(): LinkId = LinkId(UUID.randomUUID().toString)
-}
