@@ -66,3 +66,20 @@ extends ControllerSpec:
     responseAsDesRegistrationResponse shouldBe desRegistrationResponse
     AuthStubs.verifyAuthorise()
     DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
+
+  "getBusinessPartnerRecord by UTR returns NoContent if no records found" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    DesStubs.stubGetBusinessPartnerRecordNotFound(
+      utr = tdAll.utr
+    )
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/business-partner-record/utr/${tdAll.utr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.NO_CONTENT
+
+    response.body shouldBe ""
+    AuthStubs.verifyAuthorise()
+    DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)

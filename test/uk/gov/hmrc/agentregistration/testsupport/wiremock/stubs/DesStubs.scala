@@ -40,6 +40,15 @@ object DesStubs {
     responseBody = expectedResponseBody(utr, desRegistrationResponse)
   )
 
+  def stubGetBusinessPartnerRecordNotFound(
+    utr: Utr
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching(s"/registration/individual/utr/${utr.value}"),
+    requestBody = Some(expectedRequestBody),
+    responseStatus = Status.NOT_FOUND
+  )
+
   private def expectedResponseBody(
     utr: Utr,
     desRegistrationResponse: BusinessPartnerRecordResponse
