@@ -39,6 +39,7 @@ final case class MemberProvidedDetails(
   agentApplicationId: AgentApplicationId,
   companiesHouseMatch: Option[CompaniesHouseMatch] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
+  emailAddress: Option[MemberVerifiedEmailAddress] = None,
   nino: Option[Nino] = None,
   saUtr: Option[SaUtr] = None
 ):
