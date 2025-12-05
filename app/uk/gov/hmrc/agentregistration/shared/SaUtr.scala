@@ -25,4 +25,9 @@ final case class SaUtr(value: String):
   def asUtr: Utr = Utr(value)
 
 object SaUtr:
+
   given format: Format[SaUtr] = JsonFormatsFactory.makeValueClassFormat
+
+  private val saUtrRegex = "^[0-9]{10}$"
+
+  def isValid(utr: String): Boolean = utr.matches(saUtrRegex)
