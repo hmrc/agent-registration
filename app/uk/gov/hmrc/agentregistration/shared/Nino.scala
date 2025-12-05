@@ -22,4 +22,20 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 final case class Nino(value: String)
 
 object Nino:
+
   given format: Format[Nino] = JsonFormatsFactory.makeValueClassFormat
+
+  private val validNinoFormat = "[[A-Z]&&[^DFIQUV]][[A-Z]&&[^DFIQUVO]] ?\\d{2} ?\\d{2} ?\\d{2} ?[A-D]{1}"
+  private val invalidPrefixes = List(
+    "BG",
+    "GB",
+    "NK",
+    "KN",
+    "TN",
+    "NT",
+    "ZZ"
+  )
+
+  private def hasValidPrefix(nino: String) = !invalidPrefixes.exists(nino.startsWith)
+
+  def isValid(nino: String): Boolean = nino != null && hasValidPrefix(nino) && nino.matches(validNinoFormat)
