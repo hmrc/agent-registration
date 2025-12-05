@@ -38,4 +38,4 @@ object Nino:
 
   private def hasValidPrefix(nino: String) = !invalidPrefixes.exists(nino.startsWith)
 
-  def isValid(nino: String): Boolean = nino != null && hasValidPrefix(nino) && nino.matches(validNinoFormat)
+  def isValid(nino: String): Boolean = hasValidPrefix(nino) && nino.matches(validNinoFormat)
