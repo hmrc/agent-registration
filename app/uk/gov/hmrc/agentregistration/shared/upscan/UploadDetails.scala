@@ -20,6 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 final case class UploadDetails(
+  uploadId: UploadId,
   reference: Reference,
   status: UploadStatus
 )

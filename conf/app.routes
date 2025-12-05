@@ -4,6 +4,9 @@ GET         /application             uk.gov.hmrc.agentregistration.controllers.A
 GET         /application/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationByLinkId(linkId: LinkId)
 GET         /application/by-agent-application-id/:agentApplicationId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationById(agentApplicationId: AgentApplicationId)
 POST        /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
+POST        /application/amls/upscan-callback   uk.gov.hmrc.agentregistration.controllers.UpscanCallbackController.callback
+POST        /application/amls/upscan-initiate   uk.gov.hmrc.agentregistration.controllers.UpscanProgressController.initiate
+GET         /application/amls/upscan-status/:uploadId   uk.gov.hmrc.agentregistration.controllers.UpscanProgressController.getUpscanStatus(uploadId: UploadId)
 
 GET         /business-partner-record/utr/:utr   uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
 
