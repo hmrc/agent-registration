@@ -39,7 +39,7 @@ final case class MemberProvidedDetails(
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
-  memberSauUtr: Option[MemberSaUtr] = None
+  memberSaUtr: Option[MemberSaUtr] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
