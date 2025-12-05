@@ -42,3 +42,6 @@ class AppConfig @Inject() (
 
   object ProvideDetailsRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.providedetails-repo-ttl", servicesConfig)
+
+  object UploadDetailsRepo:
+    val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.uploaddetails-repo-ttl", servicesConfig)
