@@ -22,14 +22,27 @@ import scala.annotation.nowarn
 
 sealed trait MemberNino
 
+sealed trait UserProvidedNino
+extends MemberNino
+
 object MemberNino:
 
   final case class Provided(nino: Nino)
-  extends MemberNino
+  extends MemberNino,
+    UserProvidedNino
+
   case object NotProvided
-  extends MemberNino
+  extends MemberNino,
+    UserProvidedNino
+
   final case class FromAuth(nino: Nino)
   extends MemberNino
+
+  extension (memberNino: MemberNino)
+    def toUserProvidedNino: UserProvidedNino =
+      memberNino match
+        case u: UserProvidedNino => u
+        case h: FromAuth => throw new IllegalArgumentException(s"Nino is already provided from auth enrolments (${h.nino})")
 
   @nowarn()
   given OFormat[MemberNino] =
