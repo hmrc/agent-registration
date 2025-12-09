@@ -28,7 +28,7 @@ final case class UploadId(value: String)
 object UploadId:
 
   given format: Format[UploadId] = JsonFormatsFactory.makeValueClassFormat
-
-  def generate(): UploadId = UploadId(UUID.randomUUID().toString)
-
   given pathBindable: PathBindable[UploadId] = ValueClassBinder.valueClassBinder[UploadId](_.value)
+
+class UploadIdGenerator:
+  def nextUploadId(): UploadId = UploadId(UUID.randomUUID().toString)
