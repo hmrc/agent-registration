@@ -17,7 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared.upscan
 
 import play.api.libs.json.*
+import uk.gov.hmrc.agentregistration.shared.util.HttpUrlFormat
 
+import java.net.URL
 import scala.annotation.nowarn
 
 sealed trait UploadStatus
@@ -27,21 +29,23 @@ object UploadStatus:
   case object InProgress
   extends UploadStatus
 
-  final case class Failed(failureReason: String)
+  case object Failed
   extends UploadStatus
 
   final case class UploadedSuccessfully(
     name: String,
     mimeType: String,
-    downloadUrl: ObjectStoreUrl,
+    downloadUrl: URL,
     size: Option[Long],
-    checksum: String
+    checksum: String,
+    objectStoreLocation: Option[ObjectStoreUrl] = None
   )
   extends UploadStatus
 
-  private given OFormat[InProgress.type] = Json.format[InProgress.type]
-  private given OFormat[Failed] = Json.format[Failed]
-  private given OFormat[UploadedSuccessfully] = Json.format[UploadedSuccessfully]
+  given Format[URL] = HttpUrlFormat.format
+  given OFormat[InProgress.type] = Json.format[InProgress.type]
+  given OFormat[Failed.type] = Json.format[Failed.type]
+  given uploadedFormat: OFormat[UploadedSuccessfully] = Json.format[UploadedSuccessfully]
 
   @nowarn()
   given OFormat[UploadStatus] =
