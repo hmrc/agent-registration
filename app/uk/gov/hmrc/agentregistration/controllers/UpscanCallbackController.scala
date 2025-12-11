@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordConnector
 import uk.gov.hmrc.agentregistration.repository.UploadDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.Utr
-import uk.gov.hmrc.agentregistration.shared.upscan.Reference
+import uk.gov.hmrc.agentregistration.shared.upscan.FileUploadReference
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadId
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadStatus
 import uk.gov.hmrc.agentregistration.shared.util.HttpUrlFormat
@@ -42,17 +42,17 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 sealed trait CallbackBody:
-  def reference: Reference
+  def reference: FileUploadReference
 
 final case class ReadyCallbackBody(
-  reference: Reference,
+  reference: FileUploadReference,
   downloadUrl: URL,
   uploadDetails: UploadEventDetails
 )
 extends CallbackBody
 
 final case class FailedCallbackBody(
-  reference: Reference,
+  reference: FileUploadReference,
   failureDetails: ErrorDetails
 )
 extends CallbackBody

@@ -21,7 +21,7 @@ import play.api.libs.json.Json
 
 final case class UploadDetails(
   uploadId: UploadId,
-  reference: Reference,
+  reference: FileUploadReference,
   status: UploadStatus
 )
 

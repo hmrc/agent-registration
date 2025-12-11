@@ -27,7 +27,7 @@ import org.mongodb.scala.SingleObservableFuture
 import play.api.libs.functional.syntax.*
 import play.api.libs.json.*
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
-import uk.gov.hmrc.agentregistration.shared.upscan.Reference
+import uk.gov.hmrc.agentregistration.shared.upscan.FileUploadReference
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadDetails
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadId
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadStatus
@@ -73,7 +73,7 @@ object UploadDetailsRepo:
   private[repository] val mongoFormat: Format[UploadDetails] =
     given Format[ObjectId] = MongoFormats.objectIdFormat
     ((__ \ "uploadId").format[UploadId]
-      ~ (__ \ "reference").format[Reference]
+      ~ (__ \ "reference").format[FileUploadReference]
       ~ (__ \ "status").format[UploadStatus])(UploadDetails.apply, Tuple.fromProductTyped)
 
 @Singleton
@@ -102,7 +102,7 @@ extends PlayMongoRepository[UploadDetails](
   def findByUploadId(uploadId: UploadId): Future[Option[UploadDetails]] = collection.find(equal("uploadId", Codecs.toBson(uploadId))).headOption()
 
   def updateStatus(
-    reference: Reference,
+    reference: FileUploadReference,
     newStatus: UploadStatus
   ): Future[UploadStatus] = collection
     .findOneAndUpdate(

@@ -23,8 +23,8 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 /** Upscan File Reference
   */
-final case class Reference(value: String)
+final case class FileUploadReference(value: String)
 
-object Reference:
+object FileUploadReference:
 
-  given format: Format[Reference] = JsonFormatsFactory.makeValueClassFormat
+  given format: Format[FileUploadReference] = JsonFormatsFactory.makeValueClassFormat
