@@ -39,7 +39,8 @@ final case class MemberProvidedDetails(
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
-  memberSaUtr: Option[MemberSaUtr] = None
+  memberSaUtr: Option[MemberSaUtr] = None,
+  hasApprovedApplication: Option[Boolean] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
@@ -49,6 +50,9 @@ final case class MemberProvidedDetails(
     "Companies house query is missing for member provided details"
   )
   def getEmailAddress: MemberVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address is missing")
+  def getOfficerName: String = companiesHouseMatch.flatMap(
+    _.companiesHouseOfficer.map(_.name)
+  ).getOrThrowExpectedDataMissing("Companies house officer name is missing")
 
 object MemberProvidedDetails:
   given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
