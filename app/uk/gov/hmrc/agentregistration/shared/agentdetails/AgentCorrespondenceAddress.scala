@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AddressLookupFrontendAddress
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.shared.util.StringExtensions.replaceCommasWithSpaces
 
 final case class AgentCorrespondenceAddress(
@@ -67,7 +68,7 @@ object AgentCorrespondenceAddress:
    */
   def fromValueString(address: String): AgentCorrespondenceAddress =
     val parts = address.split(",").map(_.trim)
-    if parts.length == 6
+    if parts.length === 6
     then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
@@ -77,7 +78,7 @@ object AgentCorrespondenceAddress:
         postalCode = parts.lift(4),
         countryCode = parts.lift(5).getOrElse("")
       )
-    else if parts.length == 5
+    else if parts.length === 5
     then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
@@ -87,7 +88,7 @@ object AgentCorrespondenceAddress:
         postalCode = parts.lift(3),
         countryCode = parts.lift(4).getOrElse("")
       )
-    else if parts.length == 4
+    else if parts.length === 4
     then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
