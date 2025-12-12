@@ -18,13 +18,16 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 final case class BusinessPartnerRecordResponse(
   organisationName: Option[String],
+  individualName: Option[String],
   address: DesBusinessAddress,
   emailAddress: Option[String],
   primaryPhoneNumber: Option[String]
-)
+):
+  def getEntityName: String = organisationName.orElse(individualName).getOrThrowExpectedDataMissing("No entity name found")
 
 object BusinessPartnerRecordResponse:
   given format: Format[BusinessPartnerRecordResponse] = Json.format[BusinessPartnerRecordResponse]

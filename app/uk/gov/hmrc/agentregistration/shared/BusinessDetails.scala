@@ -51,6 +51,7 @@ object BusinessDetails:
 final case class LimitedCompanyDetails(
   safeId: SafeId,
   businessType: BusinessType = LimitedCompany,
+  ctUtr: CtUtr,
   companyProfile: CompanyProfile
 )
 extends BusinessDetails
@@ -70,6 +71,7 @@ object LimitedCompanyDetails:
 final case class SoleTraderDetails(
   safeId: SafeId,
   businessType: BusinessType = SoleTrader,
+  saUtr: SaUtr,
   fullName: FullName,
   dateOfBirth: LocalDate,
   nino: Option[Nino],
@@ -124,7 +126,8 @@ object BusinessDetailsPartnership:
 final case class FullName(
   firstName: String,
   lastName: String
-)
+):
+  def toStringFull: String = s"$firstName $lastName"
 
 object FullName:
   given Format[FullName] = Json.format[FullName]

@@ -38,6 +38,7 @@ import uk.gov.hmrc.agentregistration.shared.SafeId
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
+import uk.gov.hmrc.agentregistration.shared.UserRole
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
@@ -75,6 +76,7 @@ extends BackendController(cc):
     groupId = GroupId(value = UUID.randomUUID().toString),
     createdAt = Instant.now(),
     applicationState = ApplicationState.Submitted,
+    userRole = Some(UserRole.Authorised),
     businessDetails = Some(BusinessDetailsLlp(
       safeId = SafeId("safe-id-12345"),
       saUtr = SaUtr("1234567890"),
@@ -86,7 +88,7 @@ extends BackendController(cc):
       )
     )),
     applicantContactDetails = Some(ApplicantContactDetails(
-      applicantName = ApplicantName.NameOfAuthorised(name = Some("Bob Ross")),
+      applicantName = ApplicantName("Bob Ross"),
       telephoneNumber = Some(TelephoneNumber("1234658979")),
       applicantEmailAddress = Some(ApplicantEmailAddress(
         emailAddress = EmailAddress("user@test.com"),
