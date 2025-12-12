@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 
 import java.time.Instant
 
-/** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
+/** Member provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
   */
 final case class MemberProvidedDetails(
   _id: MemberProvidedDetailsId,

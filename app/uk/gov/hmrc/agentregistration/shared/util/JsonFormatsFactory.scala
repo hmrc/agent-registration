@@ -51,7 +51,7 @@ object JsonFormatsFactory:
       Writes(e => JsString(e.toString))
     )
 
-  /** Compile-time checked derivation of play json Format for case classes of the form: case class X(value: String)
+  /** Compile-time checked derivation of play json Format for final case classes of the form: final case class X(value: String)
     */
   @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
   inline def makeValueClassFormat[A](using
@@ -71,9 +71,9 @@ object JsonFormatsFactory:
             )
           case _ =>
             error(
-              "'JsonFormatsFactory.makeValueClassFormat' can only be used for case classes with exactly one field of type String,\nie. case class X(value: String)"
+              "'JsonFormatsFactory.makeValueClassFormat' can only be used for final case classes with exactly one field of type String,\nie. final case class X(value: String)"
             )
       case _ =>
         error(
-          "'JsonFormatsFactory.makeValueClassFormat' can only be used for case classes with exactly one field of type String,\nie. case class X(value: String)"
+          "'JsonFormatsFactory.makeValueClassFormat' can only be used for final case classes with exactly one field of type String,\nie. final case class X(value: String)"
         )
