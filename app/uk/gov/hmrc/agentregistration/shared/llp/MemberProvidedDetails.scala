@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared.llp
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
@@ -39,7 +40,8 @@ final case class MemberProvidedDetails(
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
-  memberSaUtr: Option[MemberSaUtr] = None
+  memberSaUtr: Option[MemberSaUtr] = None,
+  hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
