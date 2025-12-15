@@ -31,7 +31,7 @@ import java.time.Clock
 import java.time.Instant
 import scala.annotation.nowarn
 
-/** Agent (Registration) Application. This case class represents the data entered by a user for registering as an agent.
+/** Agent (Registration) Application. This final case class represents the data entered by a user for registering as an agent.
   */
 sealed trait AgentApplication:
 
@@ -88,7 +88,7 @@ sealed trait AgentApplication:
 
   def asLlpApplication: AgentApplicationLlp = asExpected[AgentApplicationLlp]
 
-/** Sole Trader Application. This case class represents the data entered by a user for registering as a sole trader.
+/** Sole Trader Application. This final case class represents the data entered by a user for registering as a sole trader.
   */
 final case class AgentApplicationSoleTrader(
   override val _id: AgentApplicationId,
@@ -109,7 +109,7 @@ extends AgentApplication:
   def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
 
-/** Application Applicatoin for Limited Liability Partnership (Llp). This case class represents the data entered by a user for registering as an Llp.
+/** Application Applicatoin for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for registering as an Llp.
   */
 final case class AgentApplicationLlp(
   override val _id: AgentApplicationId,

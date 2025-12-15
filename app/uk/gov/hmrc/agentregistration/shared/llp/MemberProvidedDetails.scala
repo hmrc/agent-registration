@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 
 import java.time.Instant
 
-/** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
+/** Member provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
   */
 final case class MemberProvidedDetails(
   _id: MemberProvidedDetailsId,
@@ -41,7 +41,8 @@ final case class MemberProvidedDetails(
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
   memberSaUtr: Option[MemberSaUtr] = None,
-  hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet
+  hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
+  hasApprovedApplication: Option[Boolean] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
@@ -51,6 +52,9 @@ final case class MemberProvidedDetails(
     "Companies house query is missing for member provided details"
   )
   def getEmailAddress: MemberVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address is missing")
+  def getOfficerName: String = companiesHouseMatch.flatMap(
+    _.companiesHouseOfficer.map(_.name)
+  ).getOrThrowExpectedDataMissing("Companies house officer name is missing")
 
 object MemberProvidedDetails:
   given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]

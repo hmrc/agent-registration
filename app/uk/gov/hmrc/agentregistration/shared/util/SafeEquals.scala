@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
+// scalafix:off DisableSyntax
 object SafeEquals:
-
   /** Simple safe equals so we don't have to import cats
     */
   extension [A](v: A)
