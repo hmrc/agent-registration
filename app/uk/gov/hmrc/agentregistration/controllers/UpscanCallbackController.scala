@@ -24,7 +24,7 @@ import play.api.mvc.Request
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordConnector
-import uk.gov.hmrc.agentregistration.repository.UploadDetailsRepo
+import uk.gov.hmrc.agentregistration.repository.UploadRepo
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.shared.upscan.FileUploadReference
 import uk.gov.hmrc.agentregistration.shared.upscan.UploadId
@@ -94,7 +94,7 @@ final case class UploadEventDetails(
 final class UpscanCallbackController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  uploadDetailsRepo: UploadDetailsRepo
+  uploadDetailsRepo: UploadRepo
 )
 extends BackendController(cc)
 with RequestAwareLogging:
