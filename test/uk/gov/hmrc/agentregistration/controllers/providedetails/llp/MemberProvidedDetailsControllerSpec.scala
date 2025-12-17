@@ -57,11 +57,11 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val repo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
+    val memeberProvidedDetailsRepo: MemeberProvidedDetailsRepo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
     val memberProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
-    repo.upsert(memberProvidedDetailsStarted).futureValue
-    repo.find(
-      memberProvidedDetailsStarted.agentApplicationId
+    memeberProvidedDetailsRepo.upsert(memberProvidedDetailsStarted).futureValue
+    memeberProvidedDetailsRepo.findById(
+      memberProvidedDetailsStarted.memberProvidedDetailsId
     ).futureValue.value shouldBe memberProvidedDetailsStarted withClue "sanity check"
 
     val response =
@@ -95,7 +95,7 @@ extends ControllerSpec:
     repo.findAll(internalUserId)
       .futureValue shouldBe memberProvidedDetailsStarted withClue "sanity check"
 
-    val response =
+    val response: HttpResponse =
       httpClient
         .get(url"$baseUrl/agent-registration/member-provided-details")
         .execute[HttpResponse]
@@ -110,12 +110,14 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val repo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
+    val memberProvidedDetailsRepo: MemeberProvidedDetailsRepo = app.injector.instanceOf[MemeberProvidedDetailsRepo]
 
-    repo.find(tdAll.agentApplicationId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
-    val memberProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
+    val memberProvidedDetailsStarted: MemberProvidedDetails = tdAll.providedDetailsLlp.afterStarted
+    memberProvidedDetailsRepo.findById(
+      memberProvidedDetailsStarted.memberProvidedDetailsId
+    ).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
 
-    val response =
+    val response: HttpResponse =
       httpClient
         .post(url"$baseUrl/agent-registration/member-provided-details")
         .withBody(Json.toJson(memberProvidedDetailsStarted))
@@ -124,7 +126,7 @@ extends ControllerSpec:
     response.status shouldBe Status.OK
     response.body shouldBe ""
 
-    repo
-      .find(tdAll.agentApplicationId)
+    memberProvidedDetailsRepo
+      .findById(memberProvidedDetailsStarted.memberProvidedDetailsId)
       .futureValue.value shouldBe memberProvidedDetailsStarted withClue "after http request there should be records in mongo"
     IndividualAuthStubs.verifyAuthorise()
