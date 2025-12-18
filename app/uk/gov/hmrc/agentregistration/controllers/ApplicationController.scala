@@ -44,14 +44,14 @@ extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
 
-  val findApplication: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
+  def findApplication: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
     agentApplicationRepo
       .findByInternalUserId(request.internalUserId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  val upsertApplication: Action[AgentApplication] =
+  def upsertApplication: Action[AgentApplication] =
     actions
       .authorised
       .async(parse.json[AgentApplication]):

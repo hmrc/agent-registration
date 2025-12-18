@@ -65,7 +65,7 @@ extends ControllerSpec:
   "upsert application upserts application to mongo and returns OK" in:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
-    val repo = app.injector.instanceOf[AgentApplicationRepo]
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
 
     repo.findByInternalUserId(tdAll.internalUserId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
     val exampleAgentApplication: AgentApplication = tdAll.llpApplicationAfterCreated

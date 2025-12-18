@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 
+import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
@@ -25,6 +26,8 @@ import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.providedetails
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.ProvidedDetailsRepoHelp.given
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails.given
 import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
@@ -35,6 +38,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
 @Singleton
@@ -48,7 +52,26 @@ extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(MemberProvidedDetails.format)),
   replaceIndexes = true
-)
+):
+
+  def findAll(internalUserId: InternalUserId): Future[List[MemberProvidedDetails]] = collection
+    .find(
+      filter = Filters.eq("internalUserId", internalUserId.value)
+    )
+    .toFuture()
+    .map(_.toList)
+
+  def find(
+    internalUserId: InternalUserId,
+    agentApplicationId: AgentApplicationId
+  ): Future[Option[MemberProvidedDetails]] = collection
+    .find(
+      Filters.and(
+        Filters.eq("internalUserId", internalUserId.value),
+        Filters.eq("agentApplicationId", agentApplicationId.value)
+      )
+    )
+    .headOption()
 
 object ProvidedDetailsRepoHelp:
 

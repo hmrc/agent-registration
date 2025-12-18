@@ -82,43 +82,6 @@ extends PlayMongoRepository[A](
       filter = Filters.eq("_id", idString.idString(i))
     ).headOption()
 
-  def findByLinkId(linkId: LinkId): Future[Option[A]] = collection
-    .find(
-      filter = Filters.eq("linkId", linkId.value)
-    )
-    .headOption()
-
-  def findByInternalUserId(internalUserId: InternalUserId): Future[Option[A]] = collection
-    .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
-    )
-    .headOption()
-
-  def findAll(internalUserId: InternalUserId): Future[List[A]] = collection
-    .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
-    )
-    .toFuture()
-    .map(_.toList)
-
-  def find(agentApplicationId: AgentApplicationId): Future[Option[A]] = collection
-    .find(
-      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
-    )
-    .headOption()
-
-  def find(
-    internalUserId: InternalUserId,
-    agentApplicationId: AgentApplicationId
-  ): Future[Option[A]] = collection
-    .find(
-      Filters.and(
-        Filters.eq("internalUserId", internalUserId.value),
-        Filters.eq("agentApplicationId", agentApplicationId.value)
-      )
-    )
-    .headOption()
-
 object Repo:
 
   trait IdString[I]:

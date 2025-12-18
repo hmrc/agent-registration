@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
@@ -25,6 +26,7 @@ import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 
@@ -46,7 +49,19 @@ extends Repo[AgentApplicationId, AgentApplication](
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
   replaceIndexes = true
-)
+):
+
+  def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
+    .find(
+      filter = Filters.eq("internalUserId", internalUserId.value)
+    )
+    .headOption()
+
+  def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
+    .find(
+      filter = Filters.eq("linkId", linkId.value)
+    )
+    .headOption()
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
