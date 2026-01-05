@@ -17,9 +17,11 @@
 package uk.gov.hmrc.agentregistration.controllers
 
 import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import scala.concurrent.ExecutionContext
 
 abstract class BackendController(override val controllerComponents: ControllerComponents)
-extends uk.gov.hmrc.play.bootstrap.backend.controller.BackendController(controllerComponents):
+extends uk.gov.hmrc.play.bootstrap.backend.controller.BackendController(controllerComponents),
+  RequestAwareLogging:
   given ExecutionContext = controllerComponents.executionContext

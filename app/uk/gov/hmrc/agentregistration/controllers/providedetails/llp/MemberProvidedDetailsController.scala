@@ -22,6 +22,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
+import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.MemeberProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.LinkId
@@ -29,7 +30,6 @@ import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,9 +43,7 @@ class MemberProvidedDetailsController @Inject() (
 )
 extends BackendController(cc):
 
-  given ExecutionContext = controllerComponents.executionContext
-
-  val upsert: Action[MemberProvidedDetails] =
+  def upsert: Action[MemberProvidedDetails] =
     actions.individualAuthorised.async(parse.json[MemberProvidedDetails]):
       implicit request =>
         val memberProvidedDetails: MemberProvidedDetails = request.body
@@ -62,9 +60,9 @@ extends BackendController(cc):
         case None => NoContent
       }
 
-  val findAll: Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def findByInternalUserId: Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
-      .findAll(request.internalUserId)
+      .findByInternalUserId(request.internalUserId)
       .map:
         case Nil => NoContent
         case memberProvidedDetails => Ok(Json.toJson(memberProvidedDetails))

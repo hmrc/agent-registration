@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.upscan
+package uk.gov.hmrc.agentregistration.shared.upload
 
 import play.api.libs.json.Format
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
-/** Upscan File Reference
-  */
-final case class FileUploadReference(value: String)
+final case class UploadId(value: String)
 
-object FileUploadReference:
+object UploadId:
 
-  given format: Format[FileUploadReference] = JsonFormatsFactory.makeValueClassFormat
+  given format: Format[UploadId] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[UploadId] = ValueClassBinder.valueClassBinder[UploadId](_.value)

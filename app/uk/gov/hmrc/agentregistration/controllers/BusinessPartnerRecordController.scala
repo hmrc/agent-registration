@@ -23,11 +23,9 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordConnector
 import uk.gov.hmrc.agentregistration.shared.Utr
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
 
 @Singleton()
 class BusinessPartnerRecordController @Inject() (
@@ -36,8 +34,6 @@ class BusinessPartnerRecordController @Inject() (
   businessPartnerRecordConnector: BusinessPartnerRecordConnector
 )
 extends BackendController(cc):
-
-  given ExecutionContext = controllerComponents.executionContext
 
   def getBusinessPartnerRecord(utr: Utr): Action[AnyContent] = actions
     .authorised

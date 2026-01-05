@@ -16,22 +16,25 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
-import play.api.libs.json._
+import play.api.libs.json.*
+import sttp.model.Uri
 
-import java.net.URL
-import scala.util.Try
+object UriFormat:
 
-object HttpUrlFormat:
-
-  given format: Format[URL] =
-    new Format[URL]:
-
-      override def reads(json: JsValue): JsResult[URL] = json
+  given uriFormat: Format[Uri] =
+    new Format[Uri]:
+      override def reads(json: JsValue): JsResult[Uri] = json
         .validate[String]
-        .flatMap(parseUrl(_).fold(invalidUrlError)(JsSuccess(_)))
+        .flatMap(s =>
+          Uri.parse(s).fold(
+            (errorMessage: String) =>
+              JsError(Seq(JsPath() -> Seq(JsonValidationError(
+                "error.expected.uri",
+                s,
+                errorMessage
+              )))),
+            uri => JsSuccess(uri)
+          )
+        )
 
-      private def parseUrl(url: String): Option[URL] = Try(new java.net.URI(url).toURL).toOption
-
-      private def invalidUrlError: JsError = JsError(Seq(JsPath() -> Seq(JsonValidationError("error.expected.url"))))
-
-      override def writes(o: URL): JsValue = JsString(o.toString)
+      override def writes(uri: Uri): JsValue = JsString(uri.toString)

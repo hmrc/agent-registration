@@ -54,7 +54,7 @@ extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
   replaceIndexes = true
 ):
 
-  def findAll(internalUserId: InternalUserId): Future[List[MemberProvidedDetails]] = collection
+  def findByInternalUserId(internalUserId: InternalUserId): Future[List[MemberProvidedDetails]] = collection
     .find(
       filter = Filters.eq("internalUserId", internalUserId.value)
     )
