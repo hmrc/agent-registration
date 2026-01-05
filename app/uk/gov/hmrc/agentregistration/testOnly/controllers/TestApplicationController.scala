@@ -30,14 +30,15 @@ import uk.gov.hmrc.agentregistration.shared.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.Crn
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.EntityCheckResult
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.SafeId
+import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
-import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
@@ -95,5 +96,6 @@ extends BackendController(cc):
     )),
     amlsDetails = None,
     agentDetails = None,
-    hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
+    hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
+    entityCheckResult = Some(EntityCheckResult.Pass)
   )
