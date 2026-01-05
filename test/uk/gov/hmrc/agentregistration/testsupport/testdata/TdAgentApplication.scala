@@ -39,7 +39,8 @@ trait TdAgentApplication { dependencies: TdBase =>
     amlsDetails = None,
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
-    entityCheckResult = None
+    entityCheckResult = None,
+    companyStatusCheckResult = None
   )
 
 }
