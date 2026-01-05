@@ -44,18 +44,7 @@ final case class AmlsDetails(
             _,
             Some(_),
             Some(_),
-            Some(UploadDetails(
-              _,
-              _,
-              UploadStatus.UploadedSuccessfully(
-                _,
-                _,
-                _,
-                _,
-                _,
-                Some(_)
-              )
-            ))
+            Some(UploadDetails(_, UploadStatus.UploadedSuccessfully(_, _, _, _, _)))
           ) if !isHmrc =>
         true
       case _ => false

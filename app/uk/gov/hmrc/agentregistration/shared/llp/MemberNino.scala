@@ -18,8 +18,6 @@ package uk.gov.hmrc.agentregistration.shared.llp
 
 import uk.gov.hmrc.agentregistration.shared.Nino
 import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-
 import scala.annotation.nowarn
 
 sealed trait MemberNino
@@ -48,10 +46,15 @@ object MemberNino:
 
   @nowarn()
   given OFormat[MemberNino] =
-    given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[NotProvided.type] = Json.format[NotProvided.type]
     given OFormat[Provided] = Json.format[Provided]
     given OFormat[FromAuth] = Json.format[FromAuth]
+    given JsonConfiguration = JsonConfiguration(
+      discriminator = "type",
+      typeNaming = JsonNaming { fullName =>
+        fullName.split('.').last // Extract just the class name
+      }
+    )
 
     val dontDeleteMe = """
                          |Don't delete me.

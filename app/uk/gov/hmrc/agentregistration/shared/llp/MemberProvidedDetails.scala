@@ -19,15 +19,15 @@ package uk.gov.hmrc.agentregistration.shared.llp
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
+
 import java.time.Instant
 
-/** Member provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
+/** Member provided details for Limited Liability Partnership (Llp). This case class represents the data entered by a user for approving as an Llp.
   */
 final case class MemberProvidedDetails(
   _id: MemberProvidedDetailsId,
@@ -40,26 +40,19 @@ final case class MemberProvidedDetails(
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
   memberSaUtr: Option[MemberSaUtr] = None,
-  hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
   hasApprovedApplication: Option[Boolean] = None
 ):
 
   val memberProvidedDetailsId: MemberProvidedDetailsId = _id
-
-  val hasFinished: Boolean = providedDetailsState === Finished
+  val hasFinished: Boolean = if providedDetailsState === Finished then true else false
   val isInProgress: Boolean = !hasFinished
-
   def getCompaniesHouseMatch: CompaniesHouseMatch = companiesHouseMatch.getOrThrowExpectedDataMissing(
     "Companies house query is missing for member provided details"
   )
-
-  def getEmailAddress: MemberVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address")
-
-  def getTelephoneNumber: TelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number")
-
-  def getNino: MemberNino = memberNino.getOrThrowExpectedDataMissing("Nino")
-
-  def getSaUtr: MemberSaUtr = memberSaUtr.getOrThrowExpectedDataMissing("SaUtr")
+  def getEmailAddress: MemberVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address is missing")
+  def getOfficerName: String = companiesHouseMatch.flatMap(
+    _.companiesHouseOfficer.map(_.name)
+  ).getOrThrowExpectedDataMissing("Companies house officer name is missing")
 
 object MemberProvidedDetails:
   given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
