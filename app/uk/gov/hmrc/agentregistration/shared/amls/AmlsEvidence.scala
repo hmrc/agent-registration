@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.upscan
+package uk.gov.hmrc.agentregistration.shared.amls
 
-import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.upload.UploadId
+import uk.gov.hmrc.objectstore.client.Path
 
-final case class ObjectStoreUrl(private val value: String)
+final case class AmlsEvidence(
+  uploadId: UploadId,
+  fileName: String,
+  objectStoreLocation: Path.File
+)
 
-object ObjectStoreUrl:
-
-  def apply(uri: sttp.model.Uri): ObjectStoreUrl =
-    val isFullyQualified: Boolean = uri.scheme.isDefined && uri.host.isDefined
-    require(isFullyQualified, "ObjectStoreUrl must be fully qualified")
-    ObjectStoreUrl(uri.toString)
-
-  given format: Format[ObjectStoreUrl] = JsonFormatsFactory.makeValueClassFormat
+object AmlsEvidence:
+  given OFormat[AmlsEvidence] =
+    given OFormat[Path.File] = Json.format[Path.File]
+    given OFormat[Path.Directory] = Json.format[Path.Directory]
+    Json.format[AmlsEvidence]

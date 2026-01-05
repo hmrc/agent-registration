@@ -1,16 +1,13 @@
 # microservice specific routes
 
-GET         /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplication
-GET         /application/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationByLinkId(linkId: LinkId)
-GET         /application/by-agent-application-id/:agentApplicationId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findApplicationById(agentApplicationId: AgentApplicationId)
+GET         /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByInternalUserId
+GET         /application/linkId/:linkId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByLinkId(linkId: LinkId)
+GET         /application/by-agent-application-id/:agentApplicationId     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findById(agentApplicationId: AgentApplicationId)
 POST        /application             uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
-POST        /application/amls/upscan-callback   uk.gov.hmrc.agentregistration.controllers.UpscanCallbackController.callback
-POST        /application/amls/upscan-initiate   uk.gov.hmrc.agentregistration.controllers.UpscanProgressController.initiate
-GET         /application/amls/upscan-status/:uploadId   uk.gov.hmrc.agentregistration.controllers.UpscanProgressController.getUpscanStatus(uploadId: UploadId)
 
 GET         /business-partner-record/utr/:utr   uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
 
 GET         /member-provided-details/by-agent-applicationId/:agentApplicationId     uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findByAgentApplicationId(agentApplicationId: AgentApplicationId)
-GET         /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findAll
+GET         /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.findByInternalUserId
 POST        /member-provided-details uk.gov.hmrc.agentregistration.controllers.providedetails.llp.MemberProvidedDetailsController.upsert
 

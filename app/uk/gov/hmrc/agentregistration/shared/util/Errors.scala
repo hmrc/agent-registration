@@ -16,9 +16,32 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.InternalServerException
+
+import scala.concurrent.Future
+
 object Errors:
 
   extension [T](t: Option[T])
     inline def getOrThrowExpectedDataMissing(message: => String): T = t.getOrElse(throw new IllegalStateException(s"Expected data was missing: $message"))
 
   inline def throwExpectedDataMissing(message: String): Nothing = throw new IllegalStateException(s"Expected data was missing: $message")
+
+  /** Creates a requirement which has to pass to continue computation.
+    */
+  inline def require(
+    requirement: Boolean,
+    message: => String
+  )(using request: RequestHeader): Unit =
+    if !requirement then
+      throw InternalServerException(message)
+    else ()
+
+  def requireF(
+    requirement: Boolean,
+    message: => String
+  )(using request: RequestHeader): Future[Unit] =
+    if !requirement then
+      Future.failed(InternalServerException(message))
+    else Future.successful(())

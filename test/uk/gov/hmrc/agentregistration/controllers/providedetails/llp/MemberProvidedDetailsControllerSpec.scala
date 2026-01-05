@@ -92,7 +92,7 @@ extends ControllerSpec:
       repo.upsert(memberProvidedDetails).futureValue
     }
 
-    repo.findAll(internalUserId)
+    repo.findByInternalUserId(internalUserId)
       .futureValue shouldBe memberProvidedDetailsStarted withClue "sanity check"
 
     val response: HttpResponse =

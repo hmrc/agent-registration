@@ -26,9 +26,10 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.agentregistration.shared.util.Errors
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.auth.core.AuthorisationException
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,9 +43,7 @@ class ApplicationController @Inject() (
 )
 extends BackendController(cc):
 
-  given ExecutionContext = controllerComponents.executionContext
-
-  def findApplication: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
+  def findByInternalUserId: Action[AnyContent] = actions.authorised.async: (request: AuthorisedRequest[AnyContent]) =>
     agentApplicationRepo
       .findByInternalUserId(request.internalUserId)
       .map:
@@ -62,14 +61,14 @@ extends BackendController(cc):
             .upsert(request.body)
             .map(_ => Ok(""))
 
-  def findApplicationByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
+  def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
     agentApplicationRepo
       .findByLinkId(linkId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  def findApplicationById(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def findById(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     agentApplicationRepo
       .findById(agentApplicationId)
       .map:
