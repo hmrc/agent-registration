@@ -95,5 +95,7 @@ extends BackendController(cc):
     )),
     amlsDetails = None,
     agentDetails = None,
+    entityCheckResult = None,
+    companyStatusCheckResult = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
   )
