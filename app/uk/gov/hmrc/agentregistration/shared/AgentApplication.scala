@@ -47,6 +47,7 @@ sealed trait AgentApplication:
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
   def entityCheckResult: Option[EntityCheckResult]
+  def companyStatusCheckResult: Option[CompanyStatusCheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
 
   //  /** Updates the application state to the next state */
@@ -108,6 +109,7 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
   def getEntityCheckResult: EntityCheckResult = entityCheckResult.getOrElse(expectedDataNotDefinedError("entityCheckResult"))
+  def getCompanyStatusCheckResult: CompanyStatusCheckResult = companyStatusCheckResult.getOrElse(expectedDataNotDefinedError("companyStatusCheckResult"))
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
@@ -141,6 +143,7 @@ final case class AgentApplicationSoleTrader(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
+  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -163,6 +166,7 @@ final case class AgentApplicationLlp(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
+  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
