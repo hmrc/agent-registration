@@ -17,56 +17,12 @@
 package uk.gov.hmrc.agentregistration.shared.contactdetails
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
-import play.api.libs.json.JsonConfiguration
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.ApplicantRoleInLlp
-import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseNameQuery
-import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficer
-import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName.NameOfMember
-import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-import scala.annotation.nowarn
-
-sealed trait ApplicantName:
-
-  val role: ApplicantRoleInLlp
-
-  def as[T <: ApplicantName](using ct: reflect.ClassTag[T]): Option[T] =
-    this match
-      case t: T => Some(t)
-      case _ => None
-
-  def asExpected[T <: ApplicantName](using ct: reflect.ClassTag[T]): T = as[T].getOrThrowExpectedDataMissing(
-    s"Expected type ${ct.runtimeClass.getSimpleName} but got ${this.getClass.getSimpleName}"
-  )
+final case class ApplicantName(
+  value: String
+):
+  def isValidName: Boolean = value.matches("^[a-zA-Z\\-' ]+$")
 
 object ApplicantName:
-
-  private val nameRegex = "^[a-zA-Z\\-' ]+$"
-  def isValidName(name: String): Boolean = name.matches(nameRegex)
-
-  final case class NameOfMember(
-    memberNameQuery: Option[CompaniesHouseNameQuery] = None,
-    companiesHouseOfficer: Option[CompaniesHouseOfficer] = None
-  )
-  extends ApplicantName:
-    override val role: ApplicantRoleInLlp.Member.type = ApplicantRoleInLlp.Member
-
-  final case class NameOfAuthorised(
-    name: Option[String] = None
-  )
-  extends ApplicantName:
-    override val role: ApplicantRoleInLlp.Authorised.type = ApplicantRoleInLlp.Authorised
-
-  @nowarn
-  given format: Format[ApplicantName] =
-    given JsonConfiguration = JsonConfig.jsonConfiguration
-    given OFormat[NameOfMember] = Json.format[NameOfMember]
-    given OFormat[NameOfAuthorised] = Json.format[NameOfAuthorised]
-    val dontDeleteMe = """
-        |Don't delete me.
-        |I will emit a warning so `@nowarn` can be applied to address below
-        |`Unreachable case except for null` problem emitted by Play Json macro"""
-    Json.format[ApplicantName]
+  given format: Format[ApplicantName] = JsonFormatsFactory.makeValueClassFormat

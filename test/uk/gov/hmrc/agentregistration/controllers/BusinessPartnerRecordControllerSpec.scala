@@ -37,6 +37,7 @@ extends ControllerSpec:
 
   val desRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
     organisationName = Some("Test Company Name"),
+    individualName = None,
     address = DesBusinessAddress(
       addressLine1 = "Line 1",
       addressLine2 = Some("Line 2"),

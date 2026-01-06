@@ -20,6 +20,7 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
+import uk.gov.hmrc.agentregistration.shared.UserRole
 
 import java.time.Instant
 
@@ -34,6 +35,7 @@ trait TdAgentApplication { dependencies: TdBase =>
     groupId = groupId,
     createdAt = createdAt,
     applicationState = ApplicationState.Started,
+    userRole = Some(UserRole.Authorised),
     businessDetails = None,
     applicantContactDetails = None,
     amlsDetails = None,
