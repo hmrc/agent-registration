@@ -63,6 +63,12 @@ class BusinessPartnerRecordConnector @Inject() (
       Some(
         BusinessPartnerRecordResponse(
           organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
+          individualName = (r \ "individual" \ "firstName").asOpt[String]
+            .flatMap { firstName =>
+              (r \ "individual" \ "lastName").asOpt[String].map { lastName =>
+                s"$firstName $lastName"
+              }
+            },
           address =
             (r \ "address").validate[DesBusinessAddress] match {
               case JsSuccess(value, _) => value

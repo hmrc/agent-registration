@@ -17,12 +17,19 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.PathBindableFactory
 
 enum UserRole:
 
   case Owner
+  case Member
+  case Partner
+  case Director
   case Authorised
 
 object UserRole:
+
   given Format[UserRole] = JsonFormatsFactory.makeEnumFormat[UserRole]
+  given PathBindable[UserRole] = PathBindableFactory.pathBindable[UserRole]
