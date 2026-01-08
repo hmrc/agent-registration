@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
+import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
-import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import java.time.Clock
 import java.time.Instant
@@ -83,6 +81,7 @@ sealed trait AgentApplication:
       case BusinessType.Partnership.LimitedPartnership => true
       case BusinessType.Partnership.ScottishLimitedPartnership => true
       case _ => false
+
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("agentDetails")
   def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
@@ -90,10 +89,8 @@ sealed trait AgentApplication:
     businessType match
       case BusinessType.Partnership.LimitedLiabilityPartnership => this.asLlpApplication.getBusinessDetails.companyProfile
       case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.companyProfile
-      case BusinessType.Partnership.LimitedPartnership =>
-        this.asLimitedPartnershipApplication.getBusinessDetails.companyProfile.getOrThrowExpectedDataMissing("companyProfile")
-      case BusinessType.Partnership.ScottishLimitedPartnership =>
-        this.asScottishLimitedPartnershipApplication.getBusinessDetails.companyProfile.getOrThrowExpectedDataMissing("companyProfile")
+      case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.companyProfile
+      case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.companyProfile
       case _ => expectedDataNotDefinedError("currently company profile is only defined for Llp applications, as other types are not implemented yet")
 
   // all agent applications must have a UTR
@@ -186,7 +183,7 @@ final case class AgentApplicationLimitedCompany(
   override val createdAt: Instant,
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
-  businessDetails: Option[LimitedCompanyDetails],
+  businessDetails: Option[BusinessDetailsLimitedCompany],
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
@@ -198,7 +195,7 @@ extends AgentApplication:
 
   override val businessType: BusinessType.LimitedCompany.type = BusinessType.LimitedCompany
 
-  def getBusinessDetails: LimitedCompanyDetails = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
+  def getBusinessDetails: BusinessDetailsLimitedCompany = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
 
 /** General Partnership Application. This final case class represents the data entered by a user for registering as a general partnership.
@@ -211,7 +208,7 @@ final case class AgentApplicationGeneralPartnership(
   override val createdAt: Instant,
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
-  businessDetails: Option[BusinessDetailsPartnership],
+  businessDetails: Option[BusinessDetailsGeneralPartnership],
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
@@ -222,7 +219,7 @@ final case class AgentApplicationGeneralPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.GeneralPartnership.type = BusinessType.Partnership.GeneralPartnership
-  def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
+  def getBusinessDetails: BusinessDetailsGeneralPartnership = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
 
 /** Application for Limited Partnership. This final case class represents the data entered by a user for registering as a Limited Partnership.
   */
@@ -247,7 +244,7 @@ extends AgentApplication:
   override val businessType: BusinessType.Partnership.LimitedPartnership.type = BusinessType.Partnership.LimitedPartnership
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
-  def getCrn: Crn = getBusinessDetails.companyProfile.map(_.companyNumber).getOrThrowExpectedDataMissing("Company profile missing from limited partnership")
+  def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
 
 final case class AgentApplicationScottishLimitedPartnership(
   override val _id: AgentApplicationId,
@@ -270,9 +267,7 @@ extends AgentApplication:
   override val businessType: BusinessType.Partnership.ScottishLimitedPartnership.type = BusinessType.Partnership.ScottishLimitedPartnership
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
-  def getCrn: Crn = getBusinessDetails.companyProfile.map(
-    _.companyNumber
-  ).getOrThrowExpectedDataMissing("Company profile missing from Scottish limited partnership")
+  def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
 
 final case class AgentApplicationScottishPartnership(
   override val _id: AgentApplicationId,
@@ -282,7 +277,7 @@ final case class AgentApplicationScottishPartnership(
   override val createdAt: Instant,
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
-  businessDetails: Option[BusinessDetailsPartnership],
+  businessDetails: Option[BusinessDetailsScottishPartnership],
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
@@ -294,7 +289,7 @@ extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishPartnership.type = BusinessType.Partnership.ScottishPartnership
 
-  def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
+  def getBusinessDetails: BusinessDetailsScottishPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
 
 object AgentApplication:
 
