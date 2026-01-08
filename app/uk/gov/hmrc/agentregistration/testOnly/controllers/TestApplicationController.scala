@@ -26,8 +26,8 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationIdGenerator
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.BusinessDetailsLlp
-import uk.gov.hmrc.agentregistration.shared.CompanyProfile
+import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
+import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.Crn
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.EntityCheckResult
