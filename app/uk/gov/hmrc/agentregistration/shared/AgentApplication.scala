@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.EntityCheckResult.Pass
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
@@ -47,7 +48,7 @@ sealed trait AgentApplication:
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
   def refusalToDealWithCheck: Option[EntityCheckResult]
-  def companyStatusCheckResult: Option[CompanyStatusCheckResult]
+  def companyStatusCheckResult: Option[EntityCheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
 
   //  /** Updates the application state to the next state */
@@ -108,13 +109,12 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
-  def getCompanyStatusCheckResult: CompanyStatusCheckResult = companyStatusCheckResult.getOrElse(expectedDataNotDefinedError("companyStatusCheckResult"))
-
-  def getRefusalToDealWithCheck: EntityCheckResult = refusalToDealWithCheck.getOrElse(expectedDataNotDefinedError("refusalToDealWithCheck"))
-
-  def hasEntityCheckPassed: Boolean =
-    (getRefusalToDealWithCheck, getCompanyStatusCheckResult) match
-      case (EntityCheckResult.Pass, CompanyStatusCheckResult.Allow) => true
+  def hasEntityCheckPassed: Option[Boolean] =
+    for {
+      getRefusalToDealWithCheck <- refusalToDealWithCheck
+      getCompanyStatusCheckResult <- companyStatusCheckResult
+    } yield (getRefusalToDealWithCheck, getCompanyStatusCheckResult) match
+      case (Pass, Pass) => true
       case _ => false
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
@@ -150,18 +150,20 @@ final case class AgentApplicationSoleTrader(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
   deceasedCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
 
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
 
-  def getDeceasedCheck: EntityCheckResult = deceasedCheck.getOrThrowExpectedDataMissing("deceasedCheck")
-
-  override def hasEntityCheckPassed: Boolean =
-    (getRefusalToDealWithCheck, getDeceasedCheck, getCompanyStatusCheckResult) match
-      case (EntityCheckResult.Pass, EntityCheckResult.Pass, CompanyStatusCheckResult.Allow) => true
+  override def hasEntityCheckPassed: Option[Boolean] =
+    for {
+      getRefusalToDealWithCheck <- refusalToDealWithCheck
+      getCompanyStatusCheckResult <- companyStatusCheckResult
+      getDeceasedCheck <- deceasedCheck
+    } yield (getRefusalToDealWithCheck, getCompanyStatusCheckResult, getDeceasedCheck) match
+      case (Pass, Pass, Pass) => true
       case _ => false
 
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
@@ -181,7 +183,7 @@ final case class AgentApplicationLlp(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -206,7 +208,7 @@ final case class AgentApplicationLimitedCompany(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -231,7 +233,7 @@ final case class AgentApplicationGeneralPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -254,7 +256,7 @@ final case class AgentApplicationLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -277,7 +279,7 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -300,7 +302,7 @@ final case class AgentApplicationScottishPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheck: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  override val companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
