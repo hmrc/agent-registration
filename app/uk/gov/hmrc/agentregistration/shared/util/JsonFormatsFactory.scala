@@ -20,6 +20,7 @@ import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
+
 import scala.compiletime.erasedValue
 import scala.compiletime.error
 import scala.deriving.Mirror
@@ -31,6 +32,15 @@ object JsonFormatsFactory:
     */
   inline def makeEnumFormat[E <: reflect.Enum](using ct: ClassTag[E]): Format[E] = makeFormat(EnumValues.all[E])
 
+  /** Creates a Format for Scala 3 enums by automatically retrieving all enum values. Enum values are represented as hyphenated strings, eg. "sole-trader"
+    */
+  inline def makeEnumFormatHyphenated[E <: reflect.Enum](using ct: ClassTag[E]): Format[E] =
+    import uk.gov.hmrc.agentregistration.shared.util.EnumExtensions.toStringHyphenated
+    makeFormat(
+      EnumValues.all[E],
+      stringRepresentation = _.toStringHyphenated
+    )
+
   /** Creates a Format for sealed objects
     */
   inline def makeSealedObjectFormat[E](using ct: ClassTag[E]): Format[E] = makeFormat(SealedObjects.all[E])
@@ -38,17 +48,20 @@ object JsonFormatsFactory:
   /** Internal utility to create a Format for the type `E`. The formatter uses toString() for serialization and expects all objects in the provided sequence to
     * have unique string representations.
     */
-  private def makeFormat[E](values: Iterable[E])(using ct: ClassTag[E]): Format[E] =
+  private def makeFormat[E](
+    values: Iterable[E],
+    stringRepresentation: E => String = (_: E).toString
+  )(using ct: ClassTag[E]): Format[E] =
     val enumName = ct.runtimeClass.getSimpleName
     Format(
       Reads { json =>
         json.validate[String].flatMap { str =>
           values
-            .find(_.toString === str)
+            .find(stringRepresentation(_) === str)
             .fold[JsResult[E]](JsError(s"Unknown value for enum $enumName: '$str'"))(JsSuccess(_))
         }
       },
-      Writes(e => JsString(e.toString))
+      Writes(e => JsString(stringRepresentation(e)))
     )
 
   /** Compile-time checked derivation of play json Format for final case classes of the form: final case class X(value: String)
