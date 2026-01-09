@@ -37,9 +37,9 @@ import uk.gov.hmrc.agentregistration.shared.SafeId
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
+import uk.gov.hmrc.agentregistration.shared.EntityCheckResult.Pass
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.UserRole
-import uk.gov.hmrc.agentregistration.shared.CompanyStatusCheckResult.Allow
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
@@ -101,6 +101,6 @@ extends BackendController(cc):
     amlsDetails = None,
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    refusalToDealWithCheck = Some(EntityCheckResult.Pass),
-    companyStatusCheckResult = Some(Allow)
+    refusalToDealWithCheck = Some(Pass),
+    companyStatusCheckResult = Some(Pass)
   )
