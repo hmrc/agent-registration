@@ -16,17 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
-import uk.gov.hmrc.agentregistration.shared.EntityCheckResult.Pass
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.CompanyStatusCheckResult.Allow
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
@@ -117,7 +114,7 @@ sealed trait AgentApplication:
 
   def hasEntityCheckPassed: Boolean =
     (getRefusalToDealWithCheck, getCompanyStatusCheckResult) match
-      case (Pass, Allow) => true
+      case (EntityCheckResult.Pass, CompanyStatusCheckResult.Allow) => true
       case _ => false
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
@@ -164,7 +161,7 @@ extends AgentApplication:
 
   override def hasEntityCheckPassed: Boolean =
     (getRefusalToDealWithCheck, getDeceasedCheck, getCompanyStatusCheckResult) match
-      case (Pass, Pass, Allow) => true
+      case (EntityCheckResult.Pass, EntityCheckResult.Pass, CompanyStatusCheckResult.Allow) => true
       case _ => false
 
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
@@ -265,7 +262,7 @@ extends AgentApplication:
   override val businessType: BusinessType.Partnership.LimitedPartnership.type = BusinessType.Partnership.LimitedPartnership
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
-  def getCrn: Crn = getBusinessDetails.companyProfile.map(_.companyNumber).getOrThrowExpectedDataMissing("Company profile missing from limited partnership")
+  def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
 
 final case class AgentApplicationScottishLimitedPartnership(
   override val _id: AgentApplicationId,
