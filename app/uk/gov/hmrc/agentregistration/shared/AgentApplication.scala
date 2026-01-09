@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.shared.CompanyStatusCheckResult.Allow
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
@@ -160,10 +161,9 @@ extends AgentApplication:
   override def hasEntityCheckPassed: Option[Boolean] =
     for {
       getRefusalToDealWithCheck <- refusalToDealWithCheck
-      getCompanyStatusCheckResult <- companyStatusCheckResult
       getDeceasedCheck <- deceasedCheck
-    } yield (getRefusalToDealWithCheck, getCompanyStatusCheckResult, getDeceasedCheck) match
-      case (Pass, Pass, Pass) => true
+    } yield (getRefusalToDealWithCheck, getDeceasedCheck) match
+      case (Pass, Pass) => true
       case _ => false
 
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
@@ -308,6 +308,8 @@ final case class AgentApplicationScottishPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishPartnership.type = BusinessType.Partnership.ScottishPartnership
+
+  override def hasEntityCheckPassed: Option[Boolean] = refusalToDealWithCheck.map(_ === Pass)
 
   def getBusinessDetails: BusinessDetailsScottishPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
 
