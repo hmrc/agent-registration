@@ -95,7 +95,7 @@ sealed trait AgentApplication:
       case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.companyProfile
       case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.companyProfile
       case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.companyProfile
-      case _ => expectedDataNotDefinedError("currently company profile is only defined for Llp applications, as other types are not implemented yet")
+      case _ => expectedDataNotDefinedError("Calling getCompanyProfile on non-incorporated business types is not supported")
 
   // all agent applications must have a UTR
   def getUtr: Utr =
