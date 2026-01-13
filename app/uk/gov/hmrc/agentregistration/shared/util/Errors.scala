@@ -24,7 +24,15 @@ import scala.concurrent.Future
 object Errors:
 
   extension [T](t: Option[T])
-    inline def getOrThrowExpectedDataMissing(message: => String): T = t.getOrElse(throw new IllegalStateException(s"Expected data was missing: $message"))
+
+    /** Extracts the value from an Option when we know it should be populated at this point in the user journey.
+      *
+      * This method should be used on optional fields when we have confidence that they are populated, for example on Check Your Answers pages, where we know
+      * that the user has provided answers and thus populated options with values.
+      */
+    inline def getOrThrowExpectedDataMissing(
+      message: => String
+    ): T = t.getOrElse(throw new IllegalStateException(s"Expected data was missing: $message"))
 
   inline def throwExpectedDataMissing(message: String): Nothing = throw new IllegalStateException(s"Expected data was missing: $message")
 

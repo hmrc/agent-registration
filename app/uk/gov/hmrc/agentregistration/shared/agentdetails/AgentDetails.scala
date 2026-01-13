@@ -35,7 +35,9 @@ final case class AgentDetails(
 
   def getTelephoneNumber: AgentTelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number is missing")
   def getAgentEmailAddress: AgentVerifiedEmailAddress = agentEmailAddress.getOrThrowExpectedDataMissing("Email address is missing")
-  def getAgentCorrespondenceAddress: AgentCorrespondenceAddress = agentCorrespondenceAddress.getOrThrowExpectedDataMissing("Correspondence address is missing")
+  def getAgentCorrespondenceAddress: AgentCorrespondenceAddress = agentCorrespondenceAddress.getOrThrowExpectedDataMissing(
+    "Correspondence address is missing"
+  )
 
 object AgentDetails:
   given format: Format[AgentDetails] = Json.format[AgentDetails]
