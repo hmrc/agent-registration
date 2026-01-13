@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.businessdetails
 
-import uk.gov.hmrc.agentregistration.shared.BusinessType.LimitedCompany
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.CtUtr
 import uk.gov.hmrc.agentregistration.shared.SafeId
 import play.api.libs.json.Format
@@ -25,7 +23,6 @@ import play.api.libs.json.Json
 
 final case class BusinessDetailsLimitedCompany(
   safeId: SafeId,
-  businessType: BusinessType = LimitedCompany,
   ctUtr: CtUtr,
   companyProfile: CompanyProfile
 )
