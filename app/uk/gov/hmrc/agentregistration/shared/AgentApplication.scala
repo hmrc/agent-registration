@@ -21,7 +21,6 @@ import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 import java.time.Clock
 import java.time.Instant
@@ -41,8 +40,7 @@ sealed trait AgentApplication:
   def applicantContactDetails: Option[ApplicantContactDetails]
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
-  def refusalToDealWithCheck: EntityCheckResult
-  def companyStatusCheckResult: EntityCheckResult
+  def refusalToDealWithCheckResult: Option[EntityCheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
 
   //  /** Updates the application state to the next state */
@@ -97,11 +95,6 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
-  def hasEntityCheckPassed: Boolean =
-    (refusalToDealWithCheck, companyStatusCheckResult) match
-      case (EntityCheckResult.Pass, EntityCheckResult.Pass) => true
-      case _ => false
-
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
       case t: T => Some(t)
@@ -133,20 +126,13 @@ final case class AgentApplicationSoleTrader(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  deceasedCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  deceasedCheck: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
 
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
-
-  override def hasEntityCheckPassed: Boolean =
-    (refusalToDealWithCheck, deceasedCheck) match
-      case (EntityCheckResult.Pass, EntityCheckResult.Pass) => true
-      case _ => false
-
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
 
 /** Application for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for registering as an Llp.
@@ -163,8 +149,8 @@ final case class AgentApplicationLlp(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -188,8 +174,8 @@ final case class AgentApplicationLimitedCompany(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -213,8 +199,7 @@ final case class AgentApplicationGeneralPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -236,8 +221,8 @@ final case class AgentApplicationLimitedPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -259,8 +244,8 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  companyStatusCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -282,15 +267,12 @@ final case class AgentApplicationScottishPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheck: EntityCheckResult,
-  override val companyStatusCheckResult: EntityCheckResult,
+  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishPartnership.type = BusinessType.Partnership.ScottishPartnership
-
-  override def hasEntityCheckPassed: Boolean = refusalToDealWithCheck === EntityCheckResult.Pass
 
   def getBusinessDetails: BusinessDetailsScottishPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
 

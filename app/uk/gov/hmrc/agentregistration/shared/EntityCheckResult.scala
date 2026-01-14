@@ -21,7 +21,6 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum EntityCheckResult:
 
-  case NotChecked
   case Pass
   case Fail
 
