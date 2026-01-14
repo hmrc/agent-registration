@@ -27,6 +27,7 @@ final case class BusinessPartnerRecordResponse(
   emailAddress: Option[String],
   primaryPhoneNumber: Option[String]
 ):
+
   def getEntityName: String = organisationName.orElse(individualName).getOrThrowExpectedDataMissing("No entity name found")
 
 object BusinessPartnerRecordResponse:

@@ -16,18 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.Json
-import play.api.libs.json.JsonConfiguration
-import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
+import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
-import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import java.time.Clock
 import java.time.Instant
-import scala.annotation.nowarn
 
 /** Agent (Registration) Application. This final case class represents the data entered by a user for registering as an agent.
   */
@@ -45,7 +41,6 @@ sealed trait AgentApplication:
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
   def entityCheckResult: Option[EntityCheckResult]
-  def companyStatusCheckResult: Option[CompanyStatusCheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
 
   //  /** Updates the application state to the next state */
@@ -72,33 +67,38 @@ sealed trait AgentApplication:
       case ApplicationState.GrsDataReceived => true
       case ApplicationState.Submitted => true
 
-  def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
+  def hasPassedAllEntityChecks: Boolean =
+    this match
+      case a: AgentApplication.IsIncorporated =>
+        (a.entityCheckResult, a.companyStatusCheckResult) match
+          case (Some(EntityCheckResult.Pass), Some(CompanyStatusCheckResult.Allow)) => true
+          case _ => false
+      case a: AgentApplication.IsNotIncorporated =>
+        a.entityCheckResult match
+          case Some(EntityCheckResult.Pass) => true
+          case _ => false
 
-  def isIncorporated: Boolean =
-    businessType match
-      case BusinessType.Partnership.LimitedLiabilityPartnership => true
-      case BusinessType.LimitedCompany => true
-      case BusinessType.Partnership.LimitedPartnership => true
-      case BusinessType.Partnership.ScottishLimitedPartnership => true
-      case _ => false
+  def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
 
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("agentDetails")
   def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
-  def getCompanyProfile: CompanyProfile =
+  // TODO: This method is a bug and is called even if the application is not an Incorporated one.
+  def dontCallMe_getCompanyProfile: CompanyProfile =
     businessType match
       case BusinessType.Partnership.LimitedLiabilityPartnership => this.asLlpApplication.getBusinessDetails.companyProfile
       case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.companyProfile
       case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.companyProfile
       case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.companyProfile
-      case _ => expectedDataNotDefinedError("currently company profile is only defined for Llp applications, as other types are not implemented yet")
+      case _ => expectedDataNotDefinedError("Calling getCompanyProfile on non-incorporated business types is not supported")
 
   // all agent applications must have a UTR
   def getUtr: Utr =
     businessType match
       case BusinessType.Partnership.LimitedLiabilityPartnership => this.asLlpApplication.getBusinessDetails.saUtr.asUtr
       case BusinessType.SoleTrader => this.asSoleTraderApplication.getBusinessDetails.saUtr.asUtr
-      case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.ctUtr.asUtr
+
+      case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.ctUtr.asUtr // incorporated
       case BusinessType.Partnership.GeneralPartnership => this.asGeneralPartnershipApplication.getBusinessDetails.saUtr.asUtr
       case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.saUtr.asUtr
       case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.saUtr.asUtr
@@ -106,7 +106,6 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
   def getEntityCheckResult: EntityCheckResult = entityCheckResult.getOrElse(expectedDataNotDefinedError("entityCheckResult"))
-  def getCompanyStatusCheckResult: CompanyStatusCheckResult = companyStatusCheckResult.getOrElse(expectedDataNotDefinedError("companyStatusCheckResult"))
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
@@ -140,7 +139,6 @@ final case class AgentApplicationSoleTrader(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -163,7 +161,7 @@ final case class AgentApplicationLlp(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -188,7 +186,7 @@ final case class AgentApplicationLimitedCompany(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -213,7 +211,6 @@ final case class AgentApplicationGeneralPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -236,7 +233,7 @@ final case class AgentApplicationLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -259,7 +256,7 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
+  companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -282,7 +279,6 @@ final case class AgentApplicationScottishPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val entityCheckResult: Option[EntityCheckResult],
-  override val companyStatusCheckResult: Option[CompanyStatusCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -293,22 +289,24 @@ extends AgentApplication:
 
 object AgentApplication:
 
-  @nowarn()
-  given format: OFormat[AgentApplication] =
-    given OFormat[AgentApplicationSoleTrader] = Json.format[AgentApplicationSoleTrader]
-    given OFormat[AgentApplicationLlp] = Json.format[AgentApplicationLlp]
-    given OFormat[AgentApplicationLimitedCompany] = Json.format[AgentApplicationLimitedCompany]
-    given OFormat[AgentApplicationGeneralPartnership] = Json.format[AgentApplicationGeneralPartnership]
-    given OFormat[AgentApplicationLimitedPartnership] = Json.format[AgentApplicationLimitedPartnership]
-    given OFormat[AgentApplicationScottishLimitedPartnership] = Json.format[AgentApplicationScottishLimitedPartnership]
-    given OFormat[AgentApplicationScottishPartnership] = Json.format[AgentApplicationScottishPartnership]
-    given JsonConfiguration = JsonConfig.jsonConfiguration
+  export AgentApplicationFormats.format
 
-    val dontDeleteMe = """
-                         |Don't delete me.
-                         |I will emit a warning so `@nowarn` can be applied to address below
-                         |`Unreachable case except for null` problem emited by Play Json macro"""
+  type IsIncorporated =
+    (AgentApplicationLimitedCompany
+      | AgentApplicationLimitedPartnership
+      | AgentApplicationLlp
+      | AgentApplicationScottishLimitedPartnership) & AgentApplication
 
-    Json.format[AgentApplication]
+  type IsNotIncorporated =
+    (AgentApplicationSoleTrader
+      | AgentApplicationGeneralPartnership
+      | AgentApplicationScottishPartnership) & AgentApplication
+
+  private object CompilationProofs:
+    DisjointUnions.prove[
+      AgentApplication,
+      IsIncorporated,
+      IsNotIncorporated
+    ]
 
 private inline def expectedDataNotDefinedError(key: String): Nothing = throw new RuntimeException(s"Expected $key to be defined")
