@@ -32,7 +32,7 @@ extension (agentApplication: AgentApplication)
 
     val deceasedCheckPassed: Boolean =
       agentApplication match
-        case a: AgentApplicationSoleTrader => a.deceasedCheck === Some(EntityCheckResult.Pass)
+        case a: AgentApplicationSoleTrader => a.deceasedCheckResult === Some(EntityCheckResult.Pass)
         case _ => true // not required so passed
 
     val companyStatusCheckPassed: Boolean =

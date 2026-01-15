@@ -27,6 +27,3 @@ enum EntityCheckResult:
 object EntityCheckResult:
 
   given Format[EntityCheckResult] = JsonFormatsFactory.makeEnumFormat[EntityCheckResult]
-
-  extension (bool: Boolean)
-    def asEntityCheckResult: EntityCheckResult = if bool then EntityCheckResult.Pass else EntityCheckResult.Fail

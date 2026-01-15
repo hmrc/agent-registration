@@ -127,7 +127,7 @@ final case class AgentApplicationSoleTrader(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  deceasedCheck: Option[EntityCheckResult],
+  deceasedCheckResult: Option[EntityCheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
