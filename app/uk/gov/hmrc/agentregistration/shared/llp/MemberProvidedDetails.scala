@@ -25,7 +25,9 @@ import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
+
 import java.time.Instant
+import java.time.LocalDate
 
 /** Member provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
   */
@@ -36,6 +38,7 @@ final case class MemberProvidedDetails(
   providedDetailsState: ProvidedDetailsState,
   agentApplicationId: AgentApplicationId,
   companiesHouseMatch: Option[CompaniesHouseMatch] = None,
+  dateOfBirth: Option[LocalDate] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[MemberVerifiedEmailAddress] = None,
   memberNino: Option[MemberNino] = None,
