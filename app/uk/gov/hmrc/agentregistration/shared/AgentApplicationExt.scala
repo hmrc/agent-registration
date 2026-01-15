@@ -16,14 +16,33 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
+import uk.gov.hmrc.agentregistration.shared.AgentApplication.IsIncorporated
+import uk.gov.hmrc.agentregistration.shared.AgentApplication.IsNotIncorporated
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 extension (agentApplication: AgentApplication)
 
-  def isIncorporated: Boolean =
-    agentApplication match
-      case _: AgentApplication.IsIncorporated => true
-      case _: AgentApplication.IsNotIncorporated => false
+  def hasCheckPassed: Boolean =
+
+    val refusalToDealWithCheckResultPassed: Boolean =
+      agentApplication.refusalToDealWithCheckResult === Some(
+        CheckResult.Pass
+      )
+
+    val deceasedCheckPassed: Boolean =
+      agentApplication match
+        case a: AgentApplicationSoleTrader => a.deceasedCheckResult === Some(CheckResult.Pass)
+        case _ => true // not required so passed
+
+    val companyStatusCheckPassed: Boolean =
+      agentApplication match
+        case a: IsIncorporated => a.companyStatusCheck === Some(CheckResult.Pass)
+        case a: IsNotIncorporated => true // not required so passed
+
+    refusalToDealWithCheckResultPassed
+    && deceasedCheckPassed
+    && companyStatusCheckPassed
 
 extension (agentApplication: AgentApplication.IsIncorporated)
 
@@ -34,9 +53,9 @@ extension (agentApplication: AgentApplication.IsIncorporated)
       case a: AgentApplicationLlp => a.getBusinessDetails.companyProfile
       case a: AgentApplicationScottishLimitedPartnership => a.getBusinessDetails.companyProfile
 
-  def companyStatusCheckResult: Option[CompanyStatusCheckResult] =
+  def companyStatusCheck: Option[CheckResult] =
     agentApplication match
       case a: AgentApplicationLimitedCompany => a.companyStatusCheckResult
-      case a: AgentApplicationLimitedPartnership => a.companyStatusCheckResult
       case a: AgentApplicationLlp => a.companyStatusCheckResult
+      case a: AgentApplicationLimitedPartnership => a.companyStatusCheckResult
       case a: AgentApplicationScottishLimitedPartnership => a.companyStatusCheckResult
