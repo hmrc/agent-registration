@@ -19,11 +19,11 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-enum EntityCheckResult:
+enum CheckResult:
 
   case Pass
   case Fail
 
-object EntityCheckResult:
+object CheckResult:
 
-  given Format[EntityCheckResult] = JsonFormatsFactory.makeEnumFormat[EntityCheckResult]
+  given Format[CheckResult] = JsonFormatsFactory.makeEnumFormat[CheckResult]

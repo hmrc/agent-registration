@@ -40,7 +40,7 @@ sealed trait AgentApplication:
   def applicantContactDetails: Option[ApplicantContactDetails]
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
-  def refusalToDealWithCheckResult: Option[EntityCheckResult]
+  def refusalToDealWithCheckResult: Option[CheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
 
   //  /** Updates the application state to the next state */
@@ -126,8 +126,8 @@ final case class AgentApplicationSoleTrader(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  deceasedCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
+  deceasedCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -149,8 +149,8 @@ final case class AgentApplicationLlp(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  companyStatusCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
+  companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -174,8 +174,8 @@ final case class AgentApplicationLimitedCompany(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  companyStatusCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
+  companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -199,7 +199,7 @@ final case class AgentApplicationGeneralPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -221,8 +221,8 @@ final case class AgentApplicationLimitedPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  companyStatusCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
+  companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -244,8 +244,8 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
-  companyStatusCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
+  companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:
@@ -267,7 +267,7 @@ final case class AgentApplicationScottishPartnership(
   override val applicantContactDetails: Option[ApplicantContactDetails],
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
-  override val refusalToDealWithCheckResult: Option[EntityCheckResult],
+  override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement
 )
 extends AgentApplication:

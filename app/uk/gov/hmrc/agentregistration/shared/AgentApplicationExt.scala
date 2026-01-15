@@ -23,21 +23,21 @@ import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 extension (agentApplication: AgentApplication)
 
-  def hasEntityCheckPassed: Boolean =
+  def hasCheckPassed: Boolean =
 
     val refusalToDealWithCheckResultPassed: Boolean =
       agentApplication.refusalToDealWithCheckResult === Some(
-        EntityCheckResult.Pass
+        CheckResult.Pass
       )
 
     val deceasedCheckPassed: Boolean =
       agentApplication match
-        case a: AgentApplicationSoleTrader => a.deceasedCheckResult === Some(EntityCheckResult.Pass)
+        case a: AgentApplicationSoleTrader => a.deceasedCheckResult === Some(CheckResult.Pass)
         case _ => true // not required so passed
 
     val companyStatusCheckPassed: Boolean =
       agentApplication match
-        case a: IsIncorporated => a.companyStatusCheck === Some(EntityCheckResult.Pass)
+        case a: IsIncorporated => a.companyStatusCheck === Some(CheckResult.Pass)
         case a: IsNotIncorporated => true // not required so passed
 
     refusalToDealWithCheckResultPassed
@@ -53,7 +53,7 @@ extension (agentApplication: AgentApplication.IsIncorporated)
       case a: AgentApplicationLlp => a.getBusinessDetails.companyProfile
       case a: AgentApplicationScottishLimitedPartnership => a.getBusinessDetails.companyProfile
 
-  def companyStatusCheck: Option[EntityCheckResult] =
+  def companyStatusCheck: Option[CheckResult] =
     agentApplication match
       case a: AgentApplicationLimitedCompany => a.companyStatusCheckResult
       case a: AgentApplicationLlp => a.companyStatusCheckResult
