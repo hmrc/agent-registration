@@ -61,10 +61,23 @@ object AgentCorrespondenceAddress:
 
   given format: Format[AgentCorrespondenceAddress] = Json.format[AgentCorrespondenceAddress]
 
+  // The basic syntax of a postcode from Address Lookup Frontend validation rules
+  // https://github.com/hmrc/address-lookup-frontend/blob/main/app/forms/Postcode.scala
+  private val outerRegex = "^GIR|[A-Z]{1,2}[0-9][0-9A-Z]?$"
+  private val innerRegex = "^[0-9][A-Z]{2}$"
+
+  private def isPostcode(candidate: Option[String]): Boolean =
+    candidate match
+      case Some(value) =>
+        val parts = value.split(" ")
+        parts.length === 2 && parts(0).matches(outerRegex) && parts(1).matches(innerRegex)
+      case None => false
+
   /* Parse from a string created by toValueString on either Companies House
    * Registered Office addresses (ChroAddress) or the BPR addresses (DesBusinessAddress).
    * Both produce a string with address lines separated by commas. Input lines will have
    * had commas found in individual source lines replaced with spaces so this is a safe operation.
+   * Some addresses from ALF may not have postcodes so we have to allow for that when parsing string representations.
    */
   def fromValueString(address: String): AgentCorrespondenceAddress =
     val parts = address.split(",").map(_.trim)
@@ -78,25 +91,51 @@ object AgentCorrespondenceAddress:
         postalCode = parts.lift(4),
         countryCode = parts.lift(5).getOrElse("")
       )
-    else if parts.length === 5
+    else if parts.length === 5 // we may or may not have a postcode so we test for it
     then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
         addressLine2 = parts.lift(1),
         addressLine3 = parts.lift(2),
-        addressLine4 = None,
-        postalCode = parts.lift(3),
+        addressLine4 =
+          if (!isPostcode(parts.lift(3)))
+            parts.lift(3)
+          else
+            None,
+        postalCode =
+          if (isPostcode(parts.lift(3)))
+            parts.lift(3)
+          else
+            None,
         countryCode = parts.lift(4).getOrElse("")
       )
-    else if parts.length === 4
+    else if parts.length === 4 // we may or may not have a postcode so we test for it
+    then
+      AgentCorrespondenceAddress(
+        addressLine1 = parts.headOption.getOrElse(""),
+        addressLine2 = parts.lift(1),
+        addressLine3 =
+          if (!isPostcode(parts.lift(2)))
+            parts.lift(2)
+          else
+            None,
+        addressLine4 = None,
+        postalCode =
+          if (isPostcode(parts.lift(2)))
+            parts.lift(2)
+          else
+            None,
+        countryCode = parts.lift(3).getOrElse("")
+      )
+    else if parts.length === 3 // we cannot have a postcode as 3 parts only which is ALF required minimum
     then
       AgentCorrespondenceAddress(
         addressLine1 = parts.headOption.getOrElse(""),
         addressLine2 = parts.lift(1),
         addressLine3 = None,
         addressLine4 = None,
-        postalCode = parts.lift(2),
-        countryCode = parts.lift(3).getOrElse("")
+        postalCode = None,
+        countryCode = parts.lift(2).getOrElse("")
       )
     else
       throw new IllegalArgumentException(s"Cannot parse CorrespondenceAddress from string: $address")
