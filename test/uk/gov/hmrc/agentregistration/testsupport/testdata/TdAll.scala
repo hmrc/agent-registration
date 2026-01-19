@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.testsupport.testdata.providedata.llp.TdMemberProvidedDetails
+import uk.gov.hmrc.agentregistration.testsupport.testdata.providedata.llp.TdIndividualProvidedDetails
 
 object TdAll:
 
@@ -31,4 +31,4 @@ extends AnyRef
 with TdBase
 with TdRequest
 with TdAgentApplication
-with TdMemberProvidedDetails
+with TdIndividualProvidedDetails

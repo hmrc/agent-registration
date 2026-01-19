@@ -28,9 +28,9 @@ import uk.gov.hmrc.agentregistration.repository.providedetails
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.ProvidedDetailsRepoHelp.given
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails.given
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails.given
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -42,19 +42,19 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
 @Singleton
-final class MemeberProvidedDetailsRepo @Inject() (
+final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
   appConfig: AppConfig
 )(using ec: ExecutionContext)
-extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
-  collectionName = "llp-member-provided-details",
+extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
+  collectionName = "individual",
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(MemberProvidedDetails.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetails.format)),
   replaceIndexes = true
 ):
 
-  def findByInternalUserId(internalUserId: InternalUserId): Future[List[MemberProvidedDetails]] = collection
+  def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.eq("internalUserId", internalUserId.value)
     )
@@ -64,7 +64,7 @@ extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
   def find(
     internalUserId: InternalUserId,
     agentApplicationId: AgentApplicationId
-  ): Future[Option[MemberProvidedDetails]] = collection
+  ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
         Filters.eq("internalUserId", internalUserId.value),
@@ -75,13 +75,13 @@ extends Repo[MemberProvidedDetailsId, MemberProvidedDetails](
 
 object ProvidedDetailsRepoHelp:
 
-  given IdString[MemberProvidedDetailsId] =
-    new IdString[MemberProvidedDetailsId]:
-      override def idString(i: MemberProvidedDetailsId): String = i.value
+  given IdString[IndividualProvidedDetailsId] =
+    new IdString[IndividualProvidedDetailsId]:
+      override def idString(i: IndividualProvidedDetailsId): String = i.value
 
-  given IdExtractor[MemberProvidedDetails, MemberProvidedDetailsId] =
-    new IdExtractor[MemberProvidedDetails, MemberProvidedDetailsId]:
-      override def id(memberProvidedDetails: MemberProvidedDetails): MemberProvidedDetailsId = memberProvidedDetails.memberProvidedDetailsId
+  given IdExtractor[IndividualProvidedDetails, IndividualProvidedDetailsId] =
+    new IdExtractor[IndividualProvidedDetails, IndividualProvidedDetailsId]:
+      override def id(memberProvidedDetails: IndividualProvidedDetails): IndividualProvidedDetailsId = memberProvidedDetails.individualProvidedDetailsId
 
   def indexes(ttl: FiniteDuration): Seq[IndexModel] = Seq(
     IndexModel(
