@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import javax.inject.Singleton
 
-/** Member provided details Identifier, which is unique for an member provided details
+/** Individual provided details Identifier, which is unique for an member provided details
   */
 final case class IndividualProvidedDetailsId(value: String)
 

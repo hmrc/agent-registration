@@ -34,8 +34,6 @@ object Errors:
       message: => String
     ): T = t.getOrElse(throw new IllegalStateException(s"Expected data was missing: $message"))
 
-  inline def throwExpectedDataMissing(message: String): Nothing = throw new IllegalStateException(s"Expected data was missing: $message")
-
   /** Creates a requirement which has to pass to continue computation.
     */
   inline def require(
