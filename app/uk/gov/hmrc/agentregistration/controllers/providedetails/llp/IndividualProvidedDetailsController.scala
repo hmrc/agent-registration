@@ -23,31 +23,28 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
-import uk.gov.hmrc.agentregistration.repository.providedetails.llp.MemeberProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetailsId
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
 
 @Singleton()
-class MemberProvidedDetailsController @Inject() (
+class IndividualProvidedDetailsController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  memeberProvidedDetailsRepo: MemeberProvidedDetailsRepo
+  memeberProvidedDetailsRepo: IndividualProvidedDetailsRepo
 )
 extends BackendController(cc):
 
-  def upsert: Action[MemberProvidedDetails] =
-    actions.individualAuthorised.async(parse.json[MemberProvidedDetails]):
+  def upsert: Action[IndividualProvidedDetails] =
+    actions.individualAuthorised.async(parse.json[IndividualProvidedDetails]):
       implicit request =>
-        val memberProvidedDetails: MemberProvidedDetails = request.body
-        ensureInternalUserId(memberProvidedDetails)
+        val individualProvidedDetails: IndividualProvidedDetails = request.body
+        ensureInternalUserId(individualProvidedDetails)
         memeberProvidedDetailsRepo
           .upsert(request.body)
           .map(_ => Ok(""))
@@ -56,7 +53,7 @@ extends BackendController(cc):
     memeberProvidedDetailsRepo
       .find(request.internalUserId, agentApplicationId)
       .map {
-        case Some(memberProvidedDetails) => Ok(Json.toJson(memberProvidedDetails))
+        case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
         case None => NoContent
       }
 
@@ -65,11 +62,11 @@ extends BackendController(cc):
       .findByInternalUserId(request.internalUserId)
       .map:
         case Nil => NoContent
-        case memberProvidedDetails => Ok(Json.toJson(memberProvidedDetails))
+        case individualProvidedDetails => Ok(Json.toJson(individualProvidedDetails))
 
-  private def ensureInternalUserId(memberProvidedDetails: MemberProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
-    if memberProvidedDetails.internalUserId =!= request.internalUserId then
+  private def ensureInternalUserId(individualProvidedDetails: IndividualProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
+    if individualProvidedDetails.internalUserId =!= request.internalUserId then
       throw AuthorisationException.fromString(
-        s"InternalUserId in request body (${memberProvidedDetails.internalUserId.value}) does not match InternalUserId from enrolments (${request.internalUserId.value})"
+        s"InternalUserId in request body (${individualProvidedDetails.internalUserId.value}) does not match InternalUserId from enrolments (${request.internalUserId.value})"
       )
     else ()

@@ -29,10 +29,10 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 import java.time.Instant
 import java.time.LocalDate
 
-/** Member provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
+/** Individual provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
   */
-final case class MemberProvidedDetails(
-  _id: MemberProvidedDetailsId,
+final case class IndividualProvidedDetails(
+  _id: IndividualProvidedDetailsId,
   internalUserId: InternalUserId,
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
@@ -40,29 +40,29 @@ final case class MemberProvidedDetails(
   companiesHouseMatch: Option[CompaniesHouseMatch] = None,
   dateOfBirth: Option[LocalDate] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
-  emailAddress: Option[MemberVerifiedEmailAddress] = None,
-  memberNino: Option[MemberNino] = None,
-  memberSaUtr: Option[MemberSaUtr] = None,
+  emailAddress: Option[IndividualVerifiedEmailAddress] = None,
+  individualNino: Option[IndividualNino] = None,
+  individualSaUtr: Option[IndividualSaUtr] = None,
   hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
   hasApprovedApplication: Option[Boolean] = None
 ):
 
-  val memberProvidedDetailsId: MemberProvidedDetailsId = _id
+  val individualProvidedDetailsId: IndividualProvidedDetailsId = _id
 
   val hasFinished: Boolean = providedDetailsState === Finished
   val isInProgress: Boolean = !hasFinished
 
   def getCompaniesHouseMatch: CompaniesHouseMatch = companiesHouseMatch.getOrThrowExpectedDataMissing(
-    "Companies house query is missing for member provided details"
+    "Companies house query is missing for individual provided details"
   )
 
-  def getEmailAddress: MemberVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address")
+  def getEmailAddress: IndividualVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address")
 
   def getTelephoneNumber: TelephoneNumber = telephoneNumber.getOrThrowExpectedDataMissing("Telephone number")
 
-  def getNino: MemberNino = memberNino.getOrThrowExpectedDataMissing("Nino")
+  def getNino: IndividualNino = individualNino.getOrThrowExpectedDataMissing("Nino")
 
-  def getSaUtr: MemberSaUtr = memberSaUtr.getOrThrowExpectedDataMissing("SaUtr")
+  def getSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("SaUtr")
 
-object MemberProvidedDetails:
-  given format: OFormat[MemberProvidedDetails] = Json.format[MemberProvidedDetails]
+object IndividualProvidedDetails:
+  given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]

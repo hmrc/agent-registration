@@ -22,13 +22,13 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import javax.inject.Singleton
 
-/** Member provided details Identifier, which is unique for an member provided details
+/** Individual provided details Identifier, which is unique for an member provided details
   */
-final case class MemberProvidedDetailsId(value: String)
+final case class IndividualProvidedDetailsId(value: String)
 
-object MemberProvidedDetailsId:
-  given format: Format[MemberProvidedDetailsId] = JsonFormatsFactory.makeValueClassFormat
+object IndividualProvidedDetailsId:
+  given format: Format[IndividualProvidedDetailsId] = JsonFormatsFactory.makeValueClassFormat
 
 @Singleton
-class MemberProvidedDetailsIdGenerator:
-  def nextMemberProvidedDetailsId(): MemberProvidedDetailsId = MemberProvidedDetailsId(ObjectId.get().toHexString)
+class IndividualProvidedDetailsIdGenerator:
+  def nextIndividualProvidedDetailsId(): IndividualProvidedDetailsId = IndividualProvidedDetailsId(ObjectId.get().toHexString)

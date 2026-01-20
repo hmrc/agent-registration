@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata.providedata.llp
 
-import uk.gov.hmrc.agentregistration.shared.llp.MemberProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Started
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdBase
 
-trait TdMemberProvidedDetails { dependencies: (TdBase) =>
+trait TdIndividualProvidedDetails { dependencies: (TdBase) =>
 
   object providedDetailsLlp:
 
-    val afterStarted: MemberProvidedDetails = MemberProvidedDetails(
-      _id = dependencies.memberProvidedDetailsId,
+    val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
+      _id = dependencies.individualProvidedDetailsId,
       internalUserId = dependencies.internalUserId,
       createdAt = dependencies.instant,
       agentApplicationId = dependencies.agentApplicationId,

@@ -16,51 +16,40 @@
 
 package uk.gov.hmrc.agentregistration.shared.llp
 
+import uk.gov.hmrc.agentregistration.shared.Nino
 import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import scala.annotation.nowarn
 
-sealed trait MemberSaUtr
+sealed trait IndividualNino
 
-sealed trait UserProvidedSaUtr
-extends MemberSaUtr
+sealed trait UserProvidedNino
+extends IndividualNino
 
-object MemberSaUtr:
+object IndividualNino:
 
-  final case class Provided(saUtr: SaUtr)
-  extends MemberSaUtr,
-    UserProvidedSaUtr
+  final case class Provided(nino: Nino)
+  extends IndividualNino,
+    UserProvidedNino
 
   case object NotProvided
-  extends MemberSaUtr,
-    UserProvidedSaUtr
+  extends IndividualNino,
+    UserProvidedNino
 
-  final case class FromAuth(saUtr: SaUtr)
-  extends MemberSaUtr
-
-  final case class FromCitizenDetails(saUtr: SaUtr)
-  extends MemberSaUtr
-
-  extension (memberSaUtr: MemberSaUtr)
-    def toUserProvidedSaUtr: UserProvidedSaUtr =
-      memberSaUtr match
-        case u: UserProvidedSaUtr => u
-        case h: FromAuth => throw new IllegalArgumentException(s"Utr is already provided from auth enrolments (${h.saUtr})")
-        case h: FromCitizenDetails => throw new IllegalArgumentException(s"Utr is already provided from citizen details (${h.saUtr})")
+  final case class FromAuth(nino: Nino)
+  extends IndividualNino
 
   @nowarn()
-  given OFormat[MemberSaUtr] =
+  given OFormat[IndividualNino] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[NotProvided.type] = Json.format[NotProvided.type]
     given OFormat[Provided] = Json.format[Provided]
     given OFormat[FromAuth] = Json.format[FromAuth]
-    given OFormat[FromCitizenDetails] = Json.format[FromCitizenDetails]
 
     val dontDeleteMe = """
                          |Don't delete me.
                          |I will emit a warning so `@nowarn` can be applied to address below
                          |`Unreachable case except for null` problem emited by Play Json macro"""
 
-    Json.format[MemberSaUtr]
+    Json.format[IndividualNino]

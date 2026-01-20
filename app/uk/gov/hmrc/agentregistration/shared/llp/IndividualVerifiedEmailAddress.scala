@@ -20,10 +20,10 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
-final case class MemberVerifiedEmailAddress(
+final case class IndividualVerifiedEmailAddress(
   emailAddress: EmailAddress,
   isVerified: Boolean
 )
 
-object MemberVerifiedEmailAddress:
-  given format: Format[MemberVerifiedEmailAddress] = Json.format[MemberVerifiedEmailAddress]
+object IndividualVerifiedEmailAddress:
+  given format: Format[IndividualVerifiedEmailAddress] = Json.format[IndividualVerifiedEmailAddress]
