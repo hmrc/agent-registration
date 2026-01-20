@@ -23,11 +23,10 @@ import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 import java.time.Instant
-import java.time.LocalDate
 
 /** Individual provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
   */
@@ -38,7 +37,7 @@ final case class IndividualProvidedDetails(
   providedDetailsState: ProvidedDetailsState,
   agentApplicationId: AgentApplicationId,
   companiesHouseMatch: Option[CompaniesHouseMatch] = None,
-  dateOfBirth: Option[LocalDate] = None,
+  individualDateOfBirth: Option[IndividualDateOfBirth] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[IndividualVerifiedEmailAddress] = None,
   individualNino: Option[IndividualNino] = None,
@@ -63,6 +62,8 @@ final case class IndividualProvidedDetails(
   def getNino: IndividualNino = individualNino.getOrThrowExpectedDataMissing("Nino")
 
   def getSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("SaUtr")
+
+  def getDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
 
 object IndividualProvidedDetails:
   given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
