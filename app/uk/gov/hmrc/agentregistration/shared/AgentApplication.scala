@@ -291,11 +291,28 @@ object AgentApplication:
       | AgentApplicationGeneralPartnership
       | AgentApplicationScottishPartnership) & AgentApplication
 
+  type IsPartnership =
+    (AgentApplicationLlp
+      | AgentApplicationGeneralPartnership
+      | AgentApplicationLimitedPartnership
+      | AgentApplicationScottishLimitedPartnership
+      | AgentApplicationScottishPartnership) & AgentApplication
+
+  type IsNotPartnership =
+    (AgentApplicationSoleTrader
+      | AgentApplicationLimitedCompany) & AgentApplication
+
   private object CompilationProofs:
+
     DisjointUnions.prove[
       AgentApplication,
       IsIncorporated,
       IsNotIncorporated
+    ]
+    DisjointUnions.prove[
+      AgentApplication,
+      IsPartnership,
+      IsNotPartnership
     ]
 
 private inline def expectedDataNotDefinedError(key: String): Nothing = throw new RuntimeException(s"Expected $key to be defined")
