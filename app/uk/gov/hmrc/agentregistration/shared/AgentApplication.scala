@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
+import uk.gov.hmrc.agentregistration.shared.lists.RequiredKeyIndividuals
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
@@ -42,6 +43,7 @@ sealed trait AgentApplication:
   def agentDetails: Option[AgentDetails]
   def refusalToDealWithCheckResult: Option[CheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
+  def requiredKeyIndividuals: Option[RequiredKeyIndividuals] // all applications require this, sole traders will have a list of one
 
   //  /** Updates the application state to the next state */
   //  def updateApplicationState: AgentApplication =
@@ -128,7 +130,8 @@ final case class AgentApplicationSoleTrader(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   deceasedCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -151,7 +154,8 @@ final case class AgentApplicationLlp(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -176,7 +180,8 @@ final case class AgentApplicationLimitedCompany(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -200,7 +205,8 @@ final case class AgentApplicationGeneralPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -223,7 +229,8 @@ final case class AgentApplicationLimitedPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -246,7 +253,8 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
@@ -268,7 +276,8 @@ final case class AgentApplicationScottishPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
-  override val hmrcStandardForAgentsAgreed: StateOfAgreement
+  override val hmrcStandardForAgentsAgreed: StateOfAgreement,
+  override val requiredKeyIndividuals: Option[RequiredKeyIndividuals]
 )
 extends AgentApplication:
 
