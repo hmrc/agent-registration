@@ -22,11 +22,8 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 enum KeyIndividualListSource:
 
   case FromApplicant
-  extends KeyIndividualListSource
   case FromCompaniesHouse
-  extends KeyIndividualListSource
   case FromBusinessTypeSoleTrader
-  extends KeyIndividualListSource
 
 object KeyIndividualListSource:
   given Format[KeyIndividualListSource] = JsonFormatsFactory.makeEnumFormat[KeyIndividualListSource]
