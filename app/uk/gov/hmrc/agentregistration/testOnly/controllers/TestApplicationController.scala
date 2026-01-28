@@ -49,8 +49,6 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetai
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.lists.FromFiveOrFewer
-import uk.gov.hmrc.agentregistration.shared.lists.KeyIndividualListSource.FromApplicant
-import uk.gov.hmrc.agentregistration.shared.lists.KeyIndividualListSource.FromBusinessTypeSoleTrader
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.Instant
@@ -119,8 +117,7 @@ extends BackendController(cc):
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
     requiredKeyIndividuals = Some(
       FromFiveOrFewer(
-        numberToProvideDetails = 3,
-        source = FromApplicant
+        numberToProvideDetails = 3
       )
     ),
     refusalToDealWithCheckResult = Some(Pass),
@@ -156,8 +153,7 @@ extends BackendController(cc):
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
     requiredKeyIndividuals = Some(
       FromFiveOrFewer(
-        numberToProvideDetails = 1, // these amounts are not entered by the user, they are inferred from business type
-        source = FromBusinessTypeSoleTrader
+        numberToProvideDetails = 1 // these amounts are not entered by the user, they are inferred from business type
       )
     ),
     refusalToDealWithCheckResult = Some(Pass),
