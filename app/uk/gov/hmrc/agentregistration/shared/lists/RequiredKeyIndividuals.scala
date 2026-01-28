@@ -26,16 +26,14 @@ sealed trait RequiredKeyIndividuals:
   def isValidNumberToProvideDetails: Boolean
 
 final case class FromFiveOrFewer(
-  numberToProvideDetails: Int, // in this context this is the total number of key individuals (e.g. partners) that exist
-  source: KeyIndividualListSource
+  numberToProvideDetails: Int // in this context this is the total number of key individuals (e.g. partners) that exist
 )
 extends RequiredKeyIndividuals:
 
   override def isValidNumberToProvideDetails: Boolean = numberToProvideDetails <= 5 && numberToProvideDetails >= 1
 
 final case class FromSixOrMore(
-  numberToProvideDetails: Int, // in this context this is a subset of the 6 or more, those who are responsible for tax advice
-  source: KeyIndividualListSource
+  numberToProvideDetails: Int // in this context this is a subset of the 6 or more, those who are responsible for tax advice
 )
 extends RequiredKeyIndividuals:
 
