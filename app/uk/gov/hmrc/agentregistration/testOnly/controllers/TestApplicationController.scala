@@ -115,11 +115,7 @@ extends BackendController(cc):
     amlsDetails = None,
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    requiredKeyIndividuals = Some(
-      FromFiveOrFewer(
-        numberToProvideDetails = 3
-      )
-    ),
+    requiredKeyIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
     companyStatusCheckResult = Some(Pass)
   )
@@ -151,11 +147,7 @@ extends BackendController(cc):
     amlsDetails = None,
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    requiredKeyIndividuals = Some(
-      FromFiveOrFewer(
-        numberToProvideDetails = 1 // these amounts are not entered by the user, they are inferred from business type
-      )
-    ),
+    requiredKeyIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
     deceasedCheckResult = Some(Pass)
   )
