@@ -42,6 +42,7 @@ final case class SixOrMore(
 extends NumberOfRequiredKeyIndividuals:
 
   override def isValid: Boolean = numberOfKeyIndividualsResponsibleForTaxMatters >= 1 && numberOfKeyIndividualsResponsibleForTaxMatters <= 30
+  def paddingRequired: Int = Math.max(0, 5 - numberOfKeyIndividualsResponsibleForTaxMatters)
 
 object NumberOfRequiredKeyIndividuals:
 

@@ -57,6 +57,12 @@ extends BackendController(cc):
         case None => NoContent
       }
 
+  def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>
+    memeberProvidedDetailsRepo
+      .findForApplication(agentApplicationId)
+      .map: list =>
+        Ok(Json.toJson(list))
+
   def findByInternalUserId: Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
       .findByInternalUserId(request.internalUserId)
