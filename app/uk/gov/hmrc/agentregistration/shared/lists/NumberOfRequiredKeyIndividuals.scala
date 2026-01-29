@@ -27,7 +27,7 @@ sealed trait NumberOfRequiredKeyIndividuals:
 
 /** When there less or equal 5, the Applicant has to declare the exact number of all key individuals (partners, directors, owners, etc)
   */
-final case class FiveOrFewer(
+final case class FiveOrLess(
   numberOfKeyIndividuals: Int
 )
 extends NumberOfRequiredKeyIndividuals:
@@ -46,7 +46,7 @@ extends NumberOfRequiredKeyIndividuals:
 object NumberOfRequiredKeyIndividuals:
 
   given Format[NumberOfRequiredKeyIndividuals] =
-    given Format[FiveOrFewer] = Json.format[FiveOrFewer]
+    given Format[FiveOrLess] = Json.format[FiveOrLess]
     given Format[SixOrMore] = Json.format[SixOrMore]
 
     given JsonConfiguration = JsonConfig.jsonConfiguration
