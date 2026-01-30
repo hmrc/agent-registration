@@ -61,6 +61,13 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     .toFuture()
     .map(_.toList)
 
+  def findForApplication(agentApplicationId: AgentApplicationId): Future[List[IndividualProvidedDetails]] = collection
+    .find(
+      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+    )
+    .toFuture()
+    .map(_.toList)
+
   def find(
     internalUserId: InternalUserId,
     agentApplicationId: AgentApplicationId

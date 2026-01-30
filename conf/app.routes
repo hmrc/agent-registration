@@ -11,3 +11,5 @@ GET         /member-provided-details/by-agent-applicationId/:agentApplicationId 
 GET         /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findByInternalUserId
 POST        /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
 
+GET         /individual-provided-details/for-application/:agentApplicationId        uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForApplication(agentApplicationId: AgentApplicationId)
+
