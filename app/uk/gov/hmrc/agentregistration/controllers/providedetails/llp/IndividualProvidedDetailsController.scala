@@ -24,8 +24,10 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepoToBe
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBe
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
 
@@ -36,7 +38,8 @@ import javax.inject.Singleton
 class IndividualProvidedDetailsController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  memeberProvidedDetailsRepo: IndividualProvidedDetailsRepo
+  memeberProvidedDetailsRepo: IndividualProvidedDetailsRepo,
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBe
 )
 extends BackendController(cc):
 
@@ -46,6 +49,16 @@ extends BackendController(cc):
         val individualProvidedDetails: IndividualProvidedDetails = request.body
         ensureInternalUserId(individualProvidedDetails)
         memeberProvidedDetailsRepo
+          .upsert(request.body)
+          .map(_ => Ok(""))
+
+  // removing the internalUserId guard to enable seeding by an applicant (agent affinity)
+  // before the individual signs in and is matched
+  def upsertForApplication: Action[IndividualProvidedDetailsToBe] =
+    actions.authorised.async(parse.json[IndividualProvidedDetailsToBe]):
+      implicit request =>
+        val individualProvidedDetails: IndividualProvidedDetailsToBe = request.body
+        individualProvidedDetailsRepo
           .upsert(request.body)
           .map(_ => Ok(""))
 
