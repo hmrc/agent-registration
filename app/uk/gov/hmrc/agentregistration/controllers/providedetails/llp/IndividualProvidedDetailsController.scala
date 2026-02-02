@@ -71,7 +71,7 @@ extends BackendController(cc):
       }
 
   def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>
-    memeberProvidedDetailsRepo
+    individualProvidedDetailsRepo
       .findForApplication(agentApplicationId)
       .map: list =>
         Ok(Json.toJson(list))
