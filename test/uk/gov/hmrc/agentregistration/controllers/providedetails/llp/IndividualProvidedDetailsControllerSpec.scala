@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentregistration.controllers.providedetails.llp
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.mvc.Request
-import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepoToBeDeleted
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.agentApplicationId
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.internalUserId
@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import play.api.libs.ws.JsonBodyWritables.given
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBeDeleted
 import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsId
 
 class IndividualProvidedDetailsControllerSpec
@@ -57,7 +57,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBeDeleted = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
     val individualProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
     individualProvidedDetailsRepo.upsert(individualProvidedDetailsStarted).futureValue
     individualProvidedDetailsRepo.findById(
@@ -70,7 +70,7 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
-    val individualProvidedDetails = response.json.as[IndividualProvidedDetails]
+    val individualProvidedDetails = response.json.as[IndividualProvidedDetailsToBeDeleted]
     individualProvidedDetails shouldBe individualProvidedDetailsStarted
     IndividualAuthStubs.verifyAuthorise()
 
@@ -79,7 +79,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val repo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+    val repo = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
     val individualProvidedDetailsStarted = List(
       tdAll.providedDetailsLlp.afterStarted,
       tdAll.providedDetailsLlp.afterStarted.copy(
@@ -101,7 +101,7 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
-    val individualProvidedDetails = response.json.as[List[IndividualProvidedDetails]]
+    val individualProvidedDetails = response.json.as[List[IndividualProvidedDetailsToBeDeleted]]
     individualProvidedDetails shouldBe individualProvidedDetailsStarted
     IndividualAuthStubs.verifyAuthorise()
 
@@ -110,9 +110,9 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBeDeleted = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
 
-    val individualProvidedDetailsStarted: IndividualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
+    val individualProvidedDetailsStarted: IndividualProvidedDetailsToBeDeleted = tdAll.providedDetailsLlp.afterStarted
     individualProvidedDetailsRepo.findById(
       individualProvidedDetailsStarted.individualProvidedDetailsId
     ).futureValue shouldBe None withClue "assuming initially there is no records in mongo "

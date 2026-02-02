@@ -23,11 +23,11 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepoToBeDeleted
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepoToBe
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBeDeleted
 import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBe
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
 
@@ -38,15 +38,15 @@ import javax.inject.Singleton
 class IndividualProvidedDetailsController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  memeberProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBe
+  memeberProvidedDetailsRepo: IndividualProvidedDetailsRepoToBeDeleted,
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
 )
 extends BackendController(cc):
 
-  def upsert: Action[IndividualProvidedDetails] =
-    actions.individualAuthorised.async(parse.json[IndividualProvidedDetails]):
+  def upsert: Action[IndividualProvidedDetailsToBeDeleted] =
+    actions.individualAuthorised.async(parse.json[IndividualProvidedDetailsToBeDeleted]):
       implicit request =>
-        val individualProvidedDetails: IndividualProvidedDetails = request.body
+        val individualProvidedDetails: IndividualProvidedDetailsToBeDeleted = request.body
         ensureInternalUserId(individualProvidedDetails)
         memeberProvidedDetailsRepo
           .upsert(request.body)
@@ -54,10 +54,10 @@ extends BackendController(cc):
 
   // removing the internalUserId guard to enable seeding by an applicant (agent affinity)
   // before the individual signs in and is matched
-  def upsertForApplication: Action[IndividualProvidedDetailsToBe] =
-    actions.authorised.async(parse.json[IndividualProvidedDetailsToBe]):
+  def upsertForApplication: Action[IndividualProvidedDetails] =
+    actions.authorised.async(parse.json[IndividualProvidedDetails]):
       implicit request =>
-        val individualProvidedDetails: IndividualProvidedDetailsToBe = request.body
+        val individualProvidedDetails: IndividualProvidedDetails = request.body
         individualProvidedDetailsRepo
           .upsert(request.body)
           .map(_ => Ok(""))
@@ -83,7 +83,7 @@ extends BackendController(cc):
         case Nil => NoContent
         case individualProvidedDetails => Ok(Json.toJson(individualProvidedDetails))
 
-  private def ensureInternalUserId(individualProvidedDetails: IndividualProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
+  private def ensureInternalUserId(individualProvidedDetails: IndividualProvidedDetailsToBeDeleted)(using request: IndividualAuthorisedRequest[?]): Unit =
     if individualProvidedDetails.internalUserId =!= request.internalUserId then
       throw AuthorisationException.fromString(
         s"InternalUserId in request body (${individualProvidedDetails.internalUserId.value}) does not match InternalUserId from enrolments (${request.internalUserId.value})"

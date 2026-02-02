@@ -21,25 +21,24 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
-import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseMatch
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Finished
+import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Precreated
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 import java.time.Instant
 
-/** Individual provided details for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for approving as an Llp.
+/** Individual provided details. This final case class represents the data entered by a user nominated within an application.
   */
-/*
-@deprecated("Use `IndividualProvidedDetailsToBe` with optional internalUserId instead", "2026-02-02")
- */
 final case class IndividualProvidedDetails(
   _id: IndividualProvidedDetailsId,
-  internalUserId: InternalUserId,
+  individualName: IndividualName, // supplied by applicant
+  isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
+  internalUserId: Option[InternalUserId],
   createdAt: Instant,
   providedDetailsState: ProvidedDetailsState,
   agentApplicationId: AgentApplicationId,
-  companiesHouseMatch: Option[CompaniesHouseMatch] = None,
   individualDateOfBirth: Option[IndividualDateOfBirth] = None,
   telephoneNumber: Option[TelephoneNumber] = None,
   emailAddress: Option[IndividualVerifiedEmailAddress] = None,
@@ -53,10 +52,9 @@ final case class IndividualProvidedDetails(
 
   val hasFinished: Boolean = providedDetailsState === Finished
   val isInProgress: Boolean = !hasFinished
+  val isPrecreated: Boolean = providedDetailsState === Precreated
 
-  def getCompaniesHouseMatch: CompaniesHouseMatch = companiesHouseMatch.getOrThrowExpectedDataMissing(
-    "Companies house query is missing for individual provided details"
-  )
+  def getInternalUserId: InternalUserId = internalUserId.getOrThrowExpectedDataMissing("Internal user ID")
 
   def getEmailAddress: IndividualVerifiedEmailAddress = emailAddress.getOrThrowExpectedDataMissing("Email address")
 
@@ -68,8 +66,5 @@ final case class IndividualProvidedDetails(
 
   def getDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
 
-/*
-@deprecated("Use `IndividualProvidedDetailsToBe` with optional internalUserId instead", "2026-02-02")
- */
 object IndividualProvidedDetails:
   given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
