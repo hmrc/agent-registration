@@ -18,7 +18,9 @@ package uk.gov.hmrc.agentregistration.shared.llp
 
 import org.bson.types.ObjectId
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 import javax.inject.Singleton
 
@@ -27,7 +29,9 @@ import javax.inject.Singleton
 final case class IndividualProvidedDetailsId(value: String)
 
 object IndividualProvidedDetailsId:
+
   given format: Format[IndividualProvidedDetailsId] = JsonFormatsFactory.makeValueClassFormat
+  given PathBindable[IndividualProvidedDetailsId] = ValueClassBinder.valueClassBinder[IndividualProvidedDetailsId](_.value)
 
 @Singleton
 class IndividualProvidedDetailsIdGenerator:

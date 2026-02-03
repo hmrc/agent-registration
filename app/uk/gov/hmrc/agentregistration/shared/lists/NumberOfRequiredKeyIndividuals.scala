@@ -24,6 +24,7 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 sealed trait NumberOfRequiredKeyIndividuals:
 
   def isValid: Boolean
+  def totalListSize: Int
 
 /** When there less or equal 5, the Applicant has to declare the exact number of all key individuals (partners, directors, owners, etc)
   */
@@ -34,6 +35,8 @@ extends NumberOfRequiredKeyIndividuals:
 
   override def isValid: Boolean = numberOfKeyIndividuals <= 5 && numberOfKeyIndividuals >= 1
 
+  override def totalListSize: Int = numberOfKeyIndividuals
+
 /** When there are more than 5, the Applicant has to declare how many of those are responsible for tax matters
   */
 final case class SixOrMore(
@@ -43,6 +46,7 @@ extends NumberOfRequiredKeyIndividuals:
 
   override def isValid: Boolean = numberOfKeyIndividualsResponsibleForTaxMatters >= 1 && numberOfKeyIndividualsResponsibleForTaxMatters <= 30
   def paddingRequired: Int = Math.max(0, 5 - numberOfKeyIndividualsResponsibleForTaxMatters)
+  override def totalListSize: Int = numberOfKeyIndividualsResponsibleForTaxMatters + paddingRequired
 
 object NumberOfRequiredKeyIndividuals:
 

@@ -90,3 +90,28 @@ object JsonFormatsFactory:
         error(
           "'JsonFormatsFactory.makeValueClassFormat' can only be used for final case classes with exactly one field of type String,\nie. final case class X(value: String)"
         )
+
+  @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
+  inline def makeIntValueClassFormat[A](using
+    m: Mirror.ProductOf[A],
+    intFmt: Format[Int]
+  ): Format[A] =
+    // Check the single element type is String
+    inline erasedValue[m.MirroredElemTypes] match
+      case _: Tuple1[Int] =>
+        // Check the single element label is "value"
+        inline erasedValue[m.MirroredElemLabels] match
+          case _: Tuple1["value"] =>
+            val base = summon[Format[Int]]
+            base.inmap[A](
+              s => m.fromProduct(Tuple1(s)),
+              a => a.asInstanceOf[Product].productElement(0).asInstanceOf[Int]
+            )
+          case _ =>
+            error(
+              "'JsonFormatsFactory.makeIntValueClassFormat' can only be used for final case classes with exactly one field of type Int,\nie. final case class X(value: Int)"
+            )
+      case _ =>
+        error(
+          "'JsonFormatsFactory.makeIntValueClassFormat' can only be used for final case classes with exactly one field of type Int,\nie. final case class X(value: Int)"
+        )
