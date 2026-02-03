@@ -50,7 +50,7 @@ final class IndividualProvidedDetailsRepoToBeDeleted @Inject() (
   appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetailsToBeDeleted](
-  collectionName = "individual",
+  collectionName = "individual-to-be-deleted",
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelpToBeDeleted.indexes(appConfig.ProvideDetailsRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetailsToBeDeleted.format)),

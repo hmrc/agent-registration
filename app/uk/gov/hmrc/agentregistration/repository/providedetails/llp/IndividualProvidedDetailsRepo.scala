@@ -47,7 +47,7 @@ final class IndividualProvidedDetailsRepo @Inject() (
   appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
-  collectionName = "individual-to-be",
+  collectionName = "individual",
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetails.format)),
