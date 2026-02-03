@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata.providedata.llp
 
-import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBeDeleted
 import uk.gov.hmrc.agentregistration.shared.llp.ProvidedDetailsState.Started
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdBase
 
@@ -24,7 +24,7 @@ trait TdIndividualProvidedDetails { dependencies: (TdBase) =>
 
   object providedDetailsLlp:
 
-    val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
+    val afterStarted: IndividualProvidedDetailsToBeDeleted = IndividualProvidedDetailsToBeDeleted(
       _id = dependencies.individualProvidedDetailsId,
       internalUserId = dependencies.internalUserId,
       createdAt = dependencies.instant,

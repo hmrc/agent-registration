@@ -21,6 +21,7 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum ProvidedDetailsState:
 
+  case Precreated
   case Started
   case Finished
 
