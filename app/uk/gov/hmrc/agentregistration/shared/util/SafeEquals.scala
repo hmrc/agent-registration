@@ -16,13 +16,40 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
+import scala.annotation.implicitNotFound
+
 // scalafix:off DisableSyntax
 object SafeEquals:
+
   /** Simple safe equals so we don't have to import cats
+    *
+    * Why use SafeEquals instead of Scala 3's CanEqual?
+    *
+    *   1. Zero Boilerplate: SafeEquals works immediately for all types in the codebase because it relies on subtyping evidence (<:<) which the compiler
+    *      generates automatically. CanEqual requires adding `derives CanEqual` to case classes or defining manual given instances, which is a significant
+    *      refactoring effort for existing codebases.
+    *   2. Opt-in Usage: SafeEquals allows us to use type-safe equality locally (via ===) without enabling the `strictEquality` language feature globally, which
+    *      would break standard `==` usage across the project.
+    *   3. Pragmatism: It provides a lightweight, low-friction way to catch equality bugs at compile time without modifying domain models.
     */
   extension [A](v: A)
 
     @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-    def ===(other: A): Boolean = v == other
+    inline def ===[B](other: B)(using CanCompare[A, B]): Boolean = v == other
     @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-    def =!=(other: A): Boolean = v != other
+    inline def =!=[B](other: B)(using CanCompare[A, B]): Boolean = v != other
+
+  @implicitNotFound("Comparing unrelated types: ${A} and ${B}.")
+  sealed trait CanCompare[A, B]
+
+  object CanCompare
+  extends LowPriorityCanCompare:
+
+    @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
+    given subtype[A, B](using A <:< B): CanCompare[A, B] = instance.asInstanceOf[CanCompare[A, B]]
+
+  trait LowPriorityCanCompare:
+
+    protected val instance = new CanCompare[Any, Any] {}
+    @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
+    given supertype[A, B](using B <:< A): CanCompare[A, B] = instance.asInstanceOf[CanCompare[A, B]]
