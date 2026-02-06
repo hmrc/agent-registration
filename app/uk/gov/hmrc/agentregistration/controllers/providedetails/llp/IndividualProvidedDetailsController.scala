@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsToBeDeleted
 import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.llp.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
 
@@ -52,7 +53,7 @@ extends BackendController(cc):
           .upsert(request.body)
           .map(_ => Ok(""))
 
-  // removing the internalUserId guard to enable seeding by an applicant (agent affinity)
+  // removing the internalUserId guard to enable management by an applicant (agent affinity)
   // before the individual signs in and is matched
   def upsertForApplication: Action[IndividualProvidedDetails] =
     actions.authorised.async(parse.json[IndividualProvidedDetails]):
@@ -65,6 +66,14 @@ extends BackendController(cc):
   def findByAgentApplicationId(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
     memeberProvidedDetailsRepo
       .find(request.internalUserId, agentApplicationId)
+      .map {
+        case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
+        case None => NoContent
+      }
+
+  def findById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: request =>
+    individualProvidedDetailsRepo
+      .findById(individualProvidedDetailsId)
       .map {
         case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
         case None => NoContent
@@ -89,3 +98,8 @@ extends BackendController(cc):
         s"InternalUserId in request body (${individualProvidedDetails.internalUserId.value}) does not match InternalUserId from enrolments (${request.internalUserId.value})"
       )
     else ()
+
+  def deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: request =>
+    individualProvidedDetailsRepo
+      .removeById(individualProvidedDetailsId)
+      .map(_ => Ok(""))

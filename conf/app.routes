@@ -13,3 +13,5 @@ POST        /member-provided-details                                            
 
 POST        /individual-provided-details/for-application                            uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsertForApplication
 GET         /individual-provided-details/for-application/:agentApplicationId        uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForApplication(agentApplicationId: AgentApplicationId)
+GET         /individual-provided-details/by-id/:individualProvidedDetailsId         uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findById(individualProvidedDetailsId: IndividualProvidedDetailsId)
+DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetailsId  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId)

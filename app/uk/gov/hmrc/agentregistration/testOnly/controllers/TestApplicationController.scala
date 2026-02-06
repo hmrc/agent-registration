@@ -102,6 +102,7 @@ extends BackendController(cc):
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
     numberOfRequiredKeyIndividuals = None,
+    numberOfOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
     companyStatusCheckResult = Some(Pass)
   )

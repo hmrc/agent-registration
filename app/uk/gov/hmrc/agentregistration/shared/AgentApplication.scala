@@ -20,6 +20,7 @@ import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfOtherRelevantIndividuals
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
@@ -45,6 +46,7 @@ sealed trait AgentApplication:
   def refusalToDealWithCheckResult: Option[CheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
   def numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] // all applications require this, sole traders will have a list of one
+  def numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 
   //  /** Updates the application state to the next state */
   //  def updateApplicationState: AgentApplication =
@@ -98,6 +100,14 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
+  def getNumberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = numberOfRequiredKeyIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
+
+  def getNumberOfOtherRelevantIndividuals: NumberOfOtherRelevantIndividuals = numberOfOtherRelevantIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfOtherRelevantIndividuals")
+  )
+
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
       case t: T => Some(t)
@@ -138,6 +148,7 @@ extends AgentApplication:
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
   override def numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
+  override def numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals] = Some(NumberOfOtherRelevantIndividuals(0))
 
 object AgentApplicationSoleTrader:
   val numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = FiveOrLess(1)
@@ -159,7 +170,8 @@ final case class AgentApplicationLlp(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
@@ -185,7 +197,8 @@ final case class AgentApplicationLimitedCompany(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
@@ -210,7 +223,8 @@ final case class AgentApplicationGeneralPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
@@ -234,7 +248,8 @@ final case class AgentApplicationLimitedPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
@@ -258,7 +273,8 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
@@ -281,7 +297,8 @@ final case class AgentApplicationScottishPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfOtherRelevantIndividuals: Option[NumberOfOtherRelevantIndividuals]
 )
 extends AgentApplication:
 
