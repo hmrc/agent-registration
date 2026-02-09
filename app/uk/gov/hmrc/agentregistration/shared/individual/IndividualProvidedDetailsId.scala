@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.llp
+package uk.gov.hmrc.agentregistration.shared.individual
 
 import org.bson.types.ObjectId
 import play.api.libs.json.Format

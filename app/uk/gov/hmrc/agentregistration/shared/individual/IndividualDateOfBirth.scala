@@ -14,42 +14,42 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.llp
+package uk.gov.hmrc.agentregistration.shared.individual
 
-import uk.gov.hmrc.agentregistration.shared.Nino
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
+import java.time.LocalDate
 import scala.annotation.nowarn
 
-sealed trait IndividualNino
+sealed trait IndividualDateOfBirth
 
-sealed trait UserProvidedNino
-extends IndividualNino
+sealed trait UserProvidedDateOfBirth
+extends IndividualDateOfBirth
 
-object IndividualNino:
+object IndividualDateOfBirth:
 
-  final case class Provided(nino: Nino)
-  extends IndividualNino,
-    UserProvidedNino
+  final case class Provided(dateOfBirth: LocalDate)
+  extends UserProvidedDateOfBirth
 
-  case object NotProvided
-  extends IndividualNino,
-    UserProvidedNino
+  final case class FromCitizensDetails(dateOfBirth: LocalDate)
+  extends IndividualDateOfBirth
 
-  final case class FromAuth(nino: Nino)
-  extends IndividualNino
+  extension (individualDateOfBirth: IndividualDateOfBirth)
+    def toUserProvidedDateOfBirth: UserProvidedDateOfBirth =
+      individualDateOfBirth match
+        case u: UserProvidedDateOfBirth => u
+        case _: FromCitizensDetails => throw new IllegalArgumentException(s"Date of birth is already provided from citizens details") // no logging of PII
 
   @nowarn()
-  given OFormat[IndividualNino] =
+  given OFormat[IndividualDateOfBirth] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
-    given OFormat[NotProvided.type] = Json.format[NotProvided.type]
     given OFormat[Provided] = Json.format[Provided]
-    given OFormat[FromAuth] = Json.format[FromAuth]
+    given OFormat[FromCitizensDetails] = Json.format[FromCitizensDetails]
 
     val dontDeleteMe = """
                          |Don't delete me.
                          |I will emit a warning so `@nowarn` can be applied to address below
                          |`Unreachable case except for null` problem emited by Play Json macro"""
 
-    Json.format[IndividualNino]
+    Json.format[IndividualDateOfBirth]
