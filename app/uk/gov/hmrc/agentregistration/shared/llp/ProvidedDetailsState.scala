@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 enum ProvidedDetailsState:
 
   case Precreated
+  case AccessConfirmed // the applicant has confirmed they have sent the link to access this provided details record
   case Started
   case Finished
 
