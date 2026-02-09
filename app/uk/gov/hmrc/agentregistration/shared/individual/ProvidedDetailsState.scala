@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.llp
+package uk.gov.hmrc.agentregistration.shared.individual
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
-final case class IndividualVerifiedEmailAddress(
-  emailAddress: EmailAddress,
-  isVerified: Boolean
-)
+enum ProvidedDetailsState:
 
-object IndividualVerifiedEmailAddress:
-  given format: Format[IndividualVerifiedEmailAddress] = Json.format[IndividualVerifiedEmailAddress]
+  case Precreated
+  case AccessConfirmed // the applicant has confirmed they have sent the link to access this provided details record
+  case Started
+  case Finished
+
+object ProvidedDetailsState:
+  given Format[ProvidedDetailsState] = JsonFormatsFactory.makeEnumFormat[ProvidedDetailsState]
