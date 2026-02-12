@@ -67,18 +67,18 @@ extends BackendController(cc):
   def createTestApplication: Action[AnyContent] = Action
     .async:
       implicit request =>
-        val agentApplication: AgentApplication = makeSubmittedApplication()
+        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor()
         agentApplicationRepo
           .upsert(agentApplication)
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
 
-  private def makeSubmittedApplication(): AgentApplication = AgentApplicationLlp(
+  private def makeApplicationToProvideDetailsFor(): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     groupId = GroupId(value = UUID.randomUUID().toString),
     createdAt = Instant.now(),
-    applicationState = ApplicationState.Submitted,
+    applicationState = ApplicationState.Started, // Provide details journeys now happen before an application is finished
     userRole = Some(UserRole.Authorised),
     businessDetails = Some(BusinessDetailsLlp(
       safeId = SafeId("safe-id-12345"),
