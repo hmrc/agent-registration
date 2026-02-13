@@ -32,6 +32,10 @@ _Hint: use intellij local history if you screw up._
 ./syncSharedFiles.sh FRONTEND_TO_BACKEND
 ```
 
+```bash
+./syncSharedFiles.sh BACKEND_TO_RISKING
+```
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").

@@ -61,6 +61,10 @@ case "$DIRECTION" in
         SOURCE_DIR="../agent-registration-frontend/app/uk/gov/hmrc/agentregistration/shared"
         DEST_DIR="./app/uk/gov/hmrc/agentregistration/shared"
         ;;
+    "BACKEND_TO_RISKING")
+        SOURCE_DIR="./app/uk/gov/hmrc/agentregistration/shared"
+        DEST_DIR="../agent-registration-risking/app/uk/gov/hmrc/agentregistration/shared"
+        ;;
     *)
         echo -e "${RED}Error: Invalid direction '$DIRECTION'${NC}"
         echo -e "${RED}Usage: $0 {BACKEND_TO_FRONTEND|FRONTEND_TO_BACKEND}${NC}"
