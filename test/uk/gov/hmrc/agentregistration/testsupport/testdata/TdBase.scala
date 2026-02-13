@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 
 import java.time.Instant
 import java.time.LocalDateTime
@@ -45,5 +46,6 @@ trait TdBase:
   lazy val email: String = "test@example.com"
   lazy val telephoneNumber: String = "01234567890"
   def groupId: GroupId = GroupId("group-id-12345")
+  def individualName: IndividualName = IndividualName("Test Name")
 
   lazy val individualProvidedDetailsId: IndividualProvidedDetailsId = IndividualProvidedDetailsId("individual-provided-details-id-12345")

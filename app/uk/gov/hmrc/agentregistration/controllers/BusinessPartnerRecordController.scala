@@ -44,3 +44,13 @@ extends BackendController(cc):
           .map:
             case Some(bpr) => Ok(Json.toJson(bpr))
             case None => NoContent
+
+  def getApplicationBusinessPartnerRecord(utr: Utr): Action[AnyContent] = actions
+    .individualAuthorised
+    .async:
+      implicit request =>
+        businessPartnerRecordConnector
+          .getBusinessPartnerRecord(utr)
+          .map:
+            case Some(bpr) => Ok(Json.toJson(bpr))
+            case None => NoContent

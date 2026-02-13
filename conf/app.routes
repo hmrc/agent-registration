@@ -6,12 +6,11 @@ GET         /application/by-agent-application-id/:agentApplicationId            
 POST        /application                                                            uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
 GET         /business-partner-record/utr/:utr                                       uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
-
-GET         /member-provided-details/by-agent-applicationId/:agentApplicationId     uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findByAgentApplicationId(agentApplicationId: AgentApplicationId)
-GET         /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findByInternalUserId
-POST        /member-provided-details                                                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
+GET         /application-business-partner-record/utr/:utr                           uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getApplicationBusinessPartnerRecord(utr: Utr)
 
 POST        /individual-provided-details/for-application                            uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsertForApplication
 GET         /individual-provided-details/for-application/:agentApplicationId        uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForApplication(agentApplicationId: AgentApplicationId)
+GET         /individual-provided-details/for-matching-application/:agentApplicationId  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForMatchingWithApplication(agentApplicationId: AgentApplicationId)
+PUT         /individual-provided-details/for-individual                             uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
 GET         /individual-provided-details/by-id/:individualProvidedDetailsId         uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findById(individualProvidedDetailsId: IndividualProvidedDetailsId)
 DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetailsId  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId)
