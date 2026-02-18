@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentregistration.controllers.providedetails.llp
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.mvc.Request
-import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepoToBeDeleted
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.agentApplicationId
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.internalUserId
@@ -32,32 +32,32 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import play.api.libs.ws.JsonBodyWritables.given
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsToBeDeleted
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 
 class IndividualProvidedDetailsControllerSpec
 extends ControllerSpec:
 
-  "find member provided details returns NO_CONTENT if there is no underlying records" in:
+  "find individual provided details for matching returns an empty list if there are no underlying records" in:
 
     given Request[?] = tdAll.backendRequest
     IndividualAuthStubs.stubAuthorise()
 
     val response =
       httpClient
-        .get(url"$baseUrl/agent-registration/member-provided-details/by-agent-applicationId/${agentApplicationId.value}")
+        .get(url"$baseUrl/agent-registration/individual-provided-details/for-matching-application/${agentApplicationId.value}")
         .execute[HttpResponse]
         .futureValue
-    response.status shouldBe Status.NO_CONTENT
-    response.body shouldBe ""
+    response.status shouldBe Status.OK
+    response.body shouldBe "[]"
     AuthStubs.verifyAuthorise()
 
-  "find individual provided details returns Ok and the IndividualProvidedDetails as Json body" in:
+  "find individual provided details for matching returns Ok and the list of IndividualProvidedDetails as Json body" in:
 
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBeDeleted = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
+    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
     val individualProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
     individualProvidedDetailsRepo.upsert(individualProvidedDetailsStarted).futureValue
     individualProvidedDetailsRepo.findById(
@@ -66,60 +66,29 @@ extends ControllerSpec:
 
     val response =
       httpClient
-        .get(url"$baseUrl/agent-registration/member-provided-details/by-agent-applicationId/${agentApplicationId.value}")
+        .get(url"$baseUrl/agent-registration/individual-provided-details/for-matching-application/${agentApplicationId.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
-    val individualProvidedDetails = response.json.as[IndividualProvidedDetailsToBeDeleted]
-    individualProvidedDetails shouldBe individualProvidedDetailsStarted
+    val individualProvidedDetails = response.json.as[List[IndividualProvidedDetails]]
+    individualProvidedDetails shouldBe List(individualProvidedDetailsStarted)
     IndividualAuthStubs.verifyAuthorise()
 
-  "find all individual provided details for auth user returns Ok and the MemberProvidedDetails as Json body" in:
+  "upsert with PUT individual provided details to mongo and returns OK" in:
 
     given Request[?] = tdAll.backendRequest
 
     IndividualAuthStubs.stubAuthorise()
-    val repo = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
-    val individualProvidedDetailsStarted = List(
-      tdAll.providedDetailsLlp.afterStarted,
-      tdAll.providedDetailsLlp.afterStarted.copy(
-        _id = IndividualProvidedDetailsId("member-provided-details-id-67890"),
-        agentApplicationId = AgentApplicationId(value = "another-agent-application-id")
-      )
-    )
+    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
-    individualProvidedDetailsStarted.foreach { individualProvidedDetails =>
-      repo.upsert(individualProvidedDetails).futureValue
-    }
-
-    repo.findByInternalUserId(internalUserId)
-      .futureValue shouldBe individualProvidedDetailsStarted withClue "sanity check"
-
-    val response: HttpResponse =
-      httpClient
-        .get(url"$baseUrl/agent-registration/member-provided-details")
-        .execute[HttpResponse]
-        .futureValue
-    response.status shouldBe Status.OK
-    val individualProvidedDetails = response.json.as[List[IndividualProvidedDetailsToBeDeleted]]
-    individualProvidedDetails shouldBe individualProvidedDetailsStarted
-    IndividualAuthStubs.verifyAuthorise()
-
-  "upsert individual provided details to mongo and returns OK" in:
-
-    given Request[?] = tdAll.backendRequest
-
-    IndividualAuthStubs.stubAuthorise()
-    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepoToBeDeleted = app.injector.instanceOf[IndividualProvidedDetailsRepoToBeDeleted]
-
-    val individualProvidedDetailsStarted: IndividualProvidedDetailsToBeDeleted = tdAll.providedDetailsLlp.afterStarted
+    val individualProvidedDetailsStarted: IndividualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
     individualProvidedDetailsRepo.findById(
       individualProvidedDetailsStarted.individualProvidedDetailsId
-    ).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
+    ).futureValue shouldBe None withClue "assuming initially there are no records in mongo "
 
     val response: HttpResponse =
       httpClient
-        .post(url"$baseUrl/agent-registration/member-provided-details")
+        .put(url"$baseUrl/agent-registration/individual-provided-details/for-individual")
         .withBody(Json.toJson(individualProvidedDetailsStarted))
         .execute[HttpResponse]
         .futureValue

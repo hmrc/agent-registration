@@ -342,9 +342,6 @@ object AgentApplication:
 
   type IsAgentApplicationForDeclaringNumberOfKeyIndividuals = (AgentApplicationGeneralPartnership | AgentApplicationScottishPartnership) & AgentApplication
 
-  type IsAgentApplicationForDeclaringNumberOfOtherRelevantIndividuals =
-    (AgentApplicationGeneralPartnership | AgentApplicationScottishPartnership) & AgentApplication
-
   type IsNotAgentApplicationForKeyIndividuals =
     (AgentApplicationSoleTrader
       | AgentApplicationLimitedCompany
