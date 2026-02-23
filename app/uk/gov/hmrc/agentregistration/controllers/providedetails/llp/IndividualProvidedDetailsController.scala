@@ -23,8 +23,17 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
+import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedPartnership
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationScottishLimitedPartnership
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationSoleTrader
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualAddDetailsResponse
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
@@ -32,12 +41,14 @@ import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import scala.concurrent.Future
 
 @Singleton()
 class IndividualProvidedDetailsController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
+  agentApplicationRepo: AgentApplicationRepo
 )
 extends BackendController(cc):
 
@@ -65,6 +76,20 @@ extends BackendController(cc):
       .map {
         case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
         case None => NoContent
+      }
+
+  def findByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
+    individualProvidedDetailsRepo
+      .findById(individualProvidedDetailsId)
+      .flatMap {
+        case Some(individualProvidedDetails) =>
+          agentApplicationRepo.findById(individualProvidedDetails.agentApplicationId).map {
+            case Some(agentApp) =>
+              val resp = IndividualAddDetailsResponse.from(individualProvidedDetails, agentApp)
+              Ok(Json.toJson(resp))
+            case None => NoContent
+          }
+        case None => Future.successful(NoContent)
       }
 
   def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>

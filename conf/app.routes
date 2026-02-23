@@ -1,16 +1,17 @@
 # microservice specific routes
 
-GET         /application                                                            uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByInternalUserId
-GET         /application/linkId/:linkId                                             uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByLinkId(linkId: LinkId)
-GET         /application/by-agent-application-id/:agentApplicationId                uk.gov.hmrc.agentregistration.controllers.ApplicationController.findById(agentApplicationId: AgentApplicationId)
-POST        /application                                                            uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
+GET         /application                                                                     uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByInternalUserId
+GET         /application/linkId/:linkId                                                      uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByLinkId(linkId: LinkId)
+GET         /application/by-agent-application-id/:agentApplicationId                         uk.gov.hmrc.agentregistration.controllers.ApplicationController.findById(agentApplicationId: AgentApplicationId)
+POST        /application                                                                     uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
-GET         /business-partner-record/utr/:utr                                       uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
-GET         /application-business-partner-record/utr/:utr                           uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getApplicationBusinessPartnerRecord(utr: Utr)
+GET         /business-partner-record/utr/:utr                                                uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getBusinessPartnerRecord(utr: Utr)
+GET         /application-business-partner-record/utr/:utr                                    uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController.getApplicationBusinessPartnerRecord(utr: Utr)
 
-POST        /individual-provided-details/for-application                            uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsertForApplication
-GET         /individual-provided-details/for-application/:agentApplicationId        uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForApplication(agentApplicationId: AgentApplicationId)
-GET         /individual-provided-details/for-matching-application/:agentApplicationId  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForMatchingWithApplication(agentApplicationId: AgentApplicationId)
-PUT         /individual-provided-details/for-individual                             uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
-GET         /individual-provided-details/by-id/:individualProvidedDetailsId         uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findById(individualProvidedDetailsId: IndividualProvidedDetailsId)
-DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetailsId  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId)
+POST        /individual-provided-details/for-application                                     uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsertForApplication
+GET         /individual-provided-details/for-application/:agentApplicationId                 uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForApplication(agentApplicationId: AgentApplicationId)
+GET         /individual-provided-details/for-matching-application/:agentApplicationId        uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findForMatchingWithApplication(agentApplicationId: AgentApplicationId)
+GET         /individual-provided-details/by-id/:individualProvidedDetailsId                  uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findById(individualProvidedDetailsId: IndividualProvidedDetailsId)
+GET         /individual-provided-details/by-person-reference/:personReference                uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.findByPersonReference(personReference: IndividualProvidedDetailsId)
+PUT         /individual-provided-details/for-individual                                      uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
+DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetailsId           uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId)
