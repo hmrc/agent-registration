@@ -18,11 +18,23 @@ package uk.gov.hmrc.agentregistration.shared.companieshouse
 
 import play.api.libs.json.*
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 final case class CompaniesHouseOfficer(
   name: String,
-  dateOfBirth: Option[CompaniesHouseDateOfBirth]
+  dateOfBirth: Option[CompaniesHouseDateOfBirth],
+  resignedOn: Option[LocalDate],
+  officerRole: Option[CompaniesHouseOfficerRole]
 )
 
 object CompaniesHouseOfficer:
+
+  private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+  private given Format[LocalDate] = Format(
+    Reads.localDateReads("yyyy-MM-dd"),
+    Writes.temporalWrites[LocalDate, DateTimeFormatter](dateFormat)
+  )
 
   given Format[CompaniesHouseOfficer] = Json.format[CompaniesHouseOfficer]

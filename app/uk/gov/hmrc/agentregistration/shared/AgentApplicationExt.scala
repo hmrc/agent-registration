@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentregistration.shared
 import uk.gov.hmrc.agentregistration.shared.AgentApplication.IsIncorporated
 import uk.gov.hmrc.agentregistration.shared.AgentApplication.IsNotIncorporated
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfCompaniesHouseOfficers
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 extension (agentApplication: AgentApplication)
@@ -59,3 +61,24 @@ extension (agentApplication: AgentApplication.IsIncorporated)
       case a: AgentApplicationLlp => a.companyStatusCheckResult
       case a: AgentApplicationLimitedPartnership => a.companyStatusCheckResult
       case a: AgentApplicationScottishLimitedPartnership => a.companyStatusCheckResult
+
+  def getCrn: Crn =
+    agentApplication match
+      case a: AgentApplicationLimitedCompany => a.getCrn
+      case a: AgentApplicationLlp => a.getCrn
+      case a: AgentApplicationLimitedPartnership => a.getCrn
+      case a: AgentApplicationScottishLimitedPartnership => a.getCrn
+
+  def getNumberOfCompaniesHouseOfficers: Option[NumberOfCompaniesHouseOfficers] =
+    agentApplication match
+      case a: AgentApplicationLimitedCompany => a.numberOfIndividuals
+      case a: AgentApplicationLlp => a.numberOfIndividuals
+      case a: AgentApplicationLimitedPartnership => a.numberOfIndividuals
+      case a: AgentApplicationScottishLimitedPartnership => a.numberOfIndividuals
+
+extension (agentApplication: AgentApplication.IsAgentApplicationForDeclaringNumberOfKeyIndividuals)
+
+  def getNumberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] =
+    agentApplication match
+      case a: AgentApplicationGeneralPartnership => a.numberOfIndividuals
+      case a: AgentApplicationScottishPartnership => a.numberOfIndividuals
