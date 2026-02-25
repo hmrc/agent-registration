@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.agentregistration.model
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsSoleTrader
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.individual.*
-import uk.gov.hmrc.agentregistration.shared.lists.{IndividualName, NumberOfRequiredKeyIndividuals}
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 
 // TODO: Finalise what fields need to be returned here
 final case class IndividualAddDetailsResponse(

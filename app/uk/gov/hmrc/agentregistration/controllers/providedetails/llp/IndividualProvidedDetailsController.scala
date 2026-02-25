@@ -17,19 +17,24 @@
 package uk.gov.hmrc.agentregistration.controllers.providedetails.llp
 
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.model.IndividualAddDetailsResponse
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.shared.{AgentApplication, AgentApplicationId}
-import uk.gov.hmrc.agentregistration.shared.individual.{IndividualProvidedDetails, IndividualProvidedDetailsId}
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.auth.core.AuthorisationException
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton()
@@ -66,7 +71,7 @@ extends BackendController(cc):
         case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
         case None => NoContent
       }
-    
+
   // TODO: Find out the correct stride profile and add auth to this endpoint
   def findByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
     individualProvidedDetailsRepo
