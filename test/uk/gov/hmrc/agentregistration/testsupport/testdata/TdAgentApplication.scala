@@ -44,7 +44,9 @@ trait TdAgentApplication { dependencies: TdBase =>
     numberOfRequiredKeyIndividuals = None,
     hasOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = None,
-    companyStatusCheckResult = None
+    companyStatusCheckResult = None,
+    vrns = None,
+    payeRefs = None
   )
 
 }
