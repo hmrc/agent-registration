@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 final case class IndividualName(
   value: String
 ):
+
   def isValidName: Boolean = value.matches("^[a-zA-Z\\-' ]+$")
 
 object IndividualName:
