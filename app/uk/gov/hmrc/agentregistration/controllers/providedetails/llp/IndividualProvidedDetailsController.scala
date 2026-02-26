@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
@@ -74,18 +75,14 @@ extends BackendController(cc):
 
   // TODO: Find out the correct stride profile and add auth to this endpoint
   def findByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
-    individualProvidedDetailsRepo
-      .findById(individualProvidedDetailsId)
-      .flatMap {
-        case Some(individualProvidedDetails) =>
-          agentApplicationRepo.findById(individualProvidedDetails.agentApplicationId).map {
-            case Some(agentApp) =>
-              val resp = IndividualAddDetailsResponse.from(individualProvidedDetails, agentApp)
-              Ok(Json.toJson(resp))
-            case None => NoContent
-          }
-        case None => Future.successful(NoContent)
-      }
+    for
+      ipd <- individualProvidedDetailsRepo.findById(individualProvidedDetailsId)
+      aa <- agentApplicationRepo.findById(ipd.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId"))
+    yield (ipd, aa) match
+      case (Some(ipd), Some(aa)) if aa.applicationState.sentForRisking =>
+        val resp = IndividualAddDetailsResponse.make(ipd, aa)
+        Ok(Json.toJson(resp))
+      case _ => NoContent
 
   def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>
     individualProvidedDetailsRepo

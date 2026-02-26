@@ -33,13 +33,13 @@ final case class IndividualAddDetailsResponse(
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
   internalUserId: Option[InternalUserId],
   providedDetailsState: ProvidedDetailsState,
-  individualDateOfBirth: Option[IndividualDateOfBirth] = None,
-  telephoneNumber: Option[TelephoneNumber] = None,
-  emailAddress: Option[IndividualVerifiedEmailAddress] = None,
-  individualNino: Option[IndividualNino] = None,
-  individualSaUtr: Option[IndividualSaUtr] = None,
+  individualDateOfBirth: Option[IndividualDateOfBirth],
+  telephoneNumber: Option[TelephoneNumber],
+  emailAddress: Option[IndividualVerifiedEmailAddress],
+  individualNino: Option[IndividualNino],
+  individualSaUtr: Option[IndividualSaUtr],
   hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
-  hasApprovedApplication: Option[Boolean] = None,
+  hasApprovedApplication: Option[Boolean],
   linkId: LinkId,
   groupId: GroupId,
   applicationState: ApplicationState,
@@ -58,7 +58,7 @@ final case class IndividualAddDetailsResponse(
 
 object IndividualAddDetailsResponse:
 
-  def from(
+  def make(
     ipd: IndividualProvidedDetails,
     aa: AgentApplication
   ): IndividualAddDetailsResponse = IndividualAddDetailsResponse(
