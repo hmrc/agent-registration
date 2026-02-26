@@ -122,55 +122,26 @@ object CompaniesHouseOfficerRole:
       agentApplication match
         case _: AgentApplicationLimitedCompany =>
           Set(
-            // Directors
             Director,
-            CorporateDirector,
-            NomineeDirector,
-            CorporateNomineeDirector,
-            // Secretaries
-            Secretary,
-            CorporateSecretary,
-            NomineeSecretary,
-            CorporateNomineeSecretary,
-            // People authorised
-            PersonAuthorisedToRepresent,
-            PersonAuthorisedToAccept,
-            PersonAuthorisedToRepresentAndAccept
+            NomineeDirector
           )
 
         case _: AgentApplicationLlp =>
           Set(
-            // LLP (individual + corporate)
             LlpMember,
-            LlpDesignatedMember,
-            CorporateLlpMember,
-            CorporateLlpDesignatedMember,
-            // People authorised
-            PersonAuthorisedToRepresent,
-            PersonAuthorisedToAccept,
-            PersonAuthorisedToRepresentAndAccept
+            LlpDesignatedMember
           )
 
         case _: AgentApplicationLimitedPartnership =>
           Set(
-            // Partnerships (Limited Partnership / Scottish Limited Partnership)
             GeneralPartnerLimitedPartnership,
-            LimitedPartnerLimitedPartnership,
-            // People authorised
-            PersonAuthorisedToRepresent,
-            PersonAuthorisedToAccept,
-            PersonAuthorisedToRepresentAndAccept
+            LimitedPartnerLimitedPartnership
           )
 
         case _: AgentApplicationScottishLimitedPartnership =>
           Set(
-            // Partnerships (Limited Partnership / Scottish Limited Partnership)
             GeneralPartnerLimitedPartnership,
-            LimitedPartnerLimitedPartnership,
-            // People authorised
-            PersonAuthorisedToRepresent,
-            PersonAuthorisedToAccept,
-            PersonAuthorisedToRepresentAndAccept
+            LimitedPartnerLimitedPartnership
           )
 
 //Roles that do not match to any category
