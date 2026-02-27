@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.controllers
+package uk.gov.hmrc.agentregistration.controllers.smu
 
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
-import uk.gov.hmrc.agentregistration.model.SmuViewerIndividualResponse
+import uk.gov.hmrc.agentregistration.controllers.BackendController
+import uk.gov.hmrc.agentregistration.model.smu.SmuIndividualResponse
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -47,6 +48,6 @@ extends BackendController(cc):
       aa <- agentApplicationRepo.findById(ipd.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId"))
     yield (ipd, aa) match
       case (Some(ipd), Some(aa)) if aa.applicationState.sentForRisking =>
-        val resp = SmuViewerIndividualResponse.make(ipd, aa)
+        val resp = SmuIndividualResponse.make(ipd, aa)
         Ok(Json.toJson(resp))
       case _ => NoContent

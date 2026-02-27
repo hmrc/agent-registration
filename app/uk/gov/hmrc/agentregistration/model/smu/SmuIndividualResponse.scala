@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.model
+package uk.gov.hmrc.agentregistration.model.smu
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
@@ -27,7 +27,12 @@ import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 
 // TODO: Finalise what fields need to be returned here
-final case class SmuViewerIndividualResponse(
+/** Represents an individual along with all relevant details and verification-related information required by the SMU (Secure Management Unit) to verify that
+  * person.
+  *
+  * This case class aggregates individual provided details and agent application details.
+  */
+final case class SmuIndividualResponse(
   individualProvidedDetailsId: IndividualProvidedDetailsId,
   individualName: IndividualName, // supplied by applicant
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
@@ -56,12 +61,12 @@ final case class SmuViewerIndividualResponse(
   companyStatusCheckResult: Option[CheckResult]
 )
 
-object SmuViewerIndividualResponse:
+object SmuIndividualResponse:
 
   def make(
     ipd: IndividualProvidedDetails,
     aa: AgentApplication
-  ): SmuViewerIndividualResponse = SmuViewerIndividualResponse(
+  ): SmuIndividualResponse = SmuIndividualResponse(
     ipd.individualProvidedDetailsId,
     ipd.individualName,
     ipd.isPersonOfControl,
@@ -104,4 +109,4 @@ object SmuViewerIndividualResponse:
         case _ => None
       }
   )
-  given format: OFormat[SmuViewerIndividualResponse] = Json.format[SmuViewerIndividualResponse]
+  given format: OFormat[SmuIndividualResponse] = Json.format[SmuIndividualResponse]

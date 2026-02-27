@@ -23,7 +23,6 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
-import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -38,8 +37,7 @@ import javax.inject.Singleton
 class IndividualProvidedDetailsController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  agentApplicationRepo: AgentApplicationRepo
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
 )
 extends BackendController(cc):
 
