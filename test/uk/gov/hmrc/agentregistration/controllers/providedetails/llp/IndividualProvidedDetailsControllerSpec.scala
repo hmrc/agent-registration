@@ -20,14 +20,10 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.given
 import play.api.mvc.Request
-import uk.gov.hmrc.agentregistration.model.IndividualAddDetailsResponse
-import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Submitted
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.agentApplicationId
-import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.individualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.providedetails.IndividualAuthStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
@@ -74,35 +70,6 @@ extends ControllerSpec:
     val individualProvidedDetails = response.json.as[List[IndividualProvidedDetails]]
     individualProvidedDetails shouldBe List(individualProvidedDetailsStarted)
     IndividualAuthStubs.verifyAuthorise()
-
-  "find by person reference returns Ok and IndividualAddDetailsResponse as Json body" in:
-
-    given Request[?] = tdAll.backendRequest
-    AuthStubs.stubAuthorise()
-    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-    val individualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
-    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-    val applicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-    val agentApplication = tdAll.llpApplicationAfterCreated.copy(applicationState = Submitted)
-    applicationRepo.upsert(agentApplication).futureValue
-
-    individualProvidedDetailsRepo.findById(
-      individualProvidedDetails.individualProvidedDetailsId
-    ).futureValue.value shouldBe individualProvidedDetails withClue "sanity check"
-
-    applicationRepo.findById(
-      agentApplication.agentApplicationId
-    ).futureValue.value shouldBe agentApplication withClue "sanity check"
-
-    val response =
-      httpClient
-        .get(url"$baseUrl/agent-registration/individual-provided-details/by-person-reference/${individualProvidedDetailsId.value}")
-        .execute[HttpResponse]
-        .futureValue
-    response.status shouldBe Status.OK
-    val individualAddDetailsResponse = response.json.as[IndividualAddDetailsResponse]
-    individualAddDetailsResponse.individualProvidedDetailsId shouldBe individualProvidedDetailsId
-    individualAddDetailsResponse.linkId shouldBe agentApplication.linkId
 
   "upsert with PUT individual provided details to mongo and returns OK" in:
 

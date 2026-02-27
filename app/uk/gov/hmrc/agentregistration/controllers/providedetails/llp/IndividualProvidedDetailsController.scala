@@ -23,20 +23,16 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
-import uk.gov.hmrc.agentregistration.model.IndividualAddDetailsResponse
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import scala.concurrent.Future
 
 @Singleton()
 class IndividualProvidedDetailsController @Inject() (
@@ -72,17 +68,6 @@ extends BackendController(cc):
         case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
         case None => NoContent
       }
-
-  // TODO: Find out the correct stride profile and add auth to this endpoint
-  def findByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
-    for
-      ipd <- individualProvidedDetailsRepo.findById(individualProvidedDetailsId)
-      aa <- agentApplicationRepo.findById(ipd.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId"))
-    yield (ipd, aa) match
-      case (Some(ipd), Some(aa)) if aa.applicationState.sentForRisking =>
-        val resp = IndividualAddDetailsResponse.make(ipd, aa)
-        Ok(Json.toJson(resp))
-      case _ => NoContent
 
   def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>
     individualProvidedDetailsRepo

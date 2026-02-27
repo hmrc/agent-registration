@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 
 // TODO: Finalise what fields need to be returned here
-final case class IndividualAddDetailsResponse(
+final case class SmuViewerIndividualResponse(
   individualProvidedDetailsId: IndividualProvidedDetailsId,
   individualName: IndividualName, // supplied by applicant
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
@@ -56,12 +56,12 @@ final case class IndividualAddDetailsResponse(
   companyStatusCheckResult: Option[CheckResult]
 )
 
-object IndividualAddDetailsResponse:
+object SmuViewerIndividualResponse:
 
   def make(
     ipd: IndividualProvidedDetails,
     aa: AgentApplication
-  ): IndividualAddDetailsResponse = IndividualAddDetailsResponse(
+  ): SmuViewerIndividualResponse = SmuViewerIndividualResponse(
     ipd.individualProvidedDetailsId,
     ipd.individualName,
     ipd.isPersonOfControl,
@@ -104,4 +104,4 @@ object IndividualAddDetailsResponse:
         case _ => None
       }
   )
-  given format: OFormat[IndividualAddDetailsResponse] = Json.format[IndividualAddDetailsResponse]
+  given format: OFormat[SmuViewerIndividualResponse] = Json.format[SmuViewerIndividualResponse]
