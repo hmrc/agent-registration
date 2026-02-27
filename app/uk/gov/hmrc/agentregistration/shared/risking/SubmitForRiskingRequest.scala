@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 
 final case class SubmitForRiskingRequest(
   agentApplication: AgentApplication,
-  individuals: Option[List[IndividualProvidedDetails]]
+  individuals: List[IndividualProvidedDetails]
 )
 
 object SubmitForRiskingRequest:
