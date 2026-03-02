@@ -19,8 +19,10 @@ package uk.gov.hmrc.agentregistration.shared.individual
 import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
+import uk.gov.hmrc.agentregistration.shared.PayeRef
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
+import uk.gov.hmrc.agentregistration.shared.Vrn
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
@@ -45,7 +47,9 @@ final case class IndividualProvidedDetails(
   individualNino: Option[IndividualNino] = None,
   individualSaUtr: Option[IndividualSaUtr] = None,
   hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
-  hasApprovedApplication: Option[Boolean] = None
+  hasApprovedApplication: Option[Boolean] = None,
+  vrns: Option[List[Vrn]] = None,
+  payeRefs: Option[List[PayeRef]] = None
 ):
 
   val individualProvidedDetailsId: IndividualProvidedDetailsId = _id

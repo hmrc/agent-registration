@@ -26,20 +26,20 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationIdGenerator
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
+import uk.gov.hmrc.agentregistration.shared.CheckResult
 import uk.gov.hmrc.agentregistration.shared.Crn
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
-import uk.gov.hmrc.agentregistration.shared.CheckResult
 import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.agentregistration.shared.PayeRef
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.SafeId
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
-import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership
-import uk.gov.hmrc.agentregistration.shared.CheckResult.Pass
-import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.UserRole
+import uk.gov.hmrc.agentregistration.shared.Vrn
+import uk.gov.hmrc.agentregistration.shared.CheckResult.Pass
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
@@ -104,5 +104,7 @@ extends BackendController(cc):
     numberOfRequiredKeyIndividuals = None,
     hasOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
-    companyStatusCheckResult = Some(Pass)
+    companyStatusCheckResult = Some(Pass),
+    vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
+    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
   )
