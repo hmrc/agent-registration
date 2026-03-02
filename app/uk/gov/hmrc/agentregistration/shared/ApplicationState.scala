@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 enum ApplicationState:
 
@@ -26,4 +27,8 @@ enum ApplicationState:
   case Submitted
 
 object ApplicationState:
+
   given Format[ApplicationState] = JsonFormatsFactory.makeEnumFormat[ApplicationState]
+
+  extension (as: ApplicationState)
+    def sentForRisking: Boolean = as === ApplicationState.Submitted

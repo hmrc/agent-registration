@@ -18,22 +18,19 @@ package uk.gov.hmrc.agentregistration.controllers.providedetails.llp
 
 import play.api.http.Status
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.given
 import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.agentApplicationId
-import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.internalUserId
-import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.providedetails.IndividualAuthStubs
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.providedetails.IndividualAuthStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import play.api.libs.ws.JsonBodyWritables.given
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 
 class IndividualProvidedDetailsControllerSpec
 extends ControllerSpec:
