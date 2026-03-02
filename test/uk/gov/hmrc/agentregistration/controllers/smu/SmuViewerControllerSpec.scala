@@ -28,7 +28,9 @@ import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.individual
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
-import uk.gov.hmrc.http.{HttpReads, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 
 class SmuViewerControllerSpec
 extends ControllerSpec:
