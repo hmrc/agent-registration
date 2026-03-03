@@ -59,7 +59,7 @@ extends BackendController(cc):
   def createTestSmuIndividual: Action[AnyContent] = Action
     .async:
       implicit request =>
-        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(applicationState = ApplicationState.Submitted)
+        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(applicationState = ApplicationState.SentForRisking)
         val individual: IndividualProvidedDetails = makeIndividualProvidedDetailsFor(agentApplication.agentApplicationId)
         for
           _ <- agentApplicationRepo.upsert(agentApplication)
