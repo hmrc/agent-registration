@@ -20,6 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 sealed trait NumberOfRequiredKeyIndividuals:
 
@@ -49,6 +50,15 @@ extends NumberOfRequiredKeyIndividuals:
   override def totalListSize: Int = numberOfKeyIndividualsResponsibleForTaxMatters + requiredPadding
 
 object NumberOfRequiredKeyIndividuals:
+
+  def isKeyIndividualListComplete(
+    listSize: Int,
+    numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals]
+  ): Boolean =
+    numberOfRequiredKeyIndividuals match
+      case Some(FiveOrLess(a: Int)) => listSize === a
+      case Some(a @ SixOrMore(_)) => listSize === a.totalListSize
+      case _ => false
 
   given Format[NumberOfRequiredKeyIndividuals] =
     given Format[FiveOrLess] = Json.format[FiveOrLess]
