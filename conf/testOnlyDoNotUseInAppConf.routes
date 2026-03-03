@@ -10,5 +10,7 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
-->         /                          prod.Routes
-GET        /agent-registration/test-only/create-submitted-application uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
+->          /                                                                                               prod.Routes
+GET         /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
+POST        /agent-registration/test-only/smu-viewer-individual                                             uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestSmuIndividual
+DELETE      /agent-registration/test-only/smu-viewer-individual/by-person-reference/:personReference        uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteTestSmuIndividual(personReference: IndividualProvidedDetailsId)
