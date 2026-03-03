@@ -88,6 +88,7 @@ extends BackendController(cc):
           .upsert(agentApplication)
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
 
+  // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
   private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
@@ -124,7 +125,7 @@ extends BackendController(cc):
     vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
     payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
   )
-
+  // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
   private def makeIndividualProvidedDetailsFor(agentApplicationId: AgentApplicationId): IndividualProvidedDetails = IndividualProvidedDetails(
     _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
     individualName = IndividualName("George Smiley"),
