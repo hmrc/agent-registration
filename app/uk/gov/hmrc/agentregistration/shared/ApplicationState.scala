@@ -24,11 +24,11 @@ enum ApplicationState:
 
   case Started
   case GrsDataReceived
-  case Submitted
+  case SentForRisking
 
 object ApplicationState:
 
   given Format[ApplicationState] = JsonFormatsFactory.makeEnumFormat[ApplicationState]
 
   extension (as: ApplicationState)
-    def sentForRisking: Boolean = as === ApplicationState.Submitted
+    def sentForRisking: Boolean = as === ApplicationState.SentForRisking
