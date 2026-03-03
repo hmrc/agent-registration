@@ -21,7 +21,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.model.smu.SmuIndividualResponse
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Submitted
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.individualProvidedDetailsId
@@ -43,7 +43,7 @@ extends ControllerSpec:
     val individualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
     val applicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-    val agentApplication = tdAll.llpApplicationAfterCreated.copy(applicationState = Submitted)
+    val agentApplication = tdAll.llpApplicationAfterCreated.copy(applicationState = SentForRisking)
     applicationRepo.upsert(agentApplication).futureValue
 
     individualProvidedDetailsRepo.findById(
