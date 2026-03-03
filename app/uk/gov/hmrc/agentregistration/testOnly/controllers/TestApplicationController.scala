@@ -64,7 +64,7 @@ extends BackendController(cc):
         for
           _ <- agentApplicationRepo.upsert(agentApplication)
           _ <- individualProvidedDetailsRepo.upsert(individual)
-        yield Ok(Json.obj(
+        yield Created(Json.obj(
           "individualProvidedDetailsId" -> individual.individualProvidedDetailsId.value
         ))
 
