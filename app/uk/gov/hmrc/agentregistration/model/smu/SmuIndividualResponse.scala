@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsSoleT
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
-import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
 
 // TODO: Finalise what fields need to be returned here
 /** Represents an individual along with all relevant details and verification-related information required by the SMU (Secure Management Unit) to verify that
@@ -54,7 +54,7 @@ final case class SmuIndividualResponse(
   amlsDetails: Option[AmlsDetails],
   agentDetails: Option[AgentDetails],
   refusalToDealWithCheckResult: Option[CheckResult],
-  numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals], // all applications require this, sole traders will have a list of one
+  numberOfIndividuals: Option[NumberOfIndividuals], // all applications require this, sole traders will have a list of one
   hasOtherRelevantIndividuals: Option[Boolean],
   businessDetails: Option[BusinessDetailsSoleTrader],
   deceasedCheckResult: Option[CheckResult],
@@ -88,7 +88,7 @@ object SmuIndividualResponse:
     aa.amlsDetails,
     aa.agentDetails,
     aa.refusalToDealWithCheckResult,
-    aa.numberOfRequiredKeyIndividuals,
+    aa.numberOfIndividuals,
     aa.hasOtherRelevantIndividuals,
     businessDetails =
       aa match {

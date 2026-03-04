@@ -82,7 +82,7 @@ extends ControllerSpec:
     smuViewerIndividualResponse.amlsDetails shouldBe agentApplication.amlsDetails
     smuViewerIndividualResponse.agentDetails shouldBe agentApplication.agentDetails
     smuViewerIndividualResponse.refusalToDealWithCheckResult shouldBe agentApplication.refusalToDealWithCheckResult
-    smuViewerIndividualResponse.numberOfRequiredKeyIndividuals shouldBe agentApplication.numberOfRequiredKeyIndividuals
+    smuViewerIndividualResponse.numberOfIndividuals shouldBe agentApplication.numberOfIndividuals
     smuViewerIndividualResponse.hasOtherRelevantIndividuals shouldBe agentApplication.hasOtherRelevantIndividuals
     smuViewerIndividualResponse.businessDetails shouldBe agentApplication.businessDetails
     smuViewerIndividualResponse.deceasedCheckResult shouldBe None

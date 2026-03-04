@@ -20,6 +20,8 @@ import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfCompaniesHouseOfficers
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
@@ -44,7 +46,7 @@ sealed trait AgentApplication:
   def agentDetails: Option[AgentDetails]
   def refusalToDealWithCheckResult: Option[CheckResult]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
-  def numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] // all applications require this, sole traders will have a list of one
+  def numberOfIndividuals: Option[NumberOfIndividuals] // all applications require this, sole traders will have a list of one
   def hasOtherRelevantIndividuals: Option[Boolean]
   def vrns: Option[List[Vrn]]
   def payeRefs: Option[List[PayeRef]]
@@ -101,9 +103,7 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
-  def getNumberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = numberOfRequiredKeyIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
+  def getNumberOfIndividuals: NumberOfIndividuals
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
@@ -147,7 +147,10 @@ extends AgentApplication:
 
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
-  override def numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
+  override def numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
+  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
 object AgentApplicationSoleTrader:
   val numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = FiveOrLess(1)
@@ -169,7 +172,7 @@ final case class AgentApplicationLlp(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -177,6 +180,9 @@ final case class AgentApplicationLlp(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.LimitedLiabilityPartnership.type = BusinessType.Partnership.LimitedLiabilityPartnership
+  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -198,7 +204,7 @@ final case class AgentApplicationLimitedCompany(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -206,6 +212,9 @@ final case class AgentApplicationLimitedCompany(
 extends AgentApplication:
 
   override val businessType: BusinessType.LimitedCompany.type = BusinessType.LimitedCompany
+  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
   def getBusinessDetails: BusinessDetailsLimitedCompany = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -226,7 +235,7 @@ final case class AgentApplicationGeneralPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -234,6 +243,11 @@ final case class AgentApplicationGeneralPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.GeneralPartnership.type = BusinessType.Partnership.GeneralPartnership
+
+  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
+
   def getBusinessDetails: BusinessDetailsGeneralPartnership = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
 
 /** Application for Limited Partnership. This final case class represents the data entered by a user for registering as a Limited Partnership.
@@ -253,7 +267,7 @@ final case class AgentApplicationLimitedPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -261,6 +275,9 @@ final case class AgentApplicationLimitedPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.LimitedPartnership.type = BusinessType.Partnership.LimitedPartnership
+  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -280,7 +297,7 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -288,6 +305,9 @@ final case class AgentApplicationScottishLimitedPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishLimitedPartnership.type = BusinessType.Partnership.ScottishLimitedPartnership
+  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -306,7 +326,7 @@ final case class AgentApplicationScottishPartnership(
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]]
@@ -314,6 +334,10 @@ final case class AgentApplicationScottishPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishPartnership.type = BusinessType.Partnership.ScottishPartnership
+
+  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
+  )
 
   def getBusinessDetails: BusinessDetailsScottishPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
 
@@ -354,12 +378,15 @@ object AgentApplication:
 
   type IsAgentApplicationForDeclaringNumberOfKeyIndividuals = (AgentApplicationGeneralPartnership | AgentApplicationScottishPartnership) & AgentApplication
 
-  type IsNotAgentApplicationForKeyIndividuals =
-    (AgentApplicationSoleTrader
+  type IsAgentApplicationForKeyIndividuals =
+    (AgentApplicationGeneralPartnership
+      | AgentApplicationScottishPartnership
       | AgentApplicationLimitedCompany
       | AgentApplicationLimitedPartnership
       | AgentApplicationLlp
       | AgentApplicationScottishLimitedPartnership) & AgentApplication
+
+  type IsNotAgentApplicationForKeyIndividuals = AgentApplicationSoleTrader & AgentApplication
 
   private object CompilationProofs:
 
@@ -380,7 +407,7 @@ object AgentApplication:
     ]
     DisjointUnions.prove[
       AgentApplication,
-      IsAgentApplicationForDeclaringNumberOfKeyIndividuals,
+      IsAgentApplicationForKeyIndividuals,
       IsNotAgentApplicationForKeyIndividuals
     ]
 
