@@ -100,7 +100,9 @@ extends NumberOfCompaniesHouseOfficers:
 
   override def isValid: Boolean = numberOfOfficersResponsibleForTaxMatters >= 1 && numberOfOfficersResponsibleForTaxMatters <= numberOfCompaniesHouseOfficers
 
-  override def totalListSize: Int = numberOfOfficersResponsibleForTaxMatters
+  override def totalListSize: Int = numberOfOfficersResponsibleForTaxMatters + requiredPadding
+
+  def requiredPadding: Int = Math.max(0, 5 - numberOfOfficersResponsibleForTaxMatters)
 
 object NumberOfCompaniesHouseOfficers:
 
