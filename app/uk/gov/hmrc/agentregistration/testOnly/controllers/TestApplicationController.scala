@@ -95,6 +95,7 @@ extends BackendController(cc):
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     groupId = GroupId(value = UUID.randomUUID().toString),
     createdAt = Instant.now(),
+    submittedAt = Some(Instant.now()),
     applicationState = applicationState, // Provide details journeys now happen before an application is finished
     userRole = Some(UserRole.Authorised),
     businessDetails = Some(BusinessDetailsLlp(
