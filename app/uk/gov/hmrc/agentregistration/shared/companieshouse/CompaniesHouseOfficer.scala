@@ -18,11 +18,55 @@ package uk.gov.hmrc.agentregistration.shared.companieshouse
 
 import play.api.libs.json.*
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 final case class CompaniesHouseOfficer(
   name: String,
-  dateOfBirth: Option[CompaniesHouseDateOfBirth]
+  dateOfBirth: Option[CompaniesHouseDateOfBirth],
+  resignedOn: Option[LocalDate],
+  officerRole: Option[CompaniesHouseOfficerRole]
 )
 
 object CompaniesHouseOfficer:
 
+  private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+  private given Format[LocalDate] = Format(
+    Reads.localDateReads("yyyy-MM-dd"),
+    Writes.temporalWrites[LocalDate, DateTimeFormatter](dateFormat)
+  )
+
   given Format[CompaniesHouseOfficer] = Json.format[CompaniesHouseOfficer]
+
+  def normaliseOfficerName(raw: String): String =
+    val trimmed = raw.trim
+
+    if trimmed.contains(",") then
+      // Format: SURNAME, Forename(s)
+      val parts = trimmed.split(",", 2).map(_.trim)
+      parts.toList match
+        case surname :: forenames :: Nil => s"${titleCase(forenames)} ${titleCase(surname)}"
+        case _ => trimmed
+    else
+      // Already likely "Forename Surname" or corporate name
+      titleCasePreserveAcronyms(trimmed)
+
+  private def titleCase(s: String): String = s.split("\\s+")
+    .filter(_.nonEmpty)
+    .map { word =>
+      if word.forall(_.isUpper) then
+        word.toLowerCase.capitalize
+      else
+        s"${word.head.toUpper}${word.tail.toLowerCase}"
+    }
+    .mkString(" ")
+
+  private def titleCasePreserveAcronyms(s: String): String = s.split("\\s+")
+    .filter(_.nonEmpty)
+    .map { word =>
+      // Preserve things like "LLP", "UK", "HMRC"
+      if word.forall(_.isUpper) && word.length <= 5 then word
+      else s"${word.head.toUpper}${word.tail.toLowerCase}"
+    }
+    .mkString(" ")
