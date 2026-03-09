@@ -32,6 +32,7 @@ extends NumberOfIndividuals:
 
   def isValid: Boolean
   def totalListSize: Int
+  def numberOfIndividuals: Int
 
 /** When there less or equal 5, the Applicant has to declare the exact number of all key individuals (partners, directors, owners, etc) */
 final case class FiveOrLess(
@@ -41,6 +42,8 @@ extends NumberOfRequiredKeyIndividuals:
 
   override def isValid: Boolean = numberOfKeyIndividuals <= 5 && numberOfKeyIndividuals >= 1
   override def totalListSize: Int = numberOfKeyIndividuals
+
+  override def numberOfIndividuals: Int = totalListSize
 
 /** When there are more than 5, the Applicant has to declare how many of those are responsible for tax matters */
 final case class SixOrMore(
@@ -53,6 +56,8 @@ extends NumberOfRequiredKeyIndividuals:
   def requiredPadding: Int = Math.max(0, 5 - numberOfKeyIndividualsResponsibleForTaxMatters)
 
   override def totalListSize: Int = numberOfKeyIndividualsResponsibleForTaxMatters + requiredPadding
+
+  override def numberOfIndividuals: Int = numberOfKeyIndividualsResponsibleForTaxMatters
 
 object NumberOfRequiredKeyIndividuals:
 
@@ -81,6 +86,8 @@ extends NumberOfIndividuals:
   def isValid: Boolean
   def totalListSize: Int
 
+  def numberOfIndividuals: Int
+
 /** When there less or equal 5, the Applicant has to declare the exact number of all key individuals (partners, directors, owners, etc) */
 final case class FiveOrLessOfficers(
   override val numberOfCompaniesHouseOfficers: Int,
@@ -90,6 +97,7 @@ extends NumberOfCompaniesHouseOfficers:
 
   override def isValid: Boolean = numberOfCompaniesHouseOfficers <= 5 && numberOfCompaniesHouseOfficers >= 1
   override def totalListSize: Int = numberOfCompaniesHouseOfficers
+  override def numberOfIndividuals: Int = totalListSize
 
 /** When there are more than 5, the Applicant has to declare how many of those are responsible for tax matters */
 final case class SixOrMoreOfficers(
@@ -103,6 +111,8 @@ extends NumberOfCompaniesHouseOfficers:
   override def totalListSize: Int = numberOfOfficersResponsibleForTaxMatters + requiredPadding
 
   def requiredPadding: Int = Math.max(0, 5 - numberOfOfficersResponsibleForTaxMatters)
+
+  override def numberOfIndividuals: Int = numberOfOfficersResponsibleForTaxMatters
 
 object NumberOfCompaniesHouseOfficers:
 

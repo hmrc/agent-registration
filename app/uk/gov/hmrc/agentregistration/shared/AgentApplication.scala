@@ -103,7 +103,9 @@ sealed trait AgentApplication:
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
-  def getNumberOfIndividuals: NumberOfIndividuals
+  def getNumberOfIndividuals: NumberOfIndividuals = numberOfIndividuals.getOrElse(
+    expectedDataNotDefinedError("numberOfIndividuals")
+  )
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
@@ -148,9 +150,6 @@ extends AgentApplication:
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
   override def numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
-  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
 object AgentApplicationSoleTrader:
   val numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = FiveOrLess(1)
@@ -180,9 +179,6 @@ final case class AgentApplicationLlp(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.LimitedLiabilityPartnership.type = BusinessType.Partnership.LimitedLiabilityPartnership
-  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
   def getBusinessDetails: BusinessDetailsLlp = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -212,9 +208,6 @@ final case class AgentApplicationLimitedCompany(
 extends AgentApplication:
 
   override val businessType: BusinessType.LimitedCompany.type = BusinessType.LimitedCompany
-  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
   def getBusinessDetails: BusinessDetailsLimitedCompany = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -244,10 +237,6 @@ extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.GeneralPartnership.type = BusinessType.Partnership.GeneralPartnership
 
-  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
-
   def getBusinessDetails: BusinessDetailsGeneralPartnership = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
 
 /** Application for Limited Partnership. This final case class represents the data entered by a user for registering as a Limited Partnership.
@@ -275,9 +264,6 @@ final case class AgentApplicationLimitedPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.LimitedPartnership.type = BusinessType.Partnership.LimitedPartnership
-  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -305,9 +291,6 @@ final case class AgentApplicationScottishLimitedPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishLimitedPartnership.type = BusinessType.Partnership.ScottishLimitedPartnership
-  override def getNumberOfIndividuals: NumberOfCompaniesHouseOfficers = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
   def getBusinessDetails: BusinessDetailsPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
   def getCrn: Crn = getBusinessDetails.companyProfile.companyNumber
@@ -334,10 +317,6 @@ final case class AgentApplicationScottishPartnership(
 extends AgentApplication:
 
   override val businessType: BusinessType.Partnership.ScottishPartnership.type = BusinessType.Partnership.ScottishPartnership
-
-  override def getNumberOfIndividuals: NumberOfRequiredKeyIndividuals = numberOfIndividuals.getOrElse(
-    expectedDataNotDefinedError("numberOfRequiredKeyIndividuals")
-  )
 
   def getBusinessDetails: BusinessDetailsScottishPartnership = businessDetails.getOrThrowExpectedDataMissing("businessDetails")
 
