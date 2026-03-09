@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMi
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import scala.concurrent.Future
 
 @Singleton()
 class SmuViewerController @Inject() (
@@ -44,10 +45,11 @@ extends BackendController(cc):
   // TODO: Find out the correct stride profile and add auth to this endpoint
   def findIndividualByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
     for
-      ipd <- individualProvidedDetailsRepo.findById(individualProvidedDetailsId)
-      aa <- agentApplicationRepo.findById(ipd.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId"))
-    yield (ipd, aa) match
-      case (Some(ipd), Some(aa)) if aa.applicationState.sentForRisking =>
-        val resp = SmuIndividualResponse.make(ipd, aa)
-        Ok(Json.toJson(resp))
+      maybeIpd <- individualProvidedDetailsRepo.findById(individualProvidedDetailsId)
+      maybeAa <-
+        maybeIpd match
+          case Some(ipd) => agentApplicationRepo.findById(ipd.agentApplicationId)
+          case None => Future.successful(None)
+    yield (maybeIpd, maybeAa) match
+      case (Some(ipd), Some(aa)) if aa.applicationState.sentForRisking => Ok(Json.toJson(SmuIndividualResponse.make(ipd, aa)))
       case _ => NoContent
