@@ -34,6 +34,7 @@ trait TdAgentApplication { dependencies: TdBase =>
     linkId = linkId,
     groupId = groupId,
     createdAt = createdAt,
+    submittedAt = None,
     applicationState = ApplicationState.Started,
     userRole = Some(UserRole.Authorised),
     businessDetails = None,
