@@ -49,7 +49,8 @@ final case class IndividualProvidedDetails(
   hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
   hasApprovedApplication: Option[Boolean] = None,
   vrns: Option[List[Vrn]] = None,
-  payeRefs: Option[List[PayeRef]] = None
+  payeRefs: Option[List[PayeRef]] = None,
+  passedIv: Option[Boolean] = None
 ):
 
   val individualProvidedDetailsId: IndividualProvidedDetailsId = _id
