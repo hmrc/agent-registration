@@ -37,6 +37,7 @@ import uk.gov.hmrc.agentregistration.shared.addresslookup.Country
 import uk.gov.hmrc.agentregistration.shared.addresslookup.GetConfirmedAddressResponse
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficerRole.LlpMember
+import uk.gov.hmrc.auth.core.ConfidenceLevel
 
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -70,6 +71,8 @@ trait TdBase:
     providerId = "cred-id-12345",
     providerType = "GovernmentGateway"
   )
+  def confidenceLevel250: ConfidenceLevel = ConfidenceLevel.L250
+  def confidenceLevel50: ConfidenceLevel = ConfidenceLevel.L50
 
   def individualName = IndividualName("Test Name")
   def nino = Nino("AB123456C")
@@ -220,7 +223,8 @@ trait TdBase:
     agentApplicationId = agentApplicationId,
     providedDetailsState = ProvidedDetailsState.Precreated,
     individualName = IndividualName("Test Name"),
-    isPersonOfControl = true
+    isPersonOfControl = true,
+    passedIv = None
   )
 
   val individualProvidedDetails2: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -230,7 +234,8 @@ trait TdBase:
     agentApplicationId = agentApplicationId,
     providedDetailsState = ProvidedDetailsState.Precreated,
     individualName = IndividualName("Second Test Name"),
-    isPersonOfControl = true
+    isPersonOfControl = true,
+    passedIv = None
   )
 
   val individualProvidedDetails3: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -254,7 +259,8 @@ trait TdBase:
     telephoneNumber = Some(telephoneNumber),
     emailAddress = Some(IndividualVerifiedEmailAddress(applicantEmailAddress, isVerified = true)),
     hmrcStandardForAgentsAgreed = Agreed,
-    hasApprovedApplication = Some(true)
+    hasApprovedApplication = Some(true),
+    passedIv = None
   )
 
   val soleTraderProvidedDetails: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -271,5 +277,6 @@ trait TdBase:
     individualNino = Some(ninoFromAuth),
     individualSaUtr = Some(saUtrFromCitizenDetails),
     hmrcStandardForAgentsAgreed = Agreed,
-    hasApprovedApplication = Some(true)
+    hasApprovedApplication = Some(true),
+    passedIv = None
   )

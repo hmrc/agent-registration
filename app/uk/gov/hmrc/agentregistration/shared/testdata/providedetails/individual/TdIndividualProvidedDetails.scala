@@ -38,7 +38,8 @@ trait TdIndividualProvidedDetails { dependencies: (TdBase) =>
       createdAt = dependencies.nowAsInstant,
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Precreated,
-      isPersonOfControl = true
+      isPersonOfControl = true,
+      passedIv = None
     )
 
     val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -48,7 +49,8 @@ trait TdIndividualProvidedDetails { dependencies: (TdBase) =>
       createdAt = dependencies.nowAsInstant,
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Started,
-      isPersonOfControl = true
+      isPersonOfControl = true,
+      passedIv = Some(true)
     )
 
     val afterTelephoneNumberProvided: IndividualProvidedDetails = afterStarted
