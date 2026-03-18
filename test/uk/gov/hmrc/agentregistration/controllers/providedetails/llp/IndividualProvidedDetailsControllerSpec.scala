@@ -55,7 +55,7 @@ extends ControllerSpec:
 
     IndividualAuthStubs.stubAuthorise()
     val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-    val individualProvidedDetailsStarted = tdAll.providedDetailsLlp.afterStarted
+    val individualProvidedDetailsStarted = tdAll.providedDetails.afterStarted
     individualProvidedDetailsRepo.upsert(individualProvidedDetailsStarted).futureValue
     individualProvidedDetailsRepo.findById(
       individualProvidedDetailsStarted.individualProvidedDetailsId
@@ -78,7 +78,7 @@ extends ControllerSpec:
     IndividualAuthStubs.stubAuthorise()
     val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
-    val individualProvidedDetailsStarted: IndividualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
+    val individualProvidedDetailsStarted: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     individualProvidedDetailsRepo.findById(
       individualProvidedDetailsStarted.individualProvidedDetailsId
     ).futureValue shouldBe None withClue "assuming initially there are no records in mongo "
