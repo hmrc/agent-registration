@@ -40,10 +40,10 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-    val individualProvidedDetails = tdAll.providedDetailsLlp.afterStarted
+    val individualProvidedDetails = tdAll.providedDetails.afterStarted
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
     val applicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-    val agentApplication = tdAll.llpApplicationAfterCreated.copy(applicationState = SentForRisking)
+    val agentApplication = tdAll.agentApplicationLlp.afterStarted.copy(applicationState = SentForRisking)
     applicationRepo.upsert(agentApplication).futureValue
 
     individualProvidedDetailsRepo.findById(

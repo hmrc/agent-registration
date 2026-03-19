@@ -47,7 +47,7 @@ extends ControllerSpec:
       countryCode = "GB"
     ),
     emailAddress = Some(tdAll.email),
-    primaryPhoneNumber = Some(tdAll.telephoneNumber)
+    primaryPhoneNumber = Some(tdAll.telephoneNumber.value)
   )
 
   "getBusinessPartnerRecord by UTR returns Ok and DesRegistrationResponse as Json body" in:
