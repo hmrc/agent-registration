@@ -18,11 +18,6 @@ package uk.gov.hmrc.agentregistration.shared.testdata
 
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.*
 
-// Marker trait for section test data. Extend with concrete section implementations.
-// noinspection ScalaUnusedSymbol
-trait TdSections:
-  this: TdBase =>
-
 trait TestOnlyData
 extends TdBase,
   TdAgentApplicationLlp,
