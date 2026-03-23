@@ -21,9 +21,9 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMore
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
-import uk.gov.hmrc.agentregistration.shared.testdata.TdGrs
+import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
-trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrs) =>
+trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
   object agentApplicationScottishPartnership:
 
@@ -50,7 +50,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrs) =>
 
     val afterGrsDataReceived: AgentApplicationScottishPartnership = afterStarted.copy(
       businessDetails = Some(
-        dependencies.grs.scottishPartnership.businessDetails
+        dependencies.grsBusinessDetails.scottishPartnership.businessDetails
       ),
       applicationState = GrsDataReceived
     )

@@ -19,9 +19,9 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
-import uk.gov.hmrc.agentregistration.shared.testdata.TdGrs
+import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
-trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrs) =>
+trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
   object agentApplicationSoleTrader:
 
@@ -48,7 +48,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrs) =>
 
     val afterGrsDataReceived: AgentApplicationSoleTrader = afterStarted.copy(
       businessDetails = Some(
-        dependencies.grs.soleTrader.businessDetails
+        dependencies.grsBusinessDetails.soleTrader.businessDetails
       ),
       applicationState = GrsDataReceived
     )

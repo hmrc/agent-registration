@@ -20,6 +20,7 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement.Agreed
 import uk.gov.hmrc.agentregistration.shared.agentdetails.*
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
+import uk.gov.hmrc.agentregistration.shared.businessdetails.FullName
 import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseDateOfBirth
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseNameQuery
@@ -83,6 +84,7 @@ trait TdBase:
   def dateOfBirth: LocalDate = LocalDate.of(2000, 1, 1)
   def dateOfBirthFromCitizenDetails: IndividualDateOfBirth.FromCitizensDetails = IndividualDateOfBirth.FromCitizensDetails(dateOfBirth)
   def dateOfBirthProvided = IndividualDateOfBirth.Provided(dateOfBirth)
+  def fullName: FullName = FullName(firstName = "ST Name", lastName = "ST Lastname")
 
   def applicantEmailAddress: EmailAddress = EmailAddress("user@test.com")
   def individualEmailAddress: EmailAddress = EmailAddress("member@test.com")
@@ -243,7 +245,7 @@ trait TdBase:
     createdAt = nowAsInstant,
     agentApplicationId = agentApplicationId,
     providedDetailsState = ProvidedDetailsState.AccessConfirmed,
-    individualName = IndividualName("ST Name ST Lastname"),
+    individualName = IndividualName(fullName.toStringFull),
     isPersonOfControl = true,
     telephoneNumber = Some(telephoneNumber),
     emailAddress = Some(IndividualVerifiedEmailAddress(applicantEmailAddress, isVerified = true)),
@@ -258,7 +260,7 @@ trait TdBase:
     createdAt = nowAsInstant,
     agentApplicationId = agentApplicationId,
     providedDetailsState = ProvidedDetailsState.AccessConfirmed,
-    individualName = IndividualName("ST Name ST Lastname"),
+    individualName = IndividualName(fullName.toStringFull),
     isPersonOfControl = true,
     individualDateOfBirth = Some(dateOfBirthFromCitizenDetails),
     telephoneNumber = Some(telephoneNumber),

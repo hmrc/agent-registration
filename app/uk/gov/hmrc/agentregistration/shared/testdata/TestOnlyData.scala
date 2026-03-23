@@ -25,7 +25,6 @@ trait TdSections:
 
 trait TestOnlyData
 extends TdBase,
-  TdGrs,
   TdAgentApplicationLlp,
   TdAgentApplicationGeneralPartnership,
   TdAgentApplicationScottishPartnership,
@@ -33,7 +32,8 @@ extends TdBase,
   TdAgentApplicationLimitedCompany,
   TdAgentApplicationLimitedPartnership,
   TdAgentApplicationScottishLimitedPartnership,
-  providedetails.individual.TdIndividualProvidedDetails
+  providedetails.individual.TdIndividualProvidedDetails,
+  TdGrsBusinessDetails
 
 object TestOnlyData
 extends TestOnlyData
