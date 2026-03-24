@@ -36,10 +36,14 @@ import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficerRole.LlpMember
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualDateOfBirth.Provided
+import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 trait TdBase:
 
@@ -48,6 +52,7 @@ trait TdBase:
 
   def dateString: String = "2059-11-25"
   def timeString: String = s"${dateString}T16:33:51.880"
+  def randomId: String = UUID.randomUUID().toString
 
   def nowAsLocalDateTime: LocalDateTime =
     // the frozen time has to be in future otherwise the applications will disappear from mongodb because of expiry index
@@ -58,6 +63,7 @@ trait TdBase:
   def newPlus20sAsLocalDateTime: LocalDateTime = nowAsLocalDateTime.plusSeconds(20)
 
   def nowAsInstant: Instant = nowAsLocalDateTime.toInstant(ZoneOffset.UTC)
+  def newInstant: Instant = nowAsInstant.plusSeconds(20) // used when a new application is created from existing one
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
@@ -93,6 +99,16 @@ trait TdBase:
   def crn: Crn = Crn("1234567890")
   def companyName = "Test Company Name"
   def dateOfIncorporation: LocalDate = LocalDate.now().minusYears(10)
+  def personReference: PersonReference = PersonReference("1234567890")
+  def applicantName: ApplicantName = ApplicantName(authorisedPersonName)
+  def agentBusinessName: AgentBusinessName = AgentBusinessName(agentBusinessName = companyName, otherAgentBusinessName = None)
+  def amlsCode: AmlsCode = AmlsCode("HMRC")
+  def amlsRegistrationNumber: AmlsRegistrationNumber = AmlsRegistrationNumber("XAML00000123456")
+  def vrn = Vrn("123456789")
+  def payeRef = PayeRef("123/AB12345")
+  def individualDateOfBirth: LocalDate = LocalDate.of(1980, 1, 1)
+  def agentTelephoneNumber = AgentTelephoneNumber(agentTelephoneNumber = telephoneNumber.value, otherAgentTelephoneNumber = None)
+
   def companyProfile: CompanyProfile = CompanyProfile(
     companyNumber = crn,
     companyName = companyName,
@@ -106,8 +122,16 @@ trait TdBase:
   )
   def postcode: String = "AA1 1AA"
   def authorisedPersonName: String = "Alice Smith"
+  def agentVerifiedEmailAddress = AgentVerifiedEmailAddress(
+    emailAddress = AgentEmailAddress(
+      agentEmailAddress = applicantEmailAddress.value,
+      otherAgentEmailAddress = None
+    ),
+    isVerified = true
+  )
+  def individualVerifiedEmailAddress = IndividualVerifiedEmailAddress(individualEmailAddress, isVerified = true)
   def applicantContactDetails: ApplicantContactDetails = ApplicantContactDetails(
-    applicantName = ApplicantName(authorisedPersonName),
+    applicantName = applicantName,
     telephoneNumber = Some(telephoneNumber),
     applicantEmailAddress = Some(ApplicantEmailAddress(
       emailAddress = applicantEmailAddress,
@@ -116,25 +140,13 @@ trait TdBase:
   )
   def completeAgentDetails: AgentDetails = AgentDetails(
     agentCorrespondenceAddress = Some(chroAddress),
-    telephoneNumber = Some(AgentTelephoneNumber(
-      agentTelephoneNumber = telephoneNumber.value,
-      otherAgentTelephoneNumber = None
-    )),
-    agentEmailAddress = Some(AgentVerifiedEmailAddress(
-      emailAddress = AgentEmailAddress(
-        agentEmailAddress = applicantEmailAddress.value,
-        otherAgentEmailAddress = None
-      ),
-      isVerified = true
-    )),
-    businessName = AgentBusinessName(
-      agentBusinessName = companyName,
-      otherAgentBusinessName = None
-    )
+    telephoneNumber = Some(agentTelephoneNumber),
+    agentEmailAddress = Some(agentVerifiedEmailAddress),
+    businessName = agentBusinessName
   )
   def completeAmlsDetails: AmlsDetails = AmlsDetails(
-    supervisoryBody = AmlsCode("HMRC"),
-    amlsRegistrationNumber = Some(AmlsRegistrationNumber("XAML1234567890")),
+    supervisoryBody = amlsCode,
+    amlsRegistrationNumber = Some(amlsRegistrationNumber),
     amlsExpiryDate = None,
     amlsEvidence = None
   )
@@ -239,6 +251,26 @@ trait TdBase:
     isPersonOfControl = true
   )
 
+  val individualProvidedDetailsFinished: IndividualProvidedDetails = IndividualProvidedDetails(
+    _id = individualProvidedDetailsId,
+    individualName = individualName,
+    isPersonOfControl = true,
+    internalUserId = Some(internalUserId),
+    createdAt = nowAsInstant,
+    providedDetailsState = Finished,
+    agentApplicationId = agentApplicationId,
+    individualDateOfBirth = Some(Provided(individualDateOfBirth)),
+    telephoneNumber = Some(telephoneNumber),
+    emailAddress = Some(individualVerifiedEmailAddress),
+    individualNino = Some(IndividualNino.Provided(nino)),
+    individualSaUtr = Some(saUtrProvided),
+    hmrcStandardForAgentsAgreed = Agreed,
+    hasApprovedApplication = Some(true),
+    vrns = Some(List(vrn, vrn)),
+    payeRefs = Some(List(payeRef, payeRef)),
+    passedIv = Some(true)
+  )
+
   val soleTraderYetToProvideDetails: IndividualProvidedDetails = IndividualProvidedDetails(
     _id = individualProvidedDetailsId,
     internalUserId = None,
@@ -264,7 +296,7 @@ trait TdBase:
     isPersonOfControl = true,
     individualDateOfBirth = Some(dateOfBirthFromCitizenDetails),
     telephoneNumber = Some(telephoneNumber),
-    emailAddress = Some(IndividualVerifiedEmailAddress(applicantEmailAddress, isVerified = true)),
+    emailAddress = Some(individualVerifiedEmailAddress),
     individualNino = Some(ninoFromAuth),
     individualSaUtr = Some(saUtrFromCitizenDetails),
     hmrcStandardForAgentsAgreed = Agreed,

@@ -35,6 +35,5 @@ with TdRequest:
 
   // Backward-compatible aliases for properties renamed/removed in shared
   lazy val instant: Instant = nowAsInstant
-  lazy val newInstant: Instant = nowAsInstant.plusSeconds(20)
   lazy val utr: Utr = Utr(saUtr.value)
   lazy val email: String = "test@example.com"
