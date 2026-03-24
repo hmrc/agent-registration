@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.testsupport.testdata.providedata.llp.TdIndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.Utr
+import uk.gov.hmrc.agentregistration.shared.testdata.TestOnlyData
+
+import java.time.Instant
 
 object TdAll:
 
@@ -24,11 +27,13 @@ object TdAll:
 
   val tdAll: TdAll = new TdAll {}
 
-/** TestData (Td), All instances
+/** TestData (Td), All instances. Extends shared TestOnlyData (source of truth) plus agent-registration-specific traits.
   */
 trait TdAll
-extends AnyRef
-with TdBase
-with TdRequest
-with TdAgentApplication
-with TdIndividualProvidedDetails
+extends TestOnlyData
+with TdRequest:
+
+  // Backward-compatible aliases for properties renamed/removed in shared
+  lazy val instant: Instant = nowAsInstant
+  lazy val utr: Utr = Utr(saUtr.value)
+  lazy val email: String = "test@example.com"

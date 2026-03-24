@@ -48,7 +48,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val repo = app.injector.instanceOf[AgentApplicationRepo]
-    val exampleAgentApplication = tdAll.llpApplicationAfterCreated
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterStarted
     repo.upsert(exampleAgentApplication).futureValue
     repo.findByInternalUserId(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
@@ -68,7 +68,7 @@ extends ControllerSpec:
     val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
 
     repo.findByInternalUserId(tdAll.internalUserId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
-    val exampleAgentApplication: AgentApplication = tdAll.llpApplicationAfterCreated
+    val exampleAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted
 
     val response =
       httpClient
@@ -100,7 +100,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
 
     val repo = app.injector.instanceOf[AgentApplicationRepo]
-    val exampleAgentApplication = tdAll.llpApplicationAfterCreated
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterStarted
     repo.upsert(exampleAgentApplication).futureValue
     repo.findByInternalUserId(exampleAgentApplication.internalUserId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
@@ -133,7 +133,7 @@ extends ControllerSpec:
     AuthStubs.stubAuthoriseIndividual()
 
     val repo = app.injector.instanceOf[AgentApplicationRepo]
-    val exampleAgentApplication = tdAll.llpApplicationAfterCreated
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterStarted
     repo.upsert(exampleAgentApplication).futureValue
     repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
 
