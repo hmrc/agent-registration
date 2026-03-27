@@ -16,9 +16,15 @@
 
 package uk.gov.hmrc.agentregistration.shared.util
 
+import play.api.http.Status
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
+import java.net.URL
 import scala.concurrent.Future
 
 object Errors:
@@ -51,3 +57,28 @@ object Errors:
     if !requirement then
       Future.failed(InternalServerException(message))
     else Future.successful(())
+
+  def throwUpstreamErrorResponse(
+    httpMethod: String,
+    url: URL,
+    status: Int,
+    response: => HttpResponse,
+    info: String = ""
+  ): Nothing =
+    throw UpstreamErrorResponse(
+      message =
+        info + "; " + httpErrorFunctions.upstreamResponseMessage(
+          httpMethod,
+          url.toString,
+          status,
+          response.body
+        ),
+      statusCode = status,
+      reportAs =
+        if status === Status.BAD_GATEWAY
+        then Status.BAD_GATEWAY
+        else Status.INTERNAL_SERVER_ERROR,
+      headers = response.headers
+    )
+
+  val httpErrorFunctions: HttpErrorFunctions = new HttpErrorFunctions {}
