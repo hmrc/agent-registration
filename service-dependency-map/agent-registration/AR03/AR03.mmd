@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant Client
+    participant ApplicationController
+    participant HMRC_Auth as HMRC Auth
+    participant MongoDB as MongoDB (agent-application)
+
+    Client->>ApplicationController: GET /application/by-agent-application-id/{agentApplicationId}
+    ApplicationController->>HMRC_Auth: Authenticate (GG, Individual affinity)
+    alt Auth fails
+        HMRC_Auth-->>ApplicationController: 401 Unauthorised
+        ApplicationController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>ApplicationController: Authenticated
+        ApplicationController->>MongoDB: findOne(_id = agentApplicationId)
+        alt Record found
+            MongoDB-->>ApplicationController: AgentApplication
+            ApplicationController-->>Client: 200 OK (AgentApplication JSON)
+        else Record not found
+            MongoDB-->>ApplicationController: None
+            ApplicationController-->>Client: 204 No Content
+        end
+    end
