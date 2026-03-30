@@ -20,9 +20,9 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
 final case class Failure(
-  reasonCode: String,
+  reasonCode: ReasonCode,
   reasonDescription: String,
-  checkId: String,
+  checkId: CheckId,
   checkDescription: String,
   additionalInfo: Option[String]
 ) {}
