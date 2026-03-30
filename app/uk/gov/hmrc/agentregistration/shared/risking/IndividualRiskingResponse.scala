@@ -27,10 +27,4 @@ final case class IndividualRiskingResponse(
 
 object IndividualRiskingResponse:
 
-  given OFormat[IndividualRiskingResponse] = {
-
-    // TODO: add missing formats for all IndividualFailure classes
-    given OFormat[IndividualFailure] = Json.format[IndividualFailure]
-
-    Json.format[IndividualRiskingResponse]
-  }
+  given OFormat[IndividualRiskingResponse] = Json.format[IndividualRiskingResponse]
