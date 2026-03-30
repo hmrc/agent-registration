@@ -17,16 +17,21 @@
 package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+import play.api.libs.json.Reads
 
+//TODO: move this to the risking project, close to the connector (Marjan)
 final case class Failure(
-  reasonCode: ReasonCode,
+  reasonCode: String,
   reasonDescription: String,
-  checkId: CheckId,
+  checkId: String,
   checkDescription: String,
-  additionalInfo: Option[String]
-) {}
+  additionalInfo: Option[AdditionalInfo]
+)
 
-object Failure {
-  implicit val format: OFormat[Failure] = Json.format[Failure]
-}
+final case class AdditionalInfo(value: String)
+
+object AdditionalInfo:
+  given reads: Reads[AdditionalInfo] = Json.reads[AdditionalInfo]
+
+object Failure:
+  given reads: Reads[Failure] = Json.reads[Failure]
