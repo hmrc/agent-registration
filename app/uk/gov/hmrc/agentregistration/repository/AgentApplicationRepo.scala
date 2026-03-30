@@ -63,6 +63,14 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .headOption()
 
+  // we only ever delete an authorised user's own application
+  def delete(internalUserId: InternalUserId): Future[Unit] = collection
+    .deleteOne(
+      filter = Filters.eq("internalUserId", internalUserId.value)
+    )
+    .toFuture()
+    .map(_ => ())
+
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
 object AgentApplicationRepoHelp:
