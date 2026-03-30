@@ -134,33 +134,31 @@ object EntityFailureFormats:
   import play.api.libs.functional.syntax.*
   import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
-  given JsonConfiguration = JsonConfig.jsonConfiguration
+  private given JsonConfiguration = JsonConfig.jsonConfiguration
 
-  given OFormat[EntityFailure._3._1.type] = Json.format[EntityFailure._3._1.type]
-  given OFormat[EntityFailure._3._2.type] = Json.format[EntityFailure._3._2.type]
-  given OFormat[EntityFailure._3._3.type] = Json.format[EntityFailure._3._3.type]
-  given OFormat[EntityFailure._3._4.type] = Json.format[EntityFailure._3._4.type]
-  given OFormat[EntityFailure._3._5.type] = Json.format[EntityFailure._3._5.type]
+  given format: OFormat[EntityFailure] =
+    // Note: using implicit val instead of given due to Scala compiler bug with given and Play JSON macros
+    implicit val _3_1: OFormat[EntityFailure._3._1.type] = Json.format[EntityFailure._3._1.type]
+    implicit val _3_2: OFormat[EntityFailure._3._2.type] = Json.format[EntityFailure._3._2.type]
+    implicit val _3_3: OFormat[EntityFailure._3._3.type] = Json.format[EntityFailure._3._3.type]
+    implicit val _3_4: OFormat[EntityFailure._3._4.type] = Json.format[EntityFailure._3._4.type]
+    implicit val _3_5: OFormat[EntityFailure._3._5.type] = Json.format[EntityFailure._3._5.type]
+    implicit val _4_1: OFormat[EntityFailure._4._1.type] = Json.format[EntityFailure._4._1.type]
+    implicit val _4_2: OFormat[EntityFailure._4._2.type] = Json.format[EntityFailure._4._2.type]
+    implicit val _4_3: OFormat[EntityFailure._4._3.type] = Json.format[EntityFailure._4._3.type]
+    implicit val _4_4: OFormat[EntityFailure._4._4.type] = Json.format[EntityFailure._4._4.type]
+    implicit val _5_1: OFormat[EntityFailure._5._1] = Json.format[EntityFailure._5._1]
+    implicit val _5_2: OFormat[EntityFailure._5._2] = Json.format[EntityFailure._5._2]
+    implicit val _5_3: OFormat[EntityFailure._5._3] = Json.format[EntityFailure._5._3]
+    implicit val _5_4: OFormat[EntityFailure._5._4] = Json.format[EntityFailure._5._4]
+    implicit val _5_5: OFormat[EntityFailure._5._5] = Json.format[EntityFailure._5._5]
+    implicit val _5_6: OFormat[EntityFailure._5._6] = Json.format[EntityFailure._5._6]
+    implicit val _5_7: OFormat[EntityFailure._5._7] = Json.format[EntityFailure._5._7]
+    implicit val _7: OFormat[EntityFailure._7.type] = Json.format[EntityFailure._7.type]
+    implicit val _8_1: OFormat[EntityFailure._8._1.type] = Json.format[EntityFailure._8._1.type]
+    implicit val _8_4: OFormat[EntityFailure._8._4.type] = Json.format[EntityFailure._8._4.type]
+    implicit val _8_5: OFormat[EntityFailure._8._5.type] = Json.format[EntityFailure._8._5.type]
+    implicit val _8_6: OFormat[EntityFailure._8._6.type] = Json.format[EntityFailure._8._6.type]
+    implicit val _8_7: OFormat[EntityFailure._8._7.type] = Json.format[EntityFailure._8._7.type]
 
-  implicit val _4_1: OFormat[EntityFailure._4._1.type] = Json.format[EntityFailure._4._1.type]
-  implicit val _4_2: OFormat[EntityFailure._4._2.type] = Json.format[EntityFailure._4._2.type]
-  implicit val _4_3: OFormat[EntityFailure._4._3.type] = Json.format[EntityFailure._4._3.type]
-  implicit val _4_4: OFormat[EntityFailure._4._4.type] = Json.format[EntityFailure._4._4.type]
-
-  given OFormat[EntityFailure._5._1] = Json.format[EntityFailure._5._1]
-  given OFormat[EntityFailure._5._2] = Json.format[EntityFailure._5._2]
-  given OFormat[EntityFailure._5._3] = Json.format[EntityFailure._5._3]
-  given OFormat[EntityFailure._5._4] = Json.format[EntityFailure._5._4]
-  given OFormat[EntityFailure._5._5] = Json.format[EntityFailure._5._5]
-  given OFormat[EntityFailure._5._6] = Json.format[EntityFailure._5._6]
-  given OFormat[EntityFailure._5._7] = Json.format[EntityFailure._5._7]
-
-  given OFormat[EntityFailure._7.type] = Json.format[EntityFailure._7.type]
-
-  implicit val _8_1: OFormat[EntityFailure._8._1.type] = Json.format[EntityFailure._8._1.type]
-  implicit val _8_4: OFormat[EntityFailure._8._4.type] = Json.format[EntityFailure._8._4.type]
-  implicit val _8_5: OFormat[EntityFailure._8._5.type] = Json.format[EntityFailure._8._5.type]
-  implicit val _8_6: OFormat[EntityFailure._8._6.type] = Json.format[EntityFailure._8._6.type]
-  implicit val _8_7: OFormat[EntityFailure._8._7.type] = Json.format[EntityFailure._8._7.type]
-
-  given format: OFormat[EntityFailure] = Json.format[EntityFailure]
+    Json.format[EntityFailure]

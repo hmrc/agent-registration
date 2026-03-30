@@ -114,28 +114,26 @@ object IndividualFailureFormats:
   import play.api.libs.functional.syntax.*
   import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
-  given JsonConfiguration = JsonConfig.jsonConfiguration
+  private given JsonConfiguration = JsonConfig.jsonConfiguration
 
-  given OFormat[IndividualFailure._4._1.type] = Json.format[IndividualFailure._4._1.type]
-  given OFormat[IndividualFailure._4._3.type] = Json.format[IndividualFailure._4._3.type]
-  given OFormat[IndividualFailure._4._4.type] = Json.format[IndividualFailure._4._4.type]
+  given format: OFormat[IndividualFailure] =
+    // Note: using implicit val instead of given due to Scala compiler bug with given and Play JSON macros
+    implicit val _4_1: OFormat[IndividualFailure._4._1.type] = Json.format[IndividualFailure._4._1.type]
+    implicit val _4_3: OFormat[IndividualFailure._4._3.type] = Json.format[IndividualFailure._4._3.type]
+    implicit val _4_4: OFormat[IndividualFailure._4._4.type] = Json.format[IndividualFailure._4._4.type]
+    implicit val _5_1: OFormat[IndividualFailure._5._1] = Json.format[IndividualFailure._5._1]
+    implicit val _5_3: OFormat[IndividualFailure._5._3] = Json.format[IndividualFailure._5._3]
+    implicit val _5_4: OFormat[IndividualFailure._5._4] = Json.format[IndividualFailure._5._4]
+    implicit val _5_5: OFormat[IndividualFailure._5._5] = Json.format[IndividualFailure._5._5]
+    implicit val _5_6: OFormat[IndividualFailure._5._6] = Json.format[IndividualFailure._5._6]
+    implicit val _5_7: OFormat[IndividualFailure._5._7] = Json.format[IndividualFailure._5._7]
+    implicit val _6: OFormat[IndividualFailure._6.type] = Json.format[IndividualFailure._6.type]
+    implicit val _7: OFormat[IndividualFailure._7.type] = Json.format[IndividualFailure._7.type]
+    implicit val _8_1: OFormat[IndividualFailure._8._1.type] = Json.format[IndividualFailure._8._1.type]
+    implicit val _8_6: OFormat[IndividualFailure._8._6.type] = Json.format[IndividualFailure._8._6.type]
+    implicit val _8_7: OFormat[IndividualFailure._8._7.type] = Json.format[IndividualFailure._8._7.type]
+    implicit val _9: OFormat[IndividualFailure._9.type] = Json.format[IndividualFailure._9.type]
+    implicit val _10_1: OFormat[IndividualFailure._10._1.type] = Json.format[IndividualFailure._10._1.type]
+    implicit val _10_2: OFormat[IndividualFailure._10._2.type] = Json.format[IndividualFailure._10._2.type]
 
-  given OFormat[IndividualFailure._5._1] = Json.format[IndividualFailure._5._1]
-  given OFormat[IndividualFailure._5._3] = Json.format[IndividualFailure._5._3]
-  given OFormat[IndividualFailure._5._4] = Json.format[IndividualFailure._5._4]
-  given OFormat[IndividualFailure._5._5] = Json.format[IndividualFailure._5._5]
-  given OFormat[IndividualFailure._5._6] = Json.format[IndividualFailure._5._6]
-  given OFormat[IndividualFailure._5._7] = Json.format[IndividualFailure._5._7]
-  given OFormat[IndividualFailure._6.type] = Json.format[IndividualFailure._6.type]
-  given OFormat[IndividualFailure._7.type] = Json.format[IndividualFailure._7.type]
-
-  implicit val _8_1: OFormat[IndividualFailure._8._1.type] = Json.format[IndividualFailure._8._1.type]
-
-  implicit val _8_6: OFormat[IndividualFailure._8._6.type] = Json.format[IndividualFailure._8._6.type]
-
-  implicit val _8_7: OFormat[IndividualFailure._8._7.type] = Json.format[IndividualFailure._8._7.type]
-  implicit val _9: OFormat[IndividualFailure._9.type] = Json.format[IndividualFailure._9.type]
-  implicit val _10_1: OFormat[IndividualFailure._10._1.type] = Json.format[IndividualFailure._10._1.type]
-  implicit val _10_2: OFormat[IndividualFailure._10._2.type] = Json.format[IndividualFailure._10._2.type]
-
-  given format: OFormat[IndividualFailure] = Json.format[IndividualFailure]
+    Json.format[IndividualFailure]
