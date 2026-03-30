@@ -28,6 +28,68 @@ final case class Failure(
   additionalInfo: Option[AdditionalInfo]
 )
 
+object FailureParser:
+  // format: off
+  def individualFailure(failure: Failure): IndividualFailure =
+    failure match
+      case Failure("4.1", _, "4", _, None) => IndividualFailure._4._1
+      case Failure("4.3", _, "4", _, None) => IndividualFailure._4._3
+      case Failure("4.4", _, "4", _, None) => IndividualFailure._4._4
+
+      case Failure("5.1", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._1(value)
+      case Failure("5.3", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._3(value)
+      case Failure("5.4", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._4(value)
+      case Failure("5.5", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._5(value)
+      case Failure("5.6", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._6(value)
+      case Failure("5.7", _, "5", _, Some(AdditionalInfo(value))) => IndividualFailure._5._7(value)
+
+      case Failure("6", _, "6", _, None) => IndividualFailure._6
+
+      case Failure("7", _, "7", _, None) => IndividualFailure._7
+
+      case Failure("8.1", _, "8", _, None) => IndividualFailure._8._1
+      case Failure("8.6", _, "8", _, None) => IndividualFailure._8._6
+      case Failure("8.7", _, "8", _, None) => IndividualFailure._8._7
+
+      case Failure("9", _, "9", _, None) => IndividualFailure._9
+
+      case Failure("10.1", _, "10", _, None) => IndividualFailure._10._1
+      case Failure("10.2", _, "10", _, None) => IndividualFailure._10._2
+
+      case failure:Failure => throw new IllegalArgumentException(s"Unsupported IndividualFailure $failure")
+
+  def entityFailure(failure: Failure): EntityFailure =
+    failure match
+      case Failure("3.1", _, "3", _, None) => EntityFailure._3._1
+      case Failure("3.2", _, "3", _, None) => EntityFailure._3._2
+      case Failure("3.3", _, "3", _, None) => EntityFailure._3._3
+      case Failure("3.4", _, "3", _, None) => EntityFailure._3._4
+      case Failure("3.5", _, "3", _, None) => EntityFailure._3._5
+
+      case Failure("4.1", _, "4", _, None) => EntityFailure._4._1
+      case Failure("4.2", _, "4", _, None) => EntityFailure._4._2
+      case Failure("4.3", _, "4", _, None) => EntityFailure._4._3
+      case Failure("4.4", _, "4", _, None) => EntityFailure._4._4
+
+      case Failure("5.1", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._1(value)
+      case Failure("5.2", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._2(value)
+      case Failure("5.3", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._3(value)
+      case Failure("5.4", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._4(value)
+      case Failure("5.5", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._5(value)
+      case Failure("5.6", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._6(value)
+      case Failure("5.7", _, "5", _, Some(AdditionalInfo(value))) => EntityFailure._5._7(value)
+
+      case Failure("7", _, "7", _, None) => EntityFailure._7
+
+      case Failure("8.1", _, "8", _, None) => EntityFailure._8._1
+      case Failure("8.4", _, "8", _, None) => EntityFailure._8._4
+      case Failure("8.5", _, "8", _, None) => EntityFailure._8._5
+      case Failure("8.6", _, "8", _, None) => EntityFailure._8._6
+      case Failure("8.7", _, "8", _, None) => EntityFailure._8._7
+
+      case failure:Failure => throw new IllegalArgumentException(s"Unsupported EntityFailure $failure")
+  // format: on
+
 final case class AdditionalInfo(value: String)
 
 object AdditionalInfo:
