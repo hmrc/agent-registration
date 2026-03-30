@@ -30,7 +30,7 @@ final case class Failure(
 
 object FailureParser:
   // format: off
-  def individualFailure(failure: Failure): IndividualFailure =
+  def parseIndividualFailure(failure: Failure): IndividualFailure =
     failure match
       case Failure("4.1", _, "4", _, None) => IndividualFailure._4._1
       case Failure("4.3", _, "4", _, None) => IndividualFailure._4._3
@@ -58,7 +58,7 @@ object FailureParser:
 
       case failure:Failure => throw new IllegalArgumentException(s"Unsupported IndividualFailure $failure")
 
-  def entityFailure(failure: Failure): EntityFailure =
+  def parseEntityFailure(failure: Failure): EntityFailure =
     failure match
       case Failure("3.1", _, "3", _, None) => EntityFailure._3._1
       case Failure("3.2", _, "3", _, None) => EntityFailure._3._2
