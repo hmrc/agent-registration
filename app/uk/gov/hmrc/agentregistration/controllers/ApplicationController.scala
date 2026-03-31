@@ -27,14 +27,11 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.agentregistration.shared.util.Errors
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton()
@@ -64,7 +61,6 @@ extends BackendController(cc):
             .upsert(request.body)
             .map(_ => Ok(""))
 
-  // we only ever delete an authorised user's own application
   def deleteApplication(): Action[AnyContent] = actions.authorised.async: request =>
     agentApplicationRepo
       .findByInternalUserId(request.internalUserId)
@@ -75,7 +71,7 @@ extends BackendController(cc):
             _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
             _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
           yield NoContent
-        case None => Future.successful(NotFound)
+        case None => Future.successful(NoContent)
 
   def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
     agentApplicationRepo
