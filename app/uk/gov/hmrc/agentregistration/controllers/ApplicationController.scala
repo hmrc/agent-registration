@@ -23,23 +23,23 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.AuthorisedRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.agentregistration.shared.util.Errors
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton()
 class ApplicationController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  agentApplicationRepo: AgentApplicationRepo
+  agentApplicationRepo: AgentApplicationRepo,
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
 )
 extends BackendController(cc):
 
@@ -60,6 +60,18 @@ extends BackendController(cc):
           agentApplicationRepo
             .upsert(request.body)
             .map(_ => Ok(""))
+
+  def deleteApplication(): Action[AnyContent] = actions.authorised.async: request =>
+    agentApplicationRepo
+      .findByInternalUserId(request.internalUserId)
+      .flatMap:
+        case Some(agentApplication) =>
+          // clean up orphaned individual provided details records before we lose the application id as well
+          for
+            _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
+            _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
+          yield NoContent
+        case None => Future.successful(NoContent)
 
   def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
     agentApplicationRepo
