@@ -73,7 +73,7 @@ extends BackendController(cc):
           // clean up orphaned individual provided details records before we lose the application id as well
           for
             _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
-            _ <- agentApplicationRepo.delete(request.internalUserId)
+            _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
           yield NoContent
         case None => Future.successful(NotFound)
 
