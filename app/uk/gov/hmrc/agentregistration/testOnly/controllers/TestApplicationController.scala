@@ -34,6 +34,7 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.Instant
@@ -93,6 +94,10 @@ extends BackendController(cc):
     _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
+    applicantCredentials = Credentials(
+      providerId = s"test-provider-id-${UUID.randomUUID().toString}",
+      providerType = s"test-provider-type-${UUID.randomUUID().toString}"
+    ),
     groupId = GroupId(value = UUID.randomUUID().toString),
     createdAt = Instant.now(),
     submittedAt = Some(Instant.now()),
