@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 import java.time.Clock
 import java.time.Instant
@@ -35,6 +36,7 @@ sealed trait AgentApplication:
 
   def _id: AgentApplicationId
   def internalUserId: InternalUserId
+  def applicantCredentials: Credentials
   def linkId: LinkId
   def groupId: GroupId
   def createdAt: Instant
@@ -102,6 +104,16 @@ sealed trait AgentApplication:
       case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.saUtr.asUtr
       case BusinessType.Partnership.ScottishPartnership => this.asScottishPartnershipApplication.getBusinessDetails.saUtr.asUtr
 
+  def getSafeId: SafeId =
+    businessType match
+      case BusinessType.Partnership.LimitedLiabilityPartnership => this.asLlpApplication.getBusinessDetails.safeId
+      case BusinessType.SoleTrader => this.asSoleTraderApplication.getBusinessDetails.safeId
+      case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.safeId
+      case BusinessType.Partnership.GeneralPartnership => this.asGeneralPartnershipApplication.getBusinessDetails.safeId
+      case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.safeId
+      case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.safeId
+      case BusinessType.Partnership.ScottishPartnership => this.asScottishPartnershipApplication.getBusinessDetails.safeId
+
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
 
   def getNumberOfIndividuals: NumberOfIndividuals = numberOfIndividuals.getOrElse(
@@ -132,6 +144,7 @@ sealed trait AgentApplication:
 final case class AgentApplicationSoleTrader(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -164,6 +177,7 @@ object AgentApplicationSoleTrader:
 final case class AgentApplicationLlp(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -194,6 +208,7 @@ extends AgentApplication:
 final case class AgentApplicationLimitedCompany(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -224,6 +239,7 @@ extends AgentApplication:
 final case class AgentApplicationGeneralPartnership(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -252,6 +268,7 @@ extends AgentApplication:
 final case class AgentApplicationLimitedPartnership(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -280,6 +297,7 @@ extends AgentApplication:
 final case class AgentApplicationScottishLimitedPartnership(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,
@@ -308,6 +326,7 @@ extends AgentApplication:
 final case class AgentApplicationScottishPartnership(
   override val _id: AgentApplicationId,
   override val internalUserId: InternalUserId,
+  override val applicantCredentials: Credentials,
   override val linkId: LinkId,
   override val groupId: GroupId,
   override val createdAt: Instant,

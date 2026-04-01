@@ -20,6 +20,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 import scala.annotation.nowarn
 
@@ -34,6 +35,7 @@ object AgentApplicationFormats:
     given OFormat[AgentApplicationLimitedPartnership] = Json.format[AgentApplicationLimitedPartnership]
     given OFormat[AgentApplicationScottishLimitedPartnership] = Json.format[AgentApplicationScottishLimitedPartnership]
     given OFormat[AgentApplicationScottishPartnership] = Json.format[AgentApplicationScottishPartnership]
+    given OFormat[Credentials] = Json.format[Credentials]
 
     given JsonConfiguration = JsonConfig.jsonConfiguration
 
