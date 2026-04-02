@@ -22,7 +22,6 @@ import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLessOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
-import uk.gov.hmrc.agentregistration.shared.testdata.TestOnlyData
 
 trait TdAgentApplicationLimitedPartnership {
   dependencies: (TdBase & TdGrsBusinessDetails) =>
@@ -94,19 +93,19 @@ trait TdAgentApplicationLimitedPartnership {
 
     val afterConfirmCompaniesHouseOfficersYes: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
-        TestOnlyData.fiveOrLessCompaniesHouseOfficers
+        dependencies.twoCompaniesHouseOfficers
       )
     )
 
     val afterNumberOfConfirmCompaniesHouseOfficers: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
-        TestOnlyData.sixOrMoreCompaniesHouseOfficers
+        dependencies.sixOrMoreCompaniesHouseOfficers
       )
     )
 
     val afterConfirmCompaniesHouseOfficersNo: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
-        TestOnlyData.fiveOrLessCompaniesHouseOfficers.copy(isCompaniesHouseOfficersListCorrect = false)
+        dependencies.twoCompaniesHouseOfficers.copy(isCompaniesHouseOfficersListCorrect = false)
       )
     )
 
