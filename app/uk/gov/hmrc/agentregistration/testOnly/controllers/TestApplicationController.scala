@@ -88,7 +88,7 @@ extends BackendController(cc):
           .collection
           .find()
           .sort(Sorts.descending("createdAt"))
-          .limit(50)
+          .limit(15)
           .toFuture()
           .map((recentApplications: Seq[AgentApplication]) => Ok(Json.toJson(recentApplications)))
 
