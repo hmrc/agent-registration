@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
+import scala.annotation.nowarn
+
 sealed trait IndividualFailure
 
 object IndividualFailure:
@@ -115,6 +117,7 @@ object IndividualFailureFormats:
 
   private given JsonConfiguration = JsonConfig.jsonConfiguration
 
+  @nowarn()
   given format: OFormat[IndividualFailure] =
     // Note: using implicit val instead of given due to Scala compiler bug with given and Play JSON macros
     implicit val _4_1: OFormat[IndividualFailure._4._1.type] = Json.format[IndividualFailure._4._1.type]
@@ -134,5 +137,10 @@ object IndividualFailureFormats:
     implicit val _9: OFormat[IndividualFailure._9.type] = Json.format[IndividualFailure._9.type]
     implicit val _10_1: OFormat[IndividualFailure._10._1.type] = Json.format[IndividualFailure._10._1.type]
     implicit val _10_2: OFormat[IndividualFailure._10._2.type] = Json.format[IndividualFailure._10._2.type]
+
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emited by Play Json macro"""
 
     Json.format[IndividualFailure]
