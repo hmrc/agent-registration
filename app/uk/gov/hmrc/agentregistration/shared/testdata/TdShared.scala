@@ -18,7 +18,9 @@ package uk.gov.hmrc.agentregistration.shared.testdata
 
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.*
 
-trait TestOnlyData
+/** Test Data (Td) Shared
+  */
+trait TdShared
 extends TdBase,
   TdAgentApplicationLlp,
   TdAgentApplicationGeneralPartnership,
@@ -30,6 +32,3 @@ extends TdBase,
   TdAgentApplicationScottishLimitedPartnership,
   providedetails.individual.TdIndividualProvidedDetails,
   TdGrsBusinessDetails
-
-object TestOnlyData
-extends TestOnlyData

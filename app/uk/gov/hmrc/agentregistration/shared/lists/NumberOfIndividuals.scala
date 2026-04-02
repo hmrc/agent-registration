@@ -95,21 +95,26 @@ final case class FiveOrLessOfficers(
 )
 extends NumberOfCompaniesHouseOfficers:
 
-  override def isValid: Boolean = numberOfCompaniesHouseOfficers <= 5 && numberOfCompaniesHouseOfficers >= 1
+  override def isValid: Boolean = numberOfCompaniesHouseOfficers <= 5 && numberOfCompaniesHouseOfficers >= 1 // this probably is not used
   override def totalListSize: Int = numberOfCompaniesHouseOfficers
   override def numberOfIndividuals: Int = totalListSize
 
 /** When there are more than 5, the Applicant has to declare how many of those are responsible for tax matters */
+//Minimum 5, if less then 5 then padd with difference up to 5
 final case class SixOrMoreOfficers(
   override val numberOfCompaniesHouseOfficers: Int,
   numberOfOfficersResponsibleForTaxMatters: Int
 )
 extends NumberOfCompaniesHouseOfficers:
 
-  override def isValid: Boolean = numberOfOfficersResponsibleForTaxMatters >= 1 && numberOfOfficersResponsibleForTaxMatters <= numberOfCompaniesHouseOfficers
+  // is valid numberOfOfficersResponsibleForTaxMatters
+  override def isValid: Boolean =
+    numberOfOfficersResponsibleForTaxMatters >= 1 /*it can be 0 in future*/ &&
+      numberOfOfficersResponsibleForTaxMatters <= numberOfCompaniesHouseOfficers
 
-  override def totalListSize: Int = numberOfOfficersResponsibleForTaxMatters + requiredPadding
+  override def totalListSize: Int = numberOfOfficersResponsibleForTaxMatters + requiredPadding // (3)
 
+  // how man more to give us
   def requiredPadding: Int = Math.max(0, 5 - numberOfOfficersResponsibleForTaxMatters)
 
   override def numberOfIndividuals: Int = numberOfOfficersResponsibleForTaxMatters
