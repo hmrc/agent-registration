@@ -16,4 +16,7 @@ GET         /individual-provided-details/by-id/:individualProvidedDetailsId     
 PUT         /individual-provided-details/for-individual                                                 uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.upsert
 DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetailsId                      uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController.deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId)
 
+GET         /unified-customer-registry/nino/:nino                                                       uk.gov.hmrc.agentregistration.controllers.UcrController.searchByNino(nino: Nino)
+GET         /unified-customer-registry/sa-utr/:saUtr                                                    uk.gov.hmrc.agentregistration.controllers.UcrController.searchBySaUtr(saUtr: SaUtr)
+
 GET         /smu-viewer/individual/by-person-reference/:personReference                                 uk.gov.hmrc.agentregistration.controllers.smu.SmuViewerController.findIndividualByPersonReference(personReference: IndividualProvidedDetailsId)

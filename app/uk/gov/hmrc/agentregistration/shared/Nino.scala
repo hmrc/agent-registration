@@ -17,13 +17,16 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 final case class Nino(value: String)
 
 object Nino:
 
   given format: Format[Nino] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[Nino] = ValueClassBinder.valueClassBinder[Nino](_.value)
 
   private val validNinoFormat = "[[A-Z]&&[^DFIQUV]][[A-Z]&&[^DFIQUVO]] ?\\d{2} ?\\d{2} ?\\d{2} ?[A-D]{1}"
   private val invalidPrefixes = List(

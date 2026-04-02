@@ -17,7 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 /** Self Assessment (Sa) Unique Taxpayer Reference (Utr)
   */
@@ -27,6 +29,7 @@ final case class SaUtr(value: String):
 object SaUtr:
 
   given format: Format[SaUtr] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[SaUtr] = ValueClassBinder.valueClassBinder[SaUtr](_.value)
 
   private val saUtrRegex = "^[0-9]{10}$"
 

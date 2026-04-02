@@ -37,6 +37,9 @@ class AppConfig @Inject() (
   val desEnvironment: String = servicesConfig.getString("microservice.services.des.environment")
   val desAuthToken: String = servicesConfig.getString("microservice.services.des.authorization-token")
 
+  val hipBaseUrl: String = servicesConfig.baseUrl("hip")
+  val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
+
   object AgentApplicationRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-repo-ttl", servicesConfig)
 
