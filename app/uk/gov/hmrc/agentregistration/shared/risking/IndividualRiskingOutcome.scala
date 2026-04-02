@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+enum IndividualRiskingOutcome:
 
-final case class Failure(
-  reasonCode: String,
-  reasonDescription: String,
-  checkId: String,
-  checkDescription: String,
-  additionalInfo: Option[String]
-) {}
+  case FailedNonFixable
+  case FailedFixable
+  case Approved
 
-object Failure {
-  implicit val format: OFormat[Failure] = Json.format[Failure]
-}
+object IndividualRiskingOutcome:
+
+  extension (failures: List[IndividualFailure])
+    def outcome(): IndividualRiskingOutcome =
+      def hasNonFixableFailures: Boolean = failures.exists:
+        case _: IndividualFailure.NonFixable => true
+        case _: IndividualFailure.Fixable => false
+      failures match
+        case Nil => IndividualRiskingOutcome.Approved
+        case _ if hasNonFixableFailures => IndividualRiskingOutcome.FailedNonFixable
+        case _ => IndividualRiskingOutcome.FailedFixable
