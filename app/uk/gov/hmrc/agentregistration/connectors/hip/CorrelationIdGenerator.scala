@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.connectors.hip
 
-object RoutesExports:
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
-  export uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-  export uk.gov.hmrc.agentregistration.shared.LinkId
-  export uk.gov.hmrc.agentregistration.shared.Nino
-  export uk.gov.hmrc.agentregistration.shared.SaUtr
-  export uk.gov.hmrc.agentregistration.shared.Utr
-  export uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
+import java.util.UUID
+import javax.inject.Singleton
+import scala.util.chaining.*
+
+@Singleton
+class CorrelationIdGenerator
+extends RequestAwareLogging:
+
+  def makeCorrelationId()(using requestHeader: RequestHeader): String = UUID
+    .randomUUID()
+    .toString
+    .tap(correlationId => logger.info(s"Generated correlationId: $correlationId"))
