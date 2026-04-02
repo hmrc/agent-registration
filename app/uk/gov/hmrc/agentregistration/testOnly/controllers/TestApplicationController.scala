@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.agentregistration.testOnly.controllers
 
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Sorts
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -55,6 +58,67 @@ class TestApplicationController @Inject() (
 extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
+
+  def upsertIndividualProvidedDetails: Action[IndividualProvidedDetails] =
+    actions
+      .default
+      .async(parse.json[IndividualProvidedDetails]):
+        implicit request =>
+          val individualProvidedDetails: IndividualProvidedDetails = request.body
+          individualProvidedDetailsRepo
+            .upsert(request.body)
+            .map(_ => Ok(""))
+
+  def upsertApplication: Action[AgentApplication] =
+    actions
+      .default
+      .async(parse.json[AgentApplication]):
+        implicit request =>
+          val agentApplication: AgentApplication = request.body
+          agentApplicationRepo
+            .upsert(request.body)
+            .map(_ => Ok(""))
+
+  def recentApplications: Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        agentApplicationRepo
+          .collection
+          .find()
+          .sort(Sorts.descending("createdAt"))
+          .limit(50)
+          .toFuture()
+          .map((recentApplications: Seq[AgentApplication]) => Ok(Json.toJson(recentApplications)))
+
+  def findApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        agentApplicationRepo
+          .findById(agentApplicationId)
+          .map:
+            case Some(agentApplication) => Ok(Json.toJson(agentApplication))
+            case None => NoContent
+
+  def findIndividuals(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        individualProvidedDetailsRepo
+          .findForApplication(agentApplicationId)
+          .map: individuals =>
+            Ok(Json.toJson(individuals))
+
+  def findIndividual(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        individualProvidedDetailsRepo
+          .findById(individualProvidedDetailsId)
+          .map:
+            case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
+            case None => NoContent
 
   def createTestSmuIndividual: Action[AnyContent] = Action
     .async:
