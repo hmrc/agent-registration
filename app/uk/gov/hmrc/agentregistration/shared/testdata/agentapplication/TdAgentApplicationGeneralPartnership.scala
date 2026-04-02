@@ -125,7 +125,42 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
         hasOtherRelevantIndividuals = Some(false)
       )
 
+    val afterConfirmTwoOtherRelevantIndividualsNo: AgentApplicationGeneralPartnership = afterHowManyKeyIndividuals
+      .copy(
+        numberOfIndividuals = Some(
+          SixOrMore(
+            numberOfKeyIndividualsResponsibleForTaxMatters = 2
+          )
+        ),
+        hasOtherRelevantIndividuals = Some(false)
+      )
+
+    val afterConfirmTwoIndividuals: AgentApplicationGeneralPartnership = afterHowManyKeyIndividuals
+      .copy(
+        numberOfIndividuals = Some(
+          FiveOrLess(
+            numberOfKeyIndividuals = 2
+          )
+        ),
+        hasOtherRelevantIndividuals = Some(false)
+      )
+
+    val afterConfirmSixIndividuals: AgentApplicationGeneralPartnership = afterHowManyKeyIndividuals
+      .copy(
+        numberOfIndividuals = Some(
+          SixOrMore(
+            numberOfKeyIndividualsResponsibleForTaxMatters = 6
+          )
+        ),
+        hasOtherRelevantIndividuals = Some(false)
+      )
+
     val afterDeclarationSubmitted: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      applicationState = ApplicationState.SentForRisking,
+      submittedAt = Some(dependencies.nowAsInstant)
+    )
+
+    val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationGeneralPartnership = afterConfirmTwoOtherRelevantIndividualsNo.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant)
     )

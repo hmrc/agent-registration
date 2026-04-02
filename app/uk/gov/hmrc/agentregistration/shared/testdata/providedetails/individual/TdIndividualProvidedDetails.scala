@@ -31,7 +31,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
 
   object providedDetails:
 
-    val unclaimed: IndividualProvidedDetails = IndividualProvidedDetails(
+    val precreated: IndividualProvidedDetails = IndividualProvidedDetails(
       _id = dependencies.individualProvidedDetailsId,
       internalUserId = None,
       individualName = dependencies.individualName,
