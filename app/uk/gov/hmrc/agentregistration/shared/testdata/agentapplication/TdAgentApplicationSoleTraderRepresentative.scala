@@ -21,9 +21,9 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
-trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetails) =>
+trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
-  object agentApplicationSoleTrader:
+  object agentApplicationSoleTraderRepresentative:
 
     val afterStarted: AgentApplicationSoleTrader = AgentApplicationSoleTrader(
       _id = dependencies.agentApplicationId,
@@ -34,7 +34,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       createdAt = dependencies.nowAsInstant,
       submittedAt = None,
       applicationState = ApplicationState.Started,
-      userRole = Some(UserRole.Owner),
+      userRole = Some(UserRole.Authorised),
       businessDetails = None,
       applicantContactDetails = None,
       amlsDetails = None,

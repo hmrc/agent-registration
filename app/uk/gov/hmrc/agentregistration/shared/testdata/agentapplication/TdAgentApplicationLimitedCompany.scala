@@ -31,6 +31,7 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
     val afterStarted: AgentApplicationLimitedCompany = AgentApplicationLimitedCompany(
       _id = dependencies.agentApplicationId,
       internalUserId = dependencies.internalUserId,
+      applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
       createdAt = dependencies.nowAsInstant,
@@ -106,6 +107,16 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       numberOfIndividuals = Some(
         TestOnlyData.fiveOrLessCompaniesHouseOfficers.copy(isCompaniesHouseOfficersListCorrect = false)
       )
+    )
+
+    val afterIndividualsDefined: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        FiveOrLessOfficers(
+          numberOfCompaniesHouseOfficers = 2,
+          isCompaniesHouseOfficersListCorrect = true
+        )
+      ),
+      hasOtherRelevantIndividuals = Some(false)
     )
 
     val afterDeclarationSubmitted: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(

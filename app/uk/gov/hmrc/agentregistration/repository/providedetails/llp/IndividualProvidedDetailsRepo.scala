@@ -68,6 +68,13 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     .toFuture()
     .map(_.toList)
 
+  def deleteByApplicationId(agentApplicationId: AgentApplicationId): Future[Unit] = collection
+    .deleteMany(
+      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+    )
+    .toFuture()
+    .map(_ => ())
+
   def find(
     internalUserId: InternalUserId,
     agentApplicationId: AgentApplicationId

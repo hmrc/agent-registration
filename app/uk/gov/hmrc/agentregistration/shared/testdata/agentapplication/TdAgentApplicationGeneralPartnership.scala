@@ -34,6 +34,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
     val afterStarted: AgentApplicationGeneralPartnership = AgentApplicationGeneralPartnership(
       _id = dependencies.agentApplicationId,
       internalUserId = dependencies.internalUserId,
+      applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
       createdAt = dependencies.nowAsInstant,

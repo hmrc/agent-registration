@@ -30,6 +30,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
     val afterStarted: AgentApplicationScottishPartnership = AgentApplicationScottishPartnership(
       _id = dependencies.agentApplicationId,
       internalUserId = dependencies.internalUserId,
+      applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
       createdAt = dependencies.nowAsInstant,
