@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant Client
+    participant IndividualProvidedDetailsController
+    participant HMRC_Auth as HMRC Auth
+    participant MongoDB as MongoDB (individual)
+
+    Client->>IndividualProvidedDetailsController: GET /individual-provided-details/by-id/{individualProvidedDetailsId}
+    IndividualProvidedDetailsController->>HMRC_Auth: Authenticate (GG, Agent affinity)
+    alt Auth fails
+        HMRC_Auth-->>IndividualProvidedDetailsController: 401 Unauthorised
+        IndividualProvidedDetailsController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>IndividualProvidedDetailsController: Authenticated
+        IndividualProvidedDetailsController->>MongoDB: findOne(_id = individualProvidedDetailsId)
+        alt Record found
+            MongoDB-->>IndividualProvidedDetailsController: IndividualProvidedDetails
+            IndividualProvidedDetailsController-->>Client: 200 OK (IndividualProvidedDetails JSON)
+        else Record not found
+            MongoDB-->>IndividualProvidedDetailsController: None
+            IndividualProvidedDetailsController-->>Client: 204 No Content
+        end
+    end
