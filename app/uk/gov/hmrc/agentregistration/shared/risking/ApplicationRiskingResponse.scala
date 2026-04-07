@@ -23,7 +23,7 @@ final case class ApplicationRiskingResponse(
   applicationReference: ApplicationReference,
   status: ApplicationForRiskingStatus,
   individuals: List[IndividualRiskingResponse],
-  failures: Option[List[Failure]]
+  failures: Option[List[EntityFailure]]
 )
 
 object ApplicationRiskingResponse:

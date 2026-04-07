@@ -22,7 +22,7 @@ import play.api.libs.json.OFormat
 final case class IndividualRiskingResponse(
   personReference: PersonReference,
   status: ApplicationForRiskingStatus,
-  failures: Option[List[Failure]]
+  failures: Option[List[IndividualFailure]]
 )
 
 object IndividualRiskingResponse:

@@ -317,3 +317,20 @@ trait TdBase:
     providedDetailsState = Finished,
     passedIv = Some(true)
   )
+
+  def sixCompaniesHouseOfficersSelectAll: SixOrMoreOfficers = SixOrMoreOfficers(
+    numberOfCompaniesHouseOfficers = 6,
+    numberOfOfficersResponsibleForTaxMatters = 6
+  )
+
+  /** This is a list of individual names that we currently have stubbed in companies house, We need to use this list for fast forward links to ensure the names
+    * match the names we get from companies house stub
+    */
+  val individualNamesStubbedInCompaniesHouse: List[IndividualName] = List(
+    IndividualName("Steve Austin"),
+    IndividualName("Beverly Hills"),
+    IndividualName("Pauline Austin"),
+    IndividualName("Justine Hills"),
+    IndividualName("Steve Palmer"),
+    IndividualName("Sandra Hills")
+  )
