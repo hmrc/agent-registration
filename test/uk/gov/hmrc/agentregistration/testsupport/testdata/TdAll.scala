@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
 import uk.gov.hmrc.agentregistration.shared.Utr
-import uk.gov.hmrc.agentregistration.shared.testdata.TestOnlyData
+import uk.gov.hmrc.agentregistration.shared.testdata.TdShared
 
 import java.time.Instant
 
@@ -30,7 +30,7 @@ object TdAll:
 /** TestData (Td), All instances. Extends shared TestOnlyData (source of truth) plus agent-registration-specific traits.
   */
 trait TdAll
-extends TestOnlyData
+extends TdShared
 with TdRequest:
 
   // Backward-compatible aliases for properties renamed/removed in shared

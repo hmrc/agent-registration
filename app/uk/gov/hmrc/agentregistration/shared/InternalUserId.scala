@@ -17,11 +17,15 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 /** Internal User Identifier, which comes from the Retrievals
   */
 final case class InternalUserId(value: String)
 
 object InternalUserId:
+
   given format: Format[InternalUserId] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[InternalUserId] = ValueClassBinder.valueClassBinder[InternalUserId](_.value)
