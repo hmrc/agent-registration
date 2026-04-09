@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentregistration
 object RoutesExports:
 
   export uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-  export uk.gov.hmrc.agentregistration.shared.CtUtr
   export uk.gov.hmrc.agentregistration.shared.LinkId
   export uk.gov.hmrc.agentregistration.shared.Nino
   export uk.gov.hmrc.agentregistration.shared.SaUtr

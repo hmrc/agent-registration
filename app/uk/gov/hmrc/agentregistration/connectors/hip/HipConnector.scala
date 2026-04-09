@@ -23,7 +23,6 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.PayeRef
-import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.UcrIdentifiers
 import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.shared.Vrn
@@ -54,12 +53,12 @@ class HipConnector @Inject() (
 
   private val baseUrl: String = appConfig.hipBaseUrl
 
-  /** UCR Customer API v2 - Search Individual By Identifier. Searches for an individual's VRNs and PAYE refs (EMPREFs) by NINO or SA-UTR.
+  /** UCR Customer API v2 - Search Individual By Identifier. Searches for an individual's VRNs and PAYE refs (EMPREFs) by NINO or UTR.
     * @see
     *   https://admin.tax.service.gov.uk/api-hub/apis/details/ucr-customer-api-v2 "Search Individual By Identifier"
     */
   def searchByIdentifier(
-    identifier: Nino | SaUtr
+    identifier: Nino | Utr
   )(implicit
     rh: RequestHeader
   ): Future[UcrIdentifiers] =
@@ -68,7 +67,7 @@ class HipConnector @Inject() (
     val (identifierType, identifierValue) =
       identifier match
         case nino: Nino => ("NINO", nino.value)
-        case saUtr: SaUtr => ("UTR", saUtr.value)
+        case utr: Utr => ("UTR", utr.value)
 
     val requestBody = Json.obj(
       "identifier" -> Json.obj(
