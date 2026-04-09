@@ -17,7 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 /** Corporation Tax (Ct) Unique Taxpayer Reference (Utr)
   */
@@ -25,4 +27,6 @@ final case class CtUtr(value: String):
   def asUtr: Utr = Utr(value)
 
 object CtUtr:
+
   given format: Format[CtUtr] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[CtUtr] = ValueClassBinder.valueClassBinder[CtUtr](_.value)

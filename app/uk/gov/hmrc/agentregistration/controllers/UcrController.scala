@@ -22,6 +22,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.connectors.hip.HipConnector
+import uk.gov.hmrc.agentregistration.shared.CtUtr
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.Utr
@@ -59,4 +60,12 @@ extends BackendController(cc):
       implicit request =>
         hipConnector
           .searchOrganisationByIdentifier(utr)
+          .map(ucrIdentifiers => Ok(Json.toJson(ucrIdentifiers)))
+
+  def searchOrganisationByCtUtr(ctUtr: CtUtr): Action[AnyContent] = actions
+    .authorised
+    .async:
+      implicit request =>
+        hipConnector
+          .searchOrganisationByIdentifier(ctUtr.asUtr)
           .map(ucrIdentifiers => Ok(Json.toJson(ucrIdentifiers)))
