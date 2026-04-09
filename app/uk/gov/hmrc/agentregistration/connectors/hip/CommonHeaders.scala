@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration
+package uk.gov.hmrc.agentregistration.connectors.hip
 
-object RoutesExports:
+import play.api.mvc.RequestHeader
 
-  export uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-  export uk.gov.hmrc.agentregistration.shared.LinkId
-  export uk.gov.hmrc.agentregistration.shared.Nino
-  export uk.gov.hmrc.agentregistration.shared.SaUtr
-  export uk.gov.hmrc.agentregistration.shared.Utr
-  export uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
+object CommonHeaders:
+
+  private val xSessionIdHeader = "X-Session-ID"
+  private val xRequestIdHeader = "X-Request-ID"
+
+  def apply()(implicit requestHeader: RequestHeader): Seq[(String, String)] =
+    val maybeSessionId = requestHeader.headers.get(xSessionIdHeader).map(xSessionIdHeader -> _)
+    val maybeRequestId = requestHeader.headers.get(xRequestIdHeader).map(xRequestIdHeader -> _)
+    Seq(maybeSessionId, maybeRequestId).flatten
