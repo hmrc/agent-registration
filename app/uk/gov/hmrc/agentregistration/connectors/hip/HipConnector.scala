@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.PayeRef
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.UcrIdentifiers
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.shared.Vrn
 import uk.gov.hmrc.agentregistration.util.RequestSupport.given
 import uk.gov.hmrc.http.*
@@ -53,9 +54,10 @@ class HipConnector @Inject() (
   ): Future[UcrIdentifiers] =
     val apiUrl: URL = url"$baseUrl/customer/v2/api/individuals/identifier-search"
 
-    val (identifierType, identifierValue) = identifier match
-      case nino: Nino   => ("NINO", nino.value)
-      case saUtr: SaUtr => ("UTR", saUtr.value)
+    val (identifierType, identifierValue) =
+      identifier match
+        case nino: Nino => ("NINO", nino.value)
+        case saUtr: SaUtr => ("UTR", saUtr.value)
 
     val requestBody = Json.obj(
       "identifier" -> Json.obj(
@@ -77,6 +79,35 @@ class HipConnector @Inject() (
           case status =>
             throw UpstreamErrorResponse(
               s"[HIP-UCR-IdentifierSearch-POST] returned status: $status",
+              INTERNAL_SERVER_ERROR
+            )
+
+  def searchOrganisationByIdentifier(
+    utr: Utr
+  )(implicit
+    rh: RequestHeader
+  ): Future[UcrIdentifiers] =
+    val apiUrl: URL = url"$baseUrl/customer/v2/api/organisations/identifier-search"
+
+    val requestBody = Json.obj(
+      "identifier" -> Json.obj(
+        "type" -> "UTR",
+        "value" -> utr.value
+      ),
+      "registryMarker" -> "GREEN"
+    )
+
+    http
+      .post(apiUrl)
+      .setHeader(hipHeaders.makeHeaders()*)
+      .withBody(requestBody)
+      .execute[HttpResponse]
+      .map: response =>
+        response.status match
+          case s if HttpErrorFunctions.is2xx(s) => extractIdentifiers(response.json)
+          case status =>
+            throw UpstreamErrorResponse(
+              s"[HIP-UCR-OrganisationIdentifierSearch-POST] returned status: $status",
               INTERNAL_SERVER_ERROR
             )
 

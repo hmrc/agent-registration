@@ -41,7 +41,7 @@ extends ControllerSpec:
       )
       val response =
         httpClient
-          .get(url"$baseUrl/agent-registration/unified-customer-registry/nino/${tdAll.nino.value}")
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/individual/nino/${tdAll.nino.value}")
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.OK
@@ -58,7 +58,7 @@ extends ControllerSpec:
       HipStubs.stubIdentifierSearchNoMatch()
       val response =
         httpClient
-          .get(url"$baseUrl/agent-registration/unified-customer-registry/nino/${tdAll.nino.value}")
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/individual/nino/${tdAll.nino.value}")
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.OK
@@ -75,7 +75,7 @@ extends ControllerSpec:
       HipStubs.stubIdentifierSearchError(500)
       val response =
         httpClient
-          .get(url"$baseUrl/agent-registration/unified-customer-registry/nino/${tdAll.nino.value}")
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/individual/nino/${tdAll.nino.value}")
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.INTERNAL_SERVER_ERROR
@@ -95,7 +95,7 @@ extends ControllerSpec:
       )
       val response =
         httpClient
-          .get(url"$baseUrl/agent-registration/unified-customer-registry/sa-utr/${tdAll.saUtr.value}")
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/individual/sa-utr/${tdAll.saUtr.value}")
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.OK
@@ -112,7 +112,7 @@ extends ControllerSpec:
       HipStubs.stubIdentifierSearchNoMatch()
       val response =
         httpClient
-          .get(url"$baseUrl/agent-registration/unified-customer-registry/sa-utr/${tdAll.saUtr.value}")
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/individual/sa-utr/${tdAll.saUtr.value}")
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.OK
@@ -120,5 +120,59 @@ extends ControllerSpec:
       ucrIdentifiers.hasIdentifiers.shouldBe(false)
       AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
+
+  }
+
+  "searchOrganisationByUtr" - {
+
+    "returns Ok with VRNs and PAYE refs when HIP returns a match" in:
+      given Request[?] = tdAll.backendRequest
+      AuthStubs.stubAuthorise()
+      HipStubs.stubOrganisationIdentifierSearchSuccess(
+        vrns = List("462783770"),
+        payeRefs = List("123/A45678")
+      )
+      val response =
+        httpClient
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/organisation/utr/${tdAll.utr.value}")
+          .execute[HttpResponse]
+          .futureValue
+      response.status shouldBe Status.OK
+      val ucrIdentifiers = response.json.as[UcrIdentifiers]
+      ucrIdentifiers.hasIdentifiers.shouldBe(true)
+      ucrIdentifiers.vrns.map(_.value).shouldBe(List("462783770"))
+      ucrIdentifiers.payeRefs.map(_.value).shouldBe(List("123/A45678"))
+      AuthStubs.verifyAuthorise()
+      HipStubs.verifyOrganisationIdentifierSearch()
+
+    "returns Ok with empty lists when HIP returns no match" in:
+      given Request[?] = tdAll.backendRequest
+      AuthStubs.stubAuthorise()
+      HipStubs.stubOrganisationIdentifierSearchNoMatch()
+      val response =
+        httpClient
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/organisation/utr/${tdAll.utr.value}")
+          .execute[HttpResponse]
+          .futureValue
+      response.status shouldBe Status.OK
+      val ucrIdentifiers = response.json.as[UcrIdentifiers]
+      ucrIdentifiers.hasIdentifiers.shouldBe(false)
+      ucrIdentifiers.vrns.shouldBe(List.empty)
+      ucrIdentifiers.payeRefs.shouldBe(List.empty)
+      AuthStubs.verifyAuthorise()
+      HipStubs.verifyOrganisationIdentifierSearch()
+
+    "returns 500 when HIP returns an error" in:
+      given Request[?] = tdAll.backendRequest
+      AuthStubs.stubAuthorise()
+      HipStubs.stubOrganisationIdentifierSearchError(500)
+      val response =
+        httpClient
+          .get(url"$baseUrl/agent-registration/unified-customer-registry/organisation/utr/${tdAll.utr.value}")
+          .execute[HttpResponse]
+          .futureValue
+      response.status shouldBe Status.INTERNAL_SERVER_ERROR
+      AuthStubs.verifyAuthorise()
+      HipStubs.verifyOrganisationIdentifierSearch()
 
   }

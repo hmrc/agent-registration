@@ -24,6 +24,7 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.connectors.hip.HipConnector
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.SaUtr
+import uk.gov.hmrc.agentregistration.shared.Utr
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -50,4 +51,12 @@ extends BackendController(cc):
       implicit request =>
         hipConnector
           .searchByIdentifier(saUtr)
+          .map(ucrIdentifiers => Ok(Json.toJson(ucrIdentifiers)))
+
+  def searchOrganisationByUtr(utr: Utr): Action[AnyContent] = actions
+    .authorised
+    .async:
+      implicit request =>
+        hipConnector
+          .searchOrganisationByIdentifier(utr)
           .map(ucrIdentifiers => Ok(Json.toJson(ucrIdentifiers)))
