@@ -38,6 +38,12 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
+/** Connector for the UCR (Unified Customer Registry) Customer API v2, accessed via HIP (Hybrid Integration Platform).
+  *
+  * Provides individual and organisation identifier searches against the UCR.
+  *
+  * @see https://admin.tax.service.gov.uk/api-hub/apis/details/ucr-customer-api-v2
+  */
 @Singleton
 class HipConnector @Inject() (
   appConfig: AppConfig,
