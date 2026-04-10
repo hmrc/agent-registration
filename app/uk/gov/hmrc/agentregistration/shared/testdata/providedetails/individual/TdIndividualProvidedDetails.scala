@@ -18,13 +18,17 @@ package uk.gov.hmrc.agentregistration.shared.testdata.providedetails.individual
 
 import com.softwaremill.quicklens.modify
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
+import uk.gov.hmrc.agentregistration.shared.StateOfAgreement.Agreed
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualVerifiedEmailAddress
+import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState
+import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.AccessConfirmed
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Started
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
 trait TdIndividualProvidedDetails { dependencies: TdBase =>
@@ -42,13 +46,13 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       passedIv = None
     )
 
-    val unclaimed: IndividualProvidedDetails = IndividualProvidedDetails(
+    val afterAccessConfirmed: IndividualProvidedDetails = IndividualProvidedDetails(
       _id = dependencies.individualProvidedDetailsId,
       internalUserId = None,
       individualName = dependencies.individualName,
       createdAt = dependencies.nowAsInstant,
       agentApplicationId = dependencies.agentApplicationId,
-      providedDetailsState = Precreated,
+      providedDetailsState = AccessConfirmed,
       isPersonOfControl = true,
       passedIv = None
     )
@@ -136,8 +140,25 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .modify(_.hmrcStandardForAgentsAgreed)
       .setTo(StateOfAgreement.Agreed)
 
-    val afterProvidedDetailsConfirmed: IndividualProvidedDetails = afterHmrcStandardforAgentsAgreed
+    val afterFinished: IndividualProvidedDetails = afterHmrcStandardforAgentsAgreed
       .modify(_.providedDetailsState)
       .setTo(Finished)
+
+    object soleTrader:
+
+      val soleTraderAutopopulatedDetails: IndividualProvidedDetails = IndividualProvidedDetails(
+        _id = individualProvidedDetailsId,
+        internalUserId = None,
+        createdAt = nowAsInstant,
+        agentApplicationId = agentApplicationId,
+        providedDetailsState = ProvidedDetailsState.AccessConfirmed,
+        individualName = IndividualName(fullName.toStringFull),
+        isPersonOfControl = true,
+        telephoneNumber = Some(telephoneNumber),
+        emailAddress = Some(IndividualVerifiedEmailAddress(applicantEmailAddress, isVerified = true)),
+        hmrcStandardForAgentsAgreed = Agreed,
+        hasApprovedApplication = Some(true),
+        passedIv = None
+      )
 
 }
