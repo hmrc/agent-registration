@@ -26,6 +26,7 @@ import uk.gov.hmrc.agentregistration.shared.Vrn
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
@@ -35,6 +36,7 @@ import java.time.Instant
   */
 final case class IndividualProvidedDetails(
   _id: IndividualProvidedDetailsId,
+  personReference: Option[PersonReference] = None,
   individualName: IndividualName, // supplied by applicant
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
   internalUserId: Option[InternalUserId],

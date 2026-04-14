@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.individualProvidedDetailsId
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.personReference
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
@@ -40,7 +40,7 @@ extends ControllerSpec:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-    val individualProvidedDetails = tdAll.providedDetails.afterStarted
+    val individualProvidedDetails = tdAll.providedDetails.afterStarted.copy(personReference = Some(personReference))
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
     val applicationRepo = app.injector.instanceOf[AgentApplicationRepo]
     val agentApplication = tdAll.agentApplicationLlp.afterStarted.copy(applicationState = SentForRisking)
@@ -56,12 +56,13 @@ extends ControllerSpec:
 
     val response: HttpResponse =
       httpClient
-        .get(url"$baseUrl/agent-registration/smu-viewer/individual/by-person-reference/${individualProvidedDetailsId.value}")
+        .get(url"$baseUrl/agent-registration/smu-viewer/individual/by-person-reference/${personReference.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
     val smuViewerIndividualResponse: SmuIndividualResponse = response.json.as[SmuIndividualResponse]
-    smuViewerIndividualResponse.individualProvidedDetailsId shouldBe individualProvidedDetailsId
+    smuViewerIndividualResponse.personReference shouldBe personReference
+    smuViewerIndividualResponse.individualProvidedDetailsId shouldBe individualProvidedDetails.individualProvidedDetailsId
     smuViewerIndividualResponse.individualName shouldBe individualProvidedDetails.individualName
     smuViewerIndividualResponse.isPersonOfControl shouldBe individualProvidedDetails.isPersonOfControl
     smuViewerIndividualResponse.internalUserId shouldBe individualProvidedDetails.internalUserId
@@ -71,6 +72,9 @@ extends ControllerSpec:
     smuViewerIndividualResponse.emailAddress shouldBe individualProvidedDetails.emailAddress
     smuViewerIndividualResponse.individualNino shouldBe individualProvidedDetails.individualNino
     smuViewerIndividualResponse.individualSaUtr shouldBe individualProvidedDetails.individualSaUtr
+    smuViewerIndividualResponse.individualVrns shouldBe individualProvidedDetails.vrns
+    smuViewerIndividualResponse.individualPayeRefs shouldBe individualProvidedDetails.payeRefs
+    smuViewerIndividualResponse.passedIv shouldBe individualProvidedDetails.passedIv
     smuViewerIndividualResponse.hmrcStandardForAgentsAgreed shouldBe individualProvidedDetails.hmrcStandardForAgentsAgreed
     smuViewerIndividualResponse.hasApprovedApplication shouldBe individualProvidedDetails.hasApprovedApplication
     smuViewerIndividualResponse.linkId shouldBe agentApplication.linkId
@@ -84,6 +88,9 @@ extends ControllerSpec:
     smuViewerIndividualResponse.refusalToDealWithCheckResult shouldBe agentApplication.refusalToDealWithCheckResult
     smuViewerIndividualResponse.numberOfIndividuals shouldBe agentApplication.numberOfIndividuals
     smuViewerIndividualResponse.hasOtherRelevantIndividuals shouldBe agentApplication.hasOtherRelevantIndividuals
+    smuViewerIndividualResponse.entityVrns shouldBe agentApplication.vrns
+    smuViewerIndividualResponse.entityPayeRefs shouldBe agentApplication.payeRefs
     smuViewerIndividualResponse.businessDetails shouldBe agentApplication.businessDetails
+    smuViewerIndividualResponse.companyProfile shouldBe agentApplication.asLlpApplication.businessDetails.map(_.companyProfile)
     smuViewerIndividualResponse.deceasedCheckResult shouldBe None
     smuViewerIndividualResponse.companyStatusCheckResult shouldBe agentApplication.companyStatusCheckResult

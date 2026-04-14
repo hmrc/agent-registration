@@ -31,13 +31,18 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
 import uk.gov.hmrc.agentregistration.shared.CheckResult.Pass
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReferenceGenerator
+import uk.gov.hmrc.agentregistration.shared.upload.UploadId
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.Instant
@@ -54,11 +59,28 @@ class TestApplicationController @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   agentApplicationIdGenerator: AgentApplicationIdGenerator,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator
+  individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator,
+  personReferenceGenerator: PersonReferenceGenerator
 )
 extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
+
+  private enum SmuScenario:
+
+    case Full
+    case Partial
+
+  private object SmuScenario:
+    def fromQuery(value: Option[String]): SmuScenario =
+      value.map(_.trim.toLowerCase) match
+        case Some("partial") => SmuScenario.Partial
+        case _ => SmuScenario.Full
+
+  private def isFullScenario(scenario: SmuScenario): Boolean =
+    scenario match
+      case SmuScenario.Full => true
+      case SmuScenario.Partial => false
 
   def upsertIndividualProvidedDetails: Action[IndividualProvidedDetails] =
     actions
@@ -121,24 +143,28 @@ extends BackendController(cc):
             case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
             case None => NoContent
 
-  def createTestSmuIndividual: Action[AnyContent] = Action
+  def createTestSmuIndividual(scenario: Option[String]): Action[AnyContent] = Action
     .async:
       implicit request =>
-        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(applicationState = ApplicationState.SentForRisking)
-        val individual: IndividualProvidedDetails = makeIndividualProvidedDetailsFor(agentApplication.agentApplicationId)
+        val resolvedScenario = SmuScenario.fromQuery(scenario)
+        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(resolvedScenario, applicationState = ApplicationState.SentForRisking)
+        val individual: IndividualProvidedDetails = makeIndividualProvidedDetailsFor(resolvedScenario, agentApplication.agentApplicationId)
         for
           _ <- agentApplicationRepo.upsert(agentApplication)
           _ <- individualProvidedDetailsRepo.upsert(individual)
         yield Created(Json.obj(
+          "scenario" -> resolvedScenario.toString.toLowerCase,
+          "personReference" -> individual.personReference.map(_.value).getOrElse(""),
           "individualProvidedDetailsId" -> individual.individualProvidedDetailsId.value
         ))
 
-  def deleteTestSmuIndividual(individualId: IndividualProvidedDetailsId): Action[AnyContent] = Action
+  def deleteTestSmuIndividual(personReference: PersonReference): Action[AnyContent] = Action
     .async:
       implicit request =>
         for
-          maybeIndividual <- individualProvidedDetailsRepo.findById(individualId)
+          maybeIndividual <- individualProvidedDetailsRepo.findByPersonReference(personReference)
           applicationId = maybeIndividual.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId")
+          individualId = maybeIndividual.map(_.individualProvidedDetailsId).getOrThrowExpectedDataMissing("individualProvidedDetailsId")
           maybeAaRes <- agentApplicationRepo.removeById(applicationId)
           maybeIpdRes <- individualProvidedDetailsRepo.removeById(individualId)
         yield (maybeAaRes, maybeIpdRes) match
@@ -148,13 +174,16 @@ extends BackendController(cc):
   def createTestApplication: Action[AnyContent] = Action
     .async:
       implicit request =>
-        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor()
+        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(SmuScenario.Full)
         agentApplicationRepo
           .upsert(agentApplication)
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
 
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
-  private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
+  private def makeApplicationToProvideDetailsFor(
+    scenario: SmuScenario,
+    applicationState: ApplicationState = Started
+  ): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
@@ -173,7 +202,7 @@ extends BackendController(cc):
       companyProfile = CompanyProfile(
         companyNumber = Crn("12345566"),
         companyName = "Test Partnership LLP",
-        dateOfIncorporation = None,
+        dateOfIncorporation = Option.when(isFullScenario(scenario))(LocalDate.of(2015, 6, 1)),
         unsanitisedCHROAddress = None
       )
     )),
@@ -185,32 +214,49 @@ extends BackendController(cc):
         isVerified = true
       ))
     )),
-    amlsDetails = None,
+    amlsDetails =
+      Option.when(isFullScenario(scenario)) {
+        AmlsDetails(
+          supervisoryBody = AmlsCode("HMRC"),
+          amlsRegistrationNumber = Some(AmlsRegistrationNumber("XAML1234567890")),
+          amlsExpiryDate = Some(LocalDate.of(2027, 1, 31)),
+          amlsEvidence = Some(AmlsEvidence(
+            uploadId = UploadId("smu-test-evidence-123"),
+            fileName = "certificate.pdf",
+            objectStoreLocation = Path.File("/test/certificate.pdf")
+          ))
+        )
+      },
     agentDetails = None,
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
     numberOfIndividuals = None,
     hasOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
     companyStatusCheckResult = Some(Pass),
-    vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
+    vrns = Option.when(isFullScenario(scenario))(List(Vrn("12341234"), Vrn("43214321"))),
+    payeRefs = Option.when(isFullScenario(scenario))(List(PayeRef("56785678"), PayeRef("87658765")))
   )
   // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
-  private def makeIndividualProvidedDetailsFor(agentApplicationId: AgentApplicationId): IndividualProvidedDetails = IndividualProvidedDetails(
+  private def makeIndividualProvidedDetailsFor(
+    scenario: SmuScenario,
+    agentApplicationId: AgentApplicationId
+  ): IndividualProvidedDetails = IndividualProvidedDetails(
     _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
+    personReference = Some(personReferenceGenerator.nextPersonReference()),
     individualName = IndividualName("George Smiley"),
     isPersonOfControl = true,
     internalUserId = Some(InternalUserId(value = s"test-${UUID.randomUUID().toString}")),
     createdAt = Instant.now(),
     providedDetailsState = ProvidedDetailsState.Finished,
     agentApplicationId = agentApplicationId,
-    individualDateOfBirth = Some(IndividualDateOfBirth.Provided(LocalDate.of(1980, 1, 1))),
+    individualDateOfBirth = Option.when(isFullScenario(scenario))(IndividualDateOfBirth.Provided(LocalDate.of(1980, 1, 1))),
     telephoneNumber = Some(TelephoneNumber("1234658979")),
-    emailAddress = Some(IndividualVerifiedEmailAddress(EmailAddress("g.smiley@test.com"), isVerified = true)),
-    individualNino = Some(IndividualNino.Provided(Nino("AA123456A"))),
-    individualSaUtr = Some(IndividualSaUtr.Provided(SaUtr("1234567890"))),
+    emailAddress = Option.when(isFullScenario(scenario))(IndividualVerifiedEmailAddress(EmailAddress("g.smiley@test.com"), isVerified = true)),
+    individualNino = Option.when(isFullScenario(scenario))(IndividualNino.Provided(Nino("AA123456A"))),
+    individualSaUtr = Option.when(isFullScenario(scenario))(IndividualSaUtr.Provided(SaUtr("1234567890"))),
     hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
     hasApprovedApplication = Some(true),
-    vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
+    vrns = Option.when(isFullScenario(scenario))(List(Vrn("12341234"), Vrn("43214321"))),
+    payeRefs = Option.when(isFullScenario(scenario))(List(PayeRef("56785678"), PayeRef("87658765"))),
+    passedIv = Option.when(isFullScenario(scenario))(true)
   )
