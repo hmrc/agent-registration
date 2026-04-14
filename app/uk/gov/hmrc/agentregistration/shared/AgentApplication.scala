@@ -51,6 +51,9 @@ sealed trait AgentApplication:
   def hmrcStandardForAgentsAgreed: StateOfAgreement
   def numberOfIndividuals: Option[NumberOfIndividuals] // all applications require this, sole traders will have a list of one
   def hasOtherRelevantIndividuals: Option[Boolean]
+  /* vrns and payeRefs can have three states: None (we haven't called the API yet), Some(List.empty) (we called the API but there were no vrns/ payeRefs)
+   and Some(List(...)) (we called the api and got back a list of vrns/ payeRefs)
+   */
   def vrns: Option[List[Vrn]]
   def payeRefs: Option[List[PayeRef]]
 
