@@ -17,13 +17,10 @@ POST          /agent-registration/test-only/individual-provided-details         
 GET           /agent-registration/test-only/individuals/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividuals(agentApplicationId: AgentApplicationId)
 GET           /agent-registration/test-only/individuals/by-id/:individualProvidedDetailsId                    uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividual(individualProvidedDetailsId: IndividualProvidedDetailsId)
 
-
-POST          /                                                                                               uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
-
 GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
 GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.recentApplications
 GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
 
 
-POST          /agent-registration/test-only/smu-viewer-individual                                             uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestSmuIndividual
-DELETE        /agent-registration/test-only/smu-viewer-individual/by-person-reference/:personReference        uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteTestSmuIndividual(personReference: IndividualProvidedDetailsId)
+POST          /agent-registration/test-only/smu-viewer-individual                                             uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestSmuIndividual(scenario: Option[String] ?= None)
+DELETE        /agent-registration/test-only/smu-viewer-individual/by-person-reference/:personReference        uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteTestSmuIndividual(personReference: PersonReference)

@@ -24,3 +24,4 @@ object RoutesExports:
   export uk.gov.hmrc.agentregistration.shared.SaUtr
   export uk.gov.hmrc.agentregistration.shared.Utr
   export uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
+  export uk.gov.hmrc.agentregistration.shared.risking.PersonReference
