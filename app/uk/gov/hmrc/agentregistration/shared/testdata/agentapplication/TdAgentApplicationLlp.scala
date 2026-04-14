@@ -79,7 +79,17 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       companyStatusCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterContactDetailsComplete: AgentApplicationLlp = afterCompaniesHouseStatusCheckPass.copy(
+    val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationLlp = afterCompaniesHouseStatusCheckPass.copy(
+      vrns = Some(List(dependencies.vrn)),
+      payeRefs = Some(List(dependencies.payeRef))
+    )
+
+    val afterUnifiedCustomerRegistryUpdateEmptyIdentifiers: AgentApplicationLlp = afterCompaniesHouseStatusCheckPass.copy(
+      vrns = Some(List.empty),
+      payeRefs = Some(List.empty)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationLlp = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )
