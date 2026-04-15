@@ -133,9 +133,13 @@ object EntityFailure:
 object EntityFailureFormats:
 
   import play.api.libs.json.*
-  import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
-  private given JsonConfiguration = JsonConfig.jsonConfiguration
+  private given JsonConfiguration = JsonConfiguration(
+    discriminator = "type",
+    typeNaming = JsonNaming { fullName =>
+      fullName.split('.').filter(_.startsWith("_")).mkString(".")
+    }
+  )
 
   @nowarn()
   given format: OFormat[EntityFailure] =

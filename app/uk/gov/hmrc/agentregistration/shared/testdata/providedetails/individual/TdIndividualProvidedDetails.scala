@@ -128,11 +128,23 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
         .modify(_.individualSaUtr)
         .setTo(Some(IndividualSaUtr.NotProvided))
 
-    val afterApproveAgentApplication: IndividualProvidedDetails = AfterSaUtr.afterSaUtrProvided
+    val afterUcrProvided: IndividualProvidedDetails = AfterSaUtr.afterSaUtrProvided
+      .copy(
+        vrns = Some(List(dependencies.vrn)),
+        payeRefs = Some(List(dependencies.payeRef))
+      )
+
+    val afterUcrProvidedNotProvide: IndividualProvidedDetails = AfterSaUtr.afterSaUtrProvided
+      .copy(
+        vrns = Some(List.empty),
+        payeRefs = Some(List.empty)
+      )
+
+    val afterApproveAgentApplication: IndividualProvidedDetails = afterUcrProvided
       .modify(_.hasApprovedApplication)
       .setTo(Some(true))
 
-    val afterDoNotApproveAgentApplication: IndividualProvidedDetails = AfterSaUtr.afterSaUtrProvided
+    val afterDoNotApproveAgentApplication: IndividualProvidedDetails = afterUcrProvided
       .modify(_.hasApprovedApplication)
       .setTo(Some(false))
 
