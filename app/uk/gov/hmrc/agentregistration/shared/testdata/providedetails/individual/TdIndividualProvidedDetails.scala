@@ -37,6 +37,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
 
     val precreated: IndividualProvidedDetails = IndividualProvidedDetails(
       _id = dependencies.individualProvidedDetailsId,
+      personReference = dependencies.personReference,
       internalUserId = None,
       individualName = dependencies.individualName,
       createdAt = dependencies.nowAsInstant,
@@ -48,6 +49,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
 
     val afterAccessConfirmed: IndividualProvidedDetails = IndividualProvidedDetails(
       _id = dependencies.individualProvidedDetailsId,
+      personReference = dependencies.personReference,
       internalUserId = None,
       individualName = dependencies.individualName,
       createdAt = dependencies.nowAsInstant,
@@ -59,6 +61,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
 
     val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
       _id = dependencies.individualProvidedDetailsId,
+      personReference = dependencies.personReference,
       internalUserId = Some(dependencies.internalUserId),
       individualName = dependencies.individualName,
       createdAt = dependencies.nowAsInstant,
@@ -160,6 +163,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
 
       val soleTraderAutopopulatedDetails: IndividualProvidedDetails = IndividualProvidedDetails(
         _id = individualProvidedDetailsId,
+        personReference = dependencies.personReference,
         internalUserId = None,
         createdAt = nowAsInstant,
         agentApplicationId = agentApplicationId,

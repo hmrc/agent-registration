@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.risking
+package uk.gov.hmrc.agentregistration.shared
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.PersonReference
+import play.api.libs.json.Format
+import play.api.mvc.PathBindable
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
-final case class IndividualRiskingResponse(
-  personReference: PersonReference,
-  status: ApplicationForRiskingStatus,
-  failures: Option[List[IndividualFailure]]
-)
+/** Person Reference used by Minerva as a unique identifier for an individual
+  */
+final case class PersonReference(value: String)
 
-object IndividualRiskingResponse:
+object PersonReference:
 
-  given OFormat[IndividualRiskingResponse] = Json.format[IndividualRiskingResponse]
+  given format: Format[PersonReference] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[PersonReference] = ValueClassBinder.valueClassBinder[PersonReference](_.value)

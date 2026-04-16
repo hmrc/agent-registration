@@ -55,7 +55,8 @@ class TestApplicationController @Inject() (
   agentApplicationIdGenerator: AgentApplicationIdGenerator,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
   individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator,
-  applicationReferenceGenerator: ApplicationReferenceGenerator
+  applicationReferenceGenerator: ApplicationReferenceGenerator,
+  personReferenceGenerator: PersonReferenceGenerator
 )
 extends BackendController(cc):
 
@@ -200,6 +201,7 @@ extends BackendController(cc):
   // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
   private def makeIndividualProvidedDetailsFor(agentApplicationId: AgentApplicationId): IndividualProvidedDetails = IndividualProvidedDetails(
     _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
+    personReference = personReferenceGenerator.nextPersonReference(),
     individualName = IndividualName("George Smiley"),
     isPersonOfControl = true,
     internalUserId = Some(InternalUserId(value = s"test-${UUID.randomUUID().toString}")),
