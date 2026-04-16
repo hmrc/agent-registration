@@ -34,7 +34,7 @@ extends ControllerSpec:
 
     "returns Ok with VRNs and PAYE refs when HIP returns a match" in:
       given Request[?] = tdAll.backendRequest
-      AuthStubs.stubAuthorise()
+      AuthStubs.stubAuthoriseIndividual()
       HipStubs.stubIdentifierSearchSuccess(
         vrns = List("462783770"),
         payeRefs = List("123/A45678")
@@ -49,12 +49,11 @@ extends ControllerSpec:
       ucrIdentifiers.hasIdentifiers.shouldBe(true)
       ucrIdentifiers.vrns.map(_.value).shouldBe(List("462783770"))
       ucrIdentifiers.payeRefs.map(_.value).shouldBe(List("123/A45678"))
-      AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
 
     "returns Ok with empty lists when HIP returns no match" in:
       given Request[?] = tdAll.backendRequest
-      AuthStubs.stubAuthorise()
+      AuthStubs.stubAuthoriseIndividual()
       HipStubs.stubIdentifierSearchNoMatch()
       val response =
         httpClient
@@ -66,12 +65,11 @@ extends ControllerSpec:
       ucrIdentifiers.hasIdentifiers.shouldBe(false)
       ucrIdentifiers.vrns.shouldBe(List.empty)
       ucrIdentifiers.payeRefs.shouldBe(List.empty)
-      AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
 
     "returns 500 when HIP returns an error" in:
       given Request[?] = tdAll.backendRequest
-      AuthStubs.stubAuthorise()
+      AuthStubs.stubAuthoriseIndividual()
       HipStubs.stubIdentifierSearchError(500)
       val response =
         httpClient
@@ -79,7 +77,6 @@ extends ControllerSpec:
           .execute[HttpResponse]
           .futureValue
       response.status shouldBe Status.INTERNAL_SERVER_ERROR
-      AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
 
   }
@@ -88,7 +85,7 @@ extends ControllerSpec:
 
     "returns Ok with VRNs and PAYE refs when HIP returns a match" in:
       given Request[?] = tdAll.backendRequest
-      AuthStubs.stubAuthorise()
+      AuthStubs.stubAuthoriseIndividual()
       HipStubs.stubIdentifierSearchSuccess(
         vrns = List("462783770"),
         payeRefs = List("123/A45678")
@@ -103,12 +100,11 @@ extends ControllerSpec:
       ucrIdentifiers.hasIdentifiers.shouldBe(true)
       ucrIdentifiers.vrns.map(_.value).shouldBe(List("462783770"))
       ucrIdentifiers.payeRefs.map(_.value).shouldBe(List("123/A45678"))
-      AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
 
     "returns Ok with empty lists when HIP returns no match" in:
       given Request[?] = tdAll.backendRequest
-      AuthStubs.stubAuthorise()
+      AuthStubs.stubAuthoriseIndividual()
       HipStubs.stubIdentifierSearchNoMatch()
       val response =
         httpClient
@@ -118,7 +114,6 @@ extends ControllerSpec:
       response.status shouldBe Status.OK
       val ucrIdentifiers = response.json.as[UcrIdentifiers]
       ucrIdentifiers.hasIdentifiers.shouldBe(false)
-      AuthStubs.verifyAuthorise()
       HipStubs.verifyIdentifierSearch()
 
   }

@@ -37,7 +37,7 @@ class UcrController @Inject() (
 extends BackendController(cc):
 
   def searchByNino(nino: Nino): Action[AnyContent] = actions
-    .authorised
+    .individualAuthorised
     .async:
       implicit request =>
         hipConnector
@@ -45,7 +45,7 @@ extends BackendController(cc):
           .map(ucrIdentifiers => Ok(Json.toJson(ucrIdentifiers)))
 
   def searchIndividualByUtr(utr: Utr): Action[AnyContent] = actions
-    .authorised
+    .individualAuthorised
     .async:
       implicit request =>
         hipConnector
