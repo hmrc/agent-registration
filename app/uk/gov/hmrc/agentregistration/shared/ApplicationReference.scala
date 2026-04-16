@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.risking
+package uk.gov.hmrc.agentregistration.shared
 
-import org.bson.types.ObjectId
 import play.api.libs.json.Format
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
-
-import javax.inject.Singleton
 
 /** Application Reference used by Minerva as a unique identifier for an Entity(application)
   */
@@ -32,7 +29,3 @@ object ApplicationReference:
 
   given format: Format[ApplicationReference] = JsonFormatsFactory.makeValueClassFormat
   given pathBindable: PathBindable[ApplicationReference] = ValueClassBinder.valueClassBinder[ApplicationReference](_.value)
-
-@Singleton
-class ApplicationReferenceGenerator:
-  def nextApplicationReference(): ApplicationReference = ApplicationReference(ObjectId.get().toHexString)

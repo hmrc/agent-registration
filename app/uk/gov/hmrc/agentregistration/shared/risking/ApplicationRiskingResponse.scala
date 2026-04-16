@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 
 final case class ApplicationRiskingResponse(
   applicationReference: ApplicationReference,

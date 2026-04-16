@@ -27,6 +27,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
 
     val afterStarted: AgentApplicationSoleTrader = AgentApplicationSoleTrader(
       _id = dependencies.agentApplicationId,
+      applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,

@@ -54,7 +54,8 @@ class TestApplicationController @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   agentApplicationIdGenerator: AgentApplicationIdGenerator,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator
+  individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator,
+  applicationReferenceGenerator: ApplicationReferenceGenerator
 )
 extends BackendController(cc):
 
@@ -156,6 +157,7 @@ extends BackendController(cc):
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
   private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
+    applicationReference = applicationReferenceGenerator.nextApplicationReference(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     applicantCredentials = Credentials(
