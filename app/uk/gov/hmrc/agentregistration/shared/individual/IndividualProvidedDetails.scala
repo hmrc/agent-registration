@@ -20,6 +20,7 @@ import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.PayeRef
+import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.Vrn
@@ -35,6 +36,7 @@ import java.time.Instant
   */
 final case class IndividualProvidedDetails(
   _id: IndividualProvidedDetailsId,
+  personReference: PersonReference,
   individualName: IndividualName, // supplied by applicant
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
   internalUserId: Option[InternalUserId],

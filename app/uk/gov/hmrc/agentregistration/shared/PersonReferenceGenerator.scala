@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.risking
+package uk.gov.hmrc.agentregistration.shared
 
 import org.bson.types.ObjectId
-import play.api.libs.json.Format
-import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
-
 import javax.inject.Singleton
-
-/** Person Reference used by Minerva as a unique identifier for an individual
-  */
-final case class PersonReference(value: String)
-
-object PersonReference:
-
-  given format: Format[PersonReference] = JsonFormatsFactory.makeValueClassFormat
-  given pathBindable: PathBindable[PersonReference] = ValueClassBinder.valueClassBinder[PersonReference](_.value)
 
 @Singleton
 class PersonReferenceGenerator:
