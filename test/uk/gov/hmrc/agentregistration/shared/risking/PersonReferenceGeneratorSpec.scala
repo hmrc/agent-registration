@@ -23,13 +23,12 @@ extends UnitSpec:
 
   "PersonReferenceGenerator.nextPersonReference" - {
 
-    "should generate a reference in 4 letters + 4 digits format" in {
+    "should generate a 9 character reference using the allowed character set" in {
       val generator = PersonReferenceGenerator()
 
       val generated = generator.nextPersonReference().value
 
-      generated should have length 8
-      generated.take(4) should fullyMatch regex "[A-Z]{4}"
-      generated.drop(4) should fullyMatch regex "[0-9]{4}"
+      generated should have length 9
+      generated.foreach(char => PersonReference.allowedCharacters.contains(char) shouldBe true)
     }
   }

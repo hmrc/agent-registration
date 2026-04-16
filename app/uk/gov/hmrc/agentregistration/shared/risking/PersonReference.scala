@@ -30,6 +30,8 @@ final case class PersonReference(value: String)
 
 object PersonReference:
 
+  val allowedCharacters: String = "ABCDEFGHJKLMNPQRTXYZ2346789"
+
   given format: Format[PersonReference] = JsonFormatsFactory.makeValueClassFormat
   given pathBindable: PathBindable[PersonReference] = ValueClassBinder.valueClassBinder[PersonReference](_.value)
 
@@ -39,6 +41,5 @@ class PersonReferenceGenerator:
   private val random = new Random()
 
   def nextPersonReference(): PersonReference =
-    val letters = (1 to 4).map(_ => ('A' + random.nextInt(26)).toChar).mkString
-    val digits = (1 to 4).map(_ => random.nextInt(10)).mkString
-    PersonReference(s"$letters$digits")
+    val characters = (1 to 9).map(_ => PersonReference.allowedCharacters.charAt(random.nextInt(PersonReference.allowedCharacters.length))).mkString
+    PersonReference(characters)

@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import org.bson.types.ObjectId
 import play.api.libs.json.Format
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 import javax.inject.Singleton
+import scala.util.Random
 
 /** Application Reference used by Minerva as a unique identifier for an Entity(application)
   */
@@ -35,4 +35,9 @@ object ApplicationReference:
 
 @Singleton
 class ApplicationReferenceGenerator:
-  def nextApplicationReference(): ApplicationReference = ApplicationReference(ObjectId.get().toHexString)
+
+  private val random = new Random()
+
+  def nextApplicationReference(): ApplicationReference =
+    val characters = (1 to 9).map(_ => PersonReference.allowedCharacters.charAt(random.nextInt(PersonReference.allowedCharacters.length))).mkString
+    ApplicationReference(characters)

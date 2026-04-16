@@ -23,7 +23,7 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.personReference
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
@@ -63,7 +63,10 @@ extends ControllerSpec:
     response.status shouldBe Status.OK
     val smuViewerIndividualResponse: SmuIndividualResponse = response.json.as[SmuIndividualResponse]
     smuViewerIndividualResponse.personReference shouldBe personReference
-    smuViewerIndividualResponse.applicationReference shouldBe ApplicationReference("AGENTAPPLICA")
+    smuViewerIndividualResponse.applicationReference.value should have length 9
+    smuViewerIndividualResponse.applicationReference.value.foreach(char =>
+      PersonReference.allowedCharacters.contains(char) shouldBe true
+    )
     smuViewerIndividualResponse.individualProvidedDetailsId shouldBe individualProvidedDetails.individualProvidedDetailsId
     smuViewerIndividualResponse.individualName shouldBe individualProvidedDetails.individualName
     smuViewerIndividualResponse.isPersonOfControl shouldBe individualProvidedDetails.isPersonOfControl

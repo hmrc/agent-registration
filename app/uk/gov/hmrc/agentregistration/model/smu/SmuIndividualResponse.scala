@@ -140,8 +140,9 @@ object SmuIndividualResponse:
     agentApplicationId.value
       .filter(_.isLetterOrDigit)
       .toUpperCase
-      .padTo(12, 'X')
-      .take(12)
+      .padTo(9, 'X')
+      .take(9)
+      .map(char => PersonReference.allowedCharacters.charAt(Math.floorMod(char.toInt, PersonReference.allowedCharacters.length)))
   )
 
   given format: OFormat[SmuIndividualResponse] = Json.format[SmuIndividualResponse]
