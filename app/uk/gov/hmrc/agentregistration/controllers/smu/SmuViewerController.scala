@@ -25,9 +25,7 @@ import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.model.smu.SmuIndividualResponse
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
-import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,9 +41,9 @@ class SmuViewerController @Inject() (
 extends BackendController(cc):
 
   // TODO: Find out the correct stride profile and add auth to this endpoint
-  def findIndividualByPersonReference(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.default.async: request =>
+  def findIndividualByPersonReference(personReference: PersonReference): Action[AnyContent] = actions.default.async: request =>
     for
-      maybeIpd <- individualProvidedDetailsRepo.findById(individualProvidedDetailsId)
+      maybeIpd <- individualProvidedDetailsRepo.findByPersonReference(personReference)
       maybeAa <-
         maybeIpd match
           case Some(ipd) => agentApplicationRepo.findById(ipd.agentApplicationId)

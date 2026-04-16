@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import org.bson.types.ObjectId
 import play.api.libs.json.Format
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
 import javax.inject.Singleton
+import scala.util.Random
 
 /** Person Reference used by Minerva as a unique identifier for an individual
   */
@@ -35,4 +35,10 @@ object PersonReference:
 
 @Singleton
 class PersonReferenceGenerator:
-  def nextPersonReference(): PersonReference = PersonReference(ObjectId.get().toHexString)
+
+  private val random = new Random()
+
+  def nextPersonReference(): PersonReference =
+    val letters = (1 to 4).map(_ => ('A' + random.nextInt(26)).toChar).mkString
+    val digits = (1 to 4).map(_ => random.nextInt(10)).mkString
+    PersonReference(s"$letters$digits")

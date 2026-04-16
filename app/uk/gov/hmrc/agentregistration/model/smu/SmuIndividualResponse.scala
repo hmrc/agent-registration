@@ -21,11 +21,13 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsSoleTrader
+import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
-
+import uk.gov.hmrc.agentregistration.shared.risking.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 // TODO: Finalise what fields need to be returned here
 /** Represents an individual along with all relevant details and verification-related information required by the SMU (Secure Management Unit) to verify that
   * person.
@@ -33,6 +35,8 @@ import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
   * This case class aggregates individual provided details and agent application details.
   */
 final case class SmuIndividualResponse(
+  personReference: PersonReference,
+  applicationReference: ApplicationReference,
   individualProvidedDetailsId: IndividualProvidedDetailsId,
   individualName: IndividualName, // supplied by applicant
   isPersonOfControl: Boolean, // is this a person of control e.g. partner, director etc.
@@ -43,6 +47,9 @@ final case class SmuIndividualResponse(
   emailAddress: Option[IndividualVerifiedEmailAddress],
   individualNino: Option[IndividualNino],
   individualSaUtr: Option[IndividualSaUtr],
+  individualVrns: Option[List[Vrn]],
+  individualPayeRefs: Option[List[PayeRef]],
+  passedIv: Option[Boolean],
   hmrcStandardForAgentsAgreed: StateOfAgreement = StateOfAgreement.NotSet,
   hasApprovedApplication: Option[Boolean],
   linkId: LinkId,
@@ -56,7 +63,10 @@ final case class SmuIndividualResponse(
   refusalToDealWithCheckResult: Option[CheckResult],
   numberOfIndividuals: Option[NumberOfIndividuals], // all applications require this, sole traders will have a list of one
   hasOtherRelevantIndividuals: Option[Boolean],
+  entityVrns: Option[List[Vrn]],
+  entityPayeRefs: Option[List[PayeRef]],
   businessDetails: Option[BusinessDetailsSoleTrader],
+  companyProfile: Option[CompanyProfile],
   deceasedCheckResult: Option[CheckResult],
   companyStatusCheckResult: Option[CheckResult]
 )
@@ -67,6 +77,8 @@ object SmuIndividualResponse:
     ipd: IndividualProvidedDetails,
     aa: AgentApplication
   ): SmuIndividualResponse = SmuIndividualResponse(
+    ipd.personReference,
+    temporaryApplicationReference(aa.agentApplicationId),
     ipd.individualProvidedDetailsId,
     ipd.individualName,
     ipd.isPersonOfControl,
@@ -77,6 +89,9 @@ object SmuIndividualResponse:
     ipd.emailAddress,
     ipd.individualNino,
     ipd.individualSaUtr,
+    ipd.vrns,
+    ipd.payeRefs,
+    ipd.passedIv,
     ipd.hmrcStandardForAgentsAgreed,
     ipd.hasApprovedApplication,
     aa.linkId,
@@ -90,9 +105,19 @@ object SmuIndividualResponse:
     aa.refusalToDealWithCheckResult,
     aa.numberOfIndividuals,
     aa.hasOtherRelevantIndividuals,
+    aa.vrns,
+    aa.payeRefs,
     businessDetails =
       aa match {
         case st: AgentApplicationSoleTrader => st.businessDetails
+        case _ => None
+      },
+    companyProfile =
+      aa match {
+        case llp: AgentApplicationLlp => llp.businessDetails.map(_.companyProfile)
+        case lc: AgentApplicationLimitedCompany => lc.businessDetails.map(_.companyProfile)
+        case lp: AgentApplicationLimitedPartnership => lp.businessDetails.map(_.companyProfile)
+        case slp: AgentApplicationScottishLimitedPartnership => slp.businessDetails.map(_.companyProfile)
         case _ => None
       },
     deceasedCheckResult =
@@ -109,4 +134,14 @@ object SmuIndividualResponse:
         case _ => None
       }
   )
+
+  // Temporary demo value until the real risking/application reference source is confirmed and exposed.
+  private def temporaryApplicationReference(agentApplicationId: AgentApplicationId): ApplicationReference = ApplicationReference(
+    agentApplicationId.value
+      .filter(_.isLetterOrDigit)
+      .toUpperCase
+      .padTo(12, 'X')
+      .take(12)
+  )
+
   given format: OFormat[SmuIndividualResponse] = Json.format[SmuIndividualResponse]

@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.risking.PersonReference
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -87,6 +88,12 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     )
     .headOption()
 
+  def findByPersonReference(personReference: PersonReference): Future[Option[IndividualProvidedDetails]] = collection
+    .find(
+      Filters.eq("personReference", personReference.value)
+    )
+    .headOption()
+
 object ProvidedDetailsRepoHelp:
 
   given IdString[IndividualProvidedDetailsId] =
@@ -104,6 +111,18 @@ object ProvidedDetailsRepoHelp:
     ),
     IndexModel(
       Indexes.ascending("agentApplicationId")
+    ),
+    IndexModel(
+      Indexes.ascending("personReference"),
+      IndexOptions()
+        .unique(true)
+        .partialFilterExpression(
+          Filters.and(
+            Filters.exists("personReference", true),
+            Filters.`type`("personReference", BsonType.STRING)
+          )
+        )
+        .name("personReference_unique")
     ),
     IndexModel(
       Indexes.ascending("internalUserId", "agentApplicationId"),
