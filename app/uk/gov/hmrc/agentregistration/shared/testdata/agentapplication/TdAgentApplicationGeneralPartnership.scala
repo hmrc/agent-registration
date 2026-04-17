@@ -161,7 +161,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
       submittedAt = Some(dependencies.nowAsInstant)
     )
 
-    val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationGeneralPartnership = afterConfirmTwoOtherRelevantIndividualsNo.copy(
+    val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationGeneralPartnership = afterConfirmTwoIndividuals.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant)
     )

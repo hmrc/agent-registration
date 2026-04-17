@@ -112,7 +112,32 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       numberOfIndividuals = Some(dependencies.sixOrMoreKeyIndividuals)
     )
 
+    val afterConfirmTwoIndividuals: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
+      .copy(
+        numberOfIndividuals = Some(
+          FiveOrLess(
+            numberOfKeyIndividuals = 2
+          )
+        ),
+        hasOtherRelevantIndividuals = Some(false)
+      )
+
+    val afterConfirmSixIndividuals: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
+      .copy(
+        numberOfIndividuals = Some(
+          SixOrMore(
+            numberOfKeyIndividualsResponsibleForTaxMatters = 6
+          )
+        ),
+        hasOtherRelevantIndividuals = Some(false)
+      )
+
     val afterDeclarationSubmitted: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      applicationState = ApplicationState.SentForRisking,
+      submittedAt = Some(dependencies.nowAsInstant)
+    )
+
+    val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationScottishPartnership = afterConfirmTwoIndividuals.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant)
     )
