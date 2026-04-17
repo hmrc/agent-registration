@@ -158,7 +158,7 @@ extends BackendController(cc):
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
   private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
-    applicationReference = applicationReferenceGenerator.nextApplicationReference(),
+    applicationReference = applicationReferenceGenerator.generateApplicationReference(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
     applicantCredentials = Credentials(

@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
-import javax.inject.Singleton
-import scala.util.Random
+import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 
-@Singleton
-class ApplicationReferenceGenerator:
+class ApplicationReferenceGeneratorSpec
+extends UnitSpec:
 
-  private def randomChar(chars: List[Char]): Char =
-    val rng = Random.nextInt(chars.length)
-    chars.iterator.drop(rng).next()
+  "generateApplicationReference should create unique references in the agreed format" in:
 
-  def generateApplicationReference(): ApplicationReference = {
-    val reference = List.fill(ApplicationReference.validLength)(randomChar(ApplicationReference.validCharacters)).mkString("")
-    ApplicationReference(reference)
-  }
+    val generator = new ApplicationReferenceGenerator
+    val formatRegex = "^[A-HJ-NP-RTXYZ2346789]{9}$"
+
+    val ref1 = generator.generateApplicationReference()
+    val ref2 = generator.generateApplicationReference()
+    ref1 should not be ref2
+    ref1.value.length shouldBe 9
+    ref2.value.length shouldBe 9
+    ref1.value.matches(formatRegex) shouldBe true
+    ref2.value.matches(formatRegex) shouldBe true
