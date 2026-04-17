@@ -103,6 +103,20 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       )
     )
 
+    val afterConfirmTwoChOfficers: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        dependencies.twoCompaniesHouseOfficers
+      ),
+      hasOtherRelevantIndividuals = Some(false)
+    )
+
+    val afterConfirmSixChOfficers: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        dependencies.sixCompaniesHouseOfficersSelectAll
+      ),
+      hasOtherRelevantIndividuals = Some(false)
+    )
+
     val afterConfirmCompaniesHouseOfficersNo: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.twoCompaniesHouseOfficers.copy(isCompaniesHouseOfficersListCorrect = false)

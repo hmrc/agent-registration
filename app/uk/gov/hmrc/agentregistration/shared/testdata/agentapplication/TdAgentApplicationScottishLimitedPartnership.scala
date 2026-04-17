@@ -110,6 +110,20 @@ trait TdAgentApplicationScottishLimitedPartnership {
       )
     )
 
+    val afterConfirmTwoChOfficers: AgentApplicationScottishLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        dependencies.twoCompaniesHouseOfficers
+      ),
+      hasOtherRelevantIndividuals = Some(false)
+    )
+
+    val afterConfirmSixChOfficers: AgentApplicationScottishLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        dependencies.sixCompaniesHouseOfficersSelectAll
+      ),
+      hasOtherRelevantIndividuals = Some(false)
+    )
+
     val afterDeclarationSubmitted: AgentApplicationScottishLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant)
