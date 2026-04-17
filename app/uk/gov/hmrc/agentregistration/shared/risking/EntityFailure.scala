@@ -35,100 +35,122 @@ object EntityFailure:
 
     /** 3.1: Entity claims AMLS with HMRC but their registration number cannot be found in HMRC's AMLS register */
     object _1
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.3.1"
 
     /** 3.2: Entity claims AMLS with a professional body but their registration number cannot be found in that professional body's AMLS register */
     object _2
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.3.2"
 
     /** 3.3: No proof or evidence of AMLS coverage (file upload) */
     object _3
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.3.3"
 
     /** 3.4: Professional body not on approved list */
     object _4
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.3.4"
 
     /** 3.5: Student membership */
     object _5
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.3.5"
 
   /** Check 4: Overdue returns */
   object _4:
 
     /** 4.1: One or more overdue SA returns */
     object _1
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.4.1"
 
     /** 4.2: One or more overdue CoTax returns */
     object _2
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.4.2"
 
     /** 4.3: One or more overdue VAT returns */
     object _3
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.4.3"
 
     /** 4.4: One or more overdue PAYE returns */
     object _4
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.4.4"
 
   /** Check 5: Overdue liabilities */
   object _5:
 
     /** 5.1: One or more overdue SA liabilities */
     final case class _1(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.1"
 
     /** 5.2: One or more overdue CoTax liabilities */
     final case class _2(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.2"
 
     /** 5.3: One or more overdue VAT liabilities */
     final case class _3(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.3"
 
     /** 5.4: One or more overdue PAYE liabilities */
     final case class _4(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.4"
 
     /** 5.5: One or more overdue civil penalties */
     final case class _5(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.5"
 
     /** 5.6: One or more overdue Stamp Duty liabilities */
     final case class _6(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.6"
 
     /** 5.7: One or more overdue Capital Gains Tax liabilities */
     final case class _7(value: Double)
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.5.7"
 
   /** 7: Insolvent */
   case object _7
-  extends EntityFailure.NonFixable
+  extends EntityFailure.NonFixable:
+    override def toString: String = "EntityFailure.7"
 
   /** Check 8: Anti-avoidance measures or penalties */
   object _8:
 
     /** 8.1: Measure - Published Tax Avoidance promoters, enablers and suppliers */
     case object _1
-    extends EntityFailure.NonFixable
+    extends EntityFailure.NonFixable:
+      override def toString: String = "EntityFailure.8.1"
 
     /** 8.4: POTAS penalty - within 12 months */
     case object _4
-    extends EntityFailure.NonFixable
+    extends EntityFailure.NonFixable:
+      override def toString: String = "EntityFailure.8.4"
 
     /** 8.5: POTAS penalty - more than 12 months, not paid */
     case object _5
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.8.5"
 
     /** 8.6: Enablers Penalty - within 12 months */
     case object _6
-    extends EntityFailure.NonFixable
+    extends EntityFailure.NonFixable:
+      override def toString: String = "EntityFailure.8.6"
 
     /** 8.7: Enablers Penalty - more than 12 months, not paid */
     case object _7
-    extends EntityFailure.Fixable
+    extends EntityFailure.Fixable:
+      override def toString: String = "EntityFailure.8.7"
 
 object EntityFailureFormats:
 
