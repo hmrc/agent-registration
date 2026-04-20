@@ -70,17 +70,48 @@ extends BackendController(cc):
 
     case Full
     case Partial
+    case Many
 
   private object SmuScenario:
     def fromQuery(value: Option[String]): SmuScenario =
       value.map(_.trim.toLowerCase) match
         case Some("partial") => SmuScenario.Partial
+        case Some("many") => SmuScenario.Many
         case _ => SmuScenario.Full
+
+  private final case class SeedProfile(
+    individualName: IndividualName,
+    individualEmail: EmailAddress
+  )
+
+  private val defaultSeedProfile: SeedProfile = SeedProfile(IndividualName("George Smiley"), EmailAddress("g.smiley@test.com"))
+
+  private val seedProfiles: Vector[SeedProfile] = Vector(
+    defaultSeedProfile,
+    SeedProfile(IndividualName("Alice Mercer"), EmailAddress("a.mercer@test.com")),
+    SeedProfile(IndividualName("David Palmer"), EmailAddress("d.palmer@test.com")),
+    SeedProfile(IndividualName("Priya Shah"), EmailAddress("p.shah@test.com")),
+    SeedProfile(IndividualName("Martin Hughes"), EmailAddress("m.hughes@test.com")),
+    SeedProfile(IndividualName("Elena Petrova"), EmailAddress("e.petrova@test.com"))
+  )
 
   private def isFullScenario(scenario: SmuScenario): Boolean =
     scenario match
       case SmuScenario.Full => true
+      case SmuScenario.Many => true
       case SmuScenario.Partial => false
+
+  private def vrnsForScenario(scenario: SmuScenario): Option[List[Vrn]] =
+    scenario match
+      case SmuScenario.Partial => None
+      case SmuScenario.Full => Some(List(Vrn("12341234"), Vrn("43214321")))
+      case SmuScenario.Many => Some((0 until 20).toList.map(index => Vrn(f"${23000000 + index}%08d")))
+
+  private def payeRefsForScenario(scenario: SmuScenario): Option[List[PayeRef]] =
+    scenario match
+      case SmuScenario.Partial => None
+      case SmuScenario.Full => Some(List(PayeRef("56785678"), PayeRef("87658765")))
+      case SmuScenario.Many => Some((0 until 20).toList.map(index => PayeRef(f"${56000000 + index}%08d")))
 
   def upsertIndividualProvidedDetails: Action[IndividualProvidedDetails] =
     actions
@@ -233,30 +264,35 @@ extends BackendController(cc):
     hasOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
     companyStatusCheckResult = Some(Pass),
-    vrns = Option.when(isFullScenario(scenario))(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Option.when(isFullScenario(scenario))(List(PayeRef("56785678"), PayeRef("87658765")))
+    vrns = vrnsForScenario(scenario),
+    payeRefs = payeRefsForScenario(scenario)
   )
   // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
   private def makeIndividualProvidedDetailsFor(
     scenario: SmuScenario,
     agentApplicationId: AgentApplicationId
-  ): IndividualProvidedDetails = IndividualProvidedDetails(
-    _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
-    personReference = personReferenceGenerator.nextPersonReference(),
-    individualName = IndividualName("George Smiley"),
-    isPersonOfControl = true,
-    internalUserId = Some(InternalUserId(value = s"test-${UUID.randomUUID().toString}")),
-    createdAt = Instant.now(),
-    providedDetailsState = ProvidedDetailsState.Finished,
-    agentApplicationId = agentApplicationId,
-    individualDateOfBirth = Option.when(isFullScenario(scenario))(IndividualDateOfBirth.Provided(LocalDate.of(1980, 1, 1))),
-    telephoneNumber = Some(TelephoneNumber("1234658979")),
-    emailAddress = Option.when(isFullScenario(scenario))(IndividualVerifiedEmailAddress(EmailAddress("g.smiley@test.com"), isVerified = true)),
-    individualNino = Option.when(isFullScenario(scenario))(IndividualNino.Provided(Nino("AA123456A"))),
-    individualSaUtr = Option.when(isFullScenario(scenario))(IndividualSaUtr.Provided(SaUtr("1234567890"))),
-    hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    hasApprovedApplication = Some(true),
-    vrns = Option.when(isFullScenario(scenario))(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Option.when(isFullScenario(scenario))(List(PayeRef("56785678"), PayeRef("87658765"))),
-    passedIv = Option.when(isFullScenario(scenario))(true)
-  )
+  ): IndividualProvidedDetails =
+    val personReference = personReferenceGenerator.nextPersonReference()
+    val profileIndex = Math.floorMod(personReference.value.hashCode, seedProfiles.length)
+    val profile = seedProfiles.lift(profileIndex).getOrElse(defaultSeedProfile)
+
+    IndividualProvidedDetails(
+      _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
+      personReference = personReference,
+      individualName = profile.individualName,
+      isPersonOfControl = true,
+      internalUserId = Some(InternalUserId(value = s"test-${UUID.randomUUID().toString}")),
+      createdAt = Instant.now(),
+      providedDetailsState = ProvidedDetailsState.Finished,
+      agentApplicationId = agentApplicationId,
+      individualDateOfBirth = Option.when(isFullScenario(scenario))(IndividualDateOfBirth.Provided(LocalDate.of(1980, 1, 1))),
+      telephoneNumber = Some(TelephoneNumber("1234658979")),
+      emailAddress = Option.when(isFullScenario(scenario))(IndividualVerifiedEmailAddress(profile.individualEmail, isVerified = true)),
+      individualNino = Option.when(isFullScenario(scenario))(IndividualNino.Provided(Nino("AA123456A"))),
+      individualSaUtr = Option.when(isFullScenario(scenario))(IndividualSaUtr.Provided(SaUtr("1234567890"))),
+      hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
+      hasApprovedApplication = Some(true),
+      vrns = vrnsForScenario(scenario),
+      payeRefs = payeRefsForScenario(scenario),
+      passedIv = Option.when(isFullScenario(scenario))(true)
+    )
