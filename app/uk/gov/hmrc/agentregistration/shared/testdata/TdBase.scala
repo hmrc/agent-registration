@@ -239,6 +239,10 @@ trait TdBase:
     IndividualName("Sandra Hills")
   )
 
+  def getIndividualName(
+    index: Int
+  ): IndividualName = individualNamesStubbedInCompaniesHouse.lift(index).getOrElse(throw new RuntimeException(s"Missing individual name for index $index"))
+
   def ucrIdentifiers: UcrIdentifiers = UcrIdentifiers(
     vrns = List(vrn),
     payeRefs = List(payeRef)
