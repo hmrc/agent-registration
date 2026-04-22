@@ -35,80 +35,97 @@ object IndividualFailure:
 
     /** 4.1: One or more overdue SA returns */
     object _1
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.4.1"
 
     /** 4.3: One or more overdue VAT returns */
     object _3
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.4.3"
 
     /** 4.4: One or more overdue PAYE returns */
     object _4
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.4.4"
 
   /** Check 5: Overdue liabilities */
   object _5:
 
     /** 5.1: One or more overdue SA liabilities */
     final case class _1(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.1"
 
     /** 5.3: One or more overdue VAT liabilities */
     final case class _3(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.3"
 
     /** 5.4: One or more overdue PAYE liabilities */
     final case class _4(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.4"
 
     /** 5.5: One or more overdue civil penalties */
     final case class _5(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.5"
 
     /** 5.6: One or more overdue Stamp Duty liabilities */
     final case class _6(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.6"
 
     /** 5.7: One or more overdue Capital Gains Tax liabilities */
     final case class _7(value: Double)
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.5.7"
 
   /** 6: Disqualified as a director on Companies House */
   object _6
-  extends IndividualFailure.NonFixable
+  extends IndividualFailure.NonFixable:
+    override def toString: String = "IndividualFailure.6"
 
   /** 7: Insolvent */
   object _7
-  extends IndividualFailure.NonFixable
+  extends IndividualFailure.NonFixable:
+    override def toString: String = "IndividualFailure.7"
 
   /** Check 8: Anti-avoidance measures or penalties */
   object _8:
 
     /** 8.1: Measure - Published Tax Avoidance promoters, enablers and suppliers */
-    case object _1
-    extends IndividualFailure.NonFixable
+    object _1
+    extends IndividualFailure.NonFixable:
+      override def toString: String = "IndividualFailure.8.1"
 
     /** 8.6: Enablers Penalty - within 12 months */
-    case object _6
-    extends IndividualFailure.NonFixable
+    object _6
+    extends IndividualFailure.NonFixable:
+      override def toString: String = "IndividualFailure.8.6"
 
     /** 8.7: Enablers Penalty - more than 12 months, not paid */
-    case object _7
-    extends IndividualFailure.Fixable
+    object _7
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.8.7"
 
   /** 9: Relevant criminal convictions */
   object _9
-  extends IndividualFailure.NonFixable
+  extends IndividualFailure.NonFixable:
+    override def toString: String = "IndividualFailure.9"
 
   /** Check 10: Cannot verify the individual's information */
   object _10:
 
     /** 10.1: Unable to match Name and DOB against references */
     object _1
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.10.1"
 
     /** 10.2: Unable to match Name and DOB against references and Missing SA-UTR */
     object _2
-    extends IndividualFailure.Fixable
+    extends IndividualFailure.Fixable:
+      override def toString: String = "IndividualFailure.10.2"
 
 object IndividualFailureFormats:
 

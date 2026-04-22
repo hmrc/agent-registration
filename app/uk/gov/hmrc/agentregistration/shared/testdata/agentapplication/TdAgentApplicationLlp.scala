@@ -168,7 +168,6 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       amlsDetails = Some(AmlsDetails(
         supervisoryBody = AmlsCode("HMRC"),
         amlsRegistrationNumber = Some(AmlsRegistrationNumber("XAML1234567890")),
-        amlsExpiryDate = Some(java.time.LocalDate.parse(dependencies.dateString)),
         amlsEvidence = Some(uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence(
           uk.gov.hmrc.agentregistration.shared.upload.UploadId("evidence-reference-123"),
           "certificate.pdf",

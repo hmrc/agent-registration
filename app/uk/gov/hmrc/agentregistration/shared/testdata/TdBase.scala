@@ -144,7 +144,6 @@ trait TdBase:
   def completeAmlsDetails: AmlsDetails = AmlsDetails(
     supervisoryBody = amlsCode,
     amlsRegistrationNumber = Some(amlsRegistrationNumber),
-    amlsExpiryDate = None,
     amlsEvidence = None
   )
 
@@ -238,6 +237,10 @@ trait TdBase:
     IndividualName("Steve Palmer"),
     IndividualName("Sandra Hills")
   )
+
+  def getIndividualName(
+    index: Int
+  ): IndividualName = individualNamesStubbedInCompaniesHouse.lift(index).getOrElse(throw new RuntimeException(s"Missing individual name for index $index"))
 
   def ucrIdentifiers: UcrIdentifiers = UcrIdentifiers(
     vrns = List(vrn),
