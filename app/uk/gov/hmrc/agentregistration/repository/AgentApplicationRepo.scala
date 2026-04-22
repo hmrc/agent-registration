@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
@@ -63,6 +64,12 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .headOption()
 
+  def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
+    .find(
+      filter = Filters.eq("applicationReference", applicationReference.value)
+    )
+    .headOption()
+
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
 object AgentApplicationRepoHelp:
@@ -91,5 +98,11 @@ object AgentApplicationRepoHelp:
       IndexOptions()
         .unique(true)
         .name("linkId")
+    ),
+    IndexModel(
+      keys = Indexes.ascending("applicationReference"),
+      IndexOptions()
+        .unique(true)
+        .name("applicationReference")
     )
   )

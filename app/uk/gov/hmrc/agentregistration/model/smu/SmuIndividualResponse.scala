@@ -58,7 +58,8 @@ final case class SmuIndividualResponse(
   hasOtherRelevantIndividuals: Option[Boolean],
   businessDetails: Option[BusinessDetailsSoleTrader],
   deceasedCheckResult: Option[CheckResult],
-  companyStatusCheckResult: Option[CheckResult]
+  companyStatusCheckResult: Option[CheckResult],
+  applicationReference: ApplicationReference
 )
 
 object SmuIndividualResponse:
@@ -107,6 +108,7 @@ object SmuIndividualResponse:
         case llp: AgentApplicationLlp => llp.companyStatusCheckResult
         case lc: AgentApplicationLimitedCompany => lc.companyStatusCheckResult
         case _ => None
-      }
+      },
+    aa.applicationReference
   )
   given format: OFormat[SmuIndividualResponse] = Json.format[SmuIndividualResponse]

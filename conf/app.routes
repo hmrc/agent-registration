@@ -3,6 +3,7 @@
 GET         /application                                                                                uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByInternalUserId
 GET         /application/linkId/:linkId                                                                 uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByLinkId(linkId: LinkId)
 GET         /application/by-agent-application-id/:agentApplicationId                                    uk.gov.hmrc.agentregistration.controllers.ApplicationController.findById(agentApplicationId: AgentApplicationId)
+GET         /application/by-application-reference/:applicationReference                                 uk.gov.hmrc.agentregistration.controllers.ApplicationController.findByApplicationReference(applicationReference: ApplicationReference)
 POST        /application                                                                                uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 DELETE      /application                                                                                uk.gov.hmrc.agentregistration.controllers.ApplicationController.deleteApplication()
 
