@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentregistration.shared.testdata.risking
 
 import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus
+import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualRiskingResponse
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase

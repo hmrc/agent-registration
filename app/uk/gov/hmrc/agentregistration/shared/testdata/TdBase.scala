@@ -144,7 +144,6 @@ trait TdBase:
   def completeAmlsDetails: AmlsDetails = AmlsDetails(
     supervisoryBody = amlsCode,
     amlsRegistrationNumber = Some(amlsRegistrationNumber),
-    amlsExpiryDate = None,
     amlsEvidence = None
   )
 

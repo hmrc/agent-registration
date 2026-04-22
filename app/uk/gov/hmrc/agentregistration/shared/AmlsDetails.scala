@@ -20,12 +20,9 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 
-import java.time.LocalDate
-
 final case class AmlsDetails(
   supervisoryBody: AmlsCode,
   amlsRegistrationNumber: Option[AmlsRegistrationNumber],
-  amlsExpiryDate: Option[LocalDate],
   amlsEvidence: Option[AmlsEvidence]
 ):
 
@@ -35,13 +32,11 @@ final case class AmlsDetails(
       case AmlsDetails(
             _,
             Some(_),
-            _,
             _
           ) if isHmrc =>
         true
       case AmlsDetails(
             _,
-            Some(_),
             Some(_),
             Some(_)
           ) if !isHmrc =>
@@ -53,7 +48,6 @@ final case class AmlsDetails(
   def getRegistrationNumber: AmlsRegistrationNumber = amlsRegistrationNumber.getOrElse(
     throw new RuntimeException("amlsRegistrationNumber missing when required")
   )
-  def getAmlsExpiryDate: LocalDate = amlsExpiryDate.getOrElse(throw new RuntimeException("amlsExpiryDate missing when required"))
 
 object AmlsDetails:
   implicit val format: Format[AmlsDetails] = Json.format[AmlsDetails]
