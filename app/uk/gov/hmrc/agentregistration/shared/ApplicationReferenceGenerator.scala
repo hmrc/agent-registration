@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import javax.inject.Singleton
-import scala.annotation.nowarn
 import scala.util.Random
 
 @Singleton
@@ -39,8 +38,9 @@ class ApplicationReferenceGenerator:
 
   private val random: Random = new Random()
 
-  @nowarn("msg=Seq.apply is disabled")
-  private def randomChar(chars: IndexedSeq[Char]): Char = chars(random.nextInt(chars.size))
+  private def randomChar(chars: IndexedSeq[Char]): Char =
+    val rnd = random.nextInt(chars.size)
+    chars.iterator.drop(rnd).next()
 
   def generateApplicationReference(): ApplicationReference = {
     val reference = List.fill(validLength)(randomChar(validCharacters)).mkString("")
