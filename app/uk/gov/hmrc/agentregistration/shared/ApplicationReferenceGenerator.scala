@@ -39,7 +39,7 @@ class ApplicationReferenceGenerator:
 
   private val random: Random = new Random()
 
-  @nowarn()
+  @nowarn("msg=Seq.apply is disabled")
   private def randomChar(chars: IndexedSeq[Char]): Char = chars(random.nextInt(chars.size))
 
   def generateApplicationReference(): ApplicationReference = {
