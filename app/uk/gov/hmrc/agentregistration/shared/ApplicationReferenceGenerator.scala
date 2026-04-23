@@ -38,9 +38,10 @@ class ApplicationReferenceGenerator:
 
   private val random: Random = new Random()
 
+  @SuppressWarnings(Array("org.wartremover.warts.SeqApply"))
   private def randomChar(chars: IndexedSeq[Char]): Char =
-    val rnd = random.nextInt(chars.size)
-    chars.iterator.drop(rnd).next()
+    val randomIndex = random.nextInt(chars.size)
+    chars(randomIndex)
 
   def generateApplicationReference(): ApplicationReference = {
     val reference = List.fill(validLength)(randomChar(validCharacters)).mkString("")
