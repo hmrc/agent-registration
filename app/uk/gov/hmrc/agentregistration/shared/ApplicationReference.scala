@@ -29,18 +29,3 @@ object ApplicationReference:
 
   given format: Format[ApplicationReference] = JsonFormatsFactory.makeValueClassFormat
   given pathBindable: PathBindable[ApplicationReference] = ValueClassBinder.valueClassBinder[ApplicationReference](_.value)
-
-  val validCharacters: List[Char] = {
-    val allowedLetters = ('A' to 'Z').toList.diff(List(
-      'I',
-      'O',
-      'S',
-      'U',
-      'V',
-      'W'
-    ))
-    val allowedDigits = ('0' to '9').toList.diff(List('0', '1', '5'))
-    allowedLetters ::: allowedDigits
-  }
-
-  val validLength: Int = 9

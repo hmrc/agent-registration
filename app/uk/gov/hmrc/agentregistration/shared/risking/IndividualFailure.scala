@@ -160,8 +160,8 @@ object IndividualFailureFormats:
     implicit val _10_2: OFormat[IndividualFailure._10._2.type] = Json.format[IndividualFailure._10._2.type]
 
     val dontDeleteMe = """
-                         |Don't delete me.
-                         |I will emit a warning so `@nowarn` can be applied to address below
-                         |`Unreachable case except for null` problem emited by Play Json macro"""
+       |Don't delete me.
+       |I will emit a warning so `@nowarn` can be applied to address below
+       |`Unreachable case except for null` problem emited by Play Json macro"""
 
     Json.format[IndividualFailure]

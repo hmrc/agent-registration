@@ -22,11 +22,25 @@ import scala.util.Random
 @Singleton
 class ApplicationReferenceGenerator:
 
-  private def randomChar(chars: List[Char]): Char =
-    val rnd = Random.nextInt(chars.length)
-    chars.iterator.drop(rnd).next()
+  private val validCharacters: IndexedSeq[Char] =
+    val allowedLetters = ('A' to 'Z').diff(IndexedSeq(
+      'I',
+      'O',
+      'S',
+      'U',
+      'V',
+      'W'
+    ))
+    val allowedDigits = ('0' to '9').diff(IndexedSeq('0', '1', '5'))
+    allowedLetters ++ allowedDigits
+
+  private val validLength: Int = 9
+
+  private val random: Random = new Random()
+
+  private def randomChar(chars: IndexedSeq[Char]): Char = chars(random.nextInt(chars.size))
 
   def generateApplicationReference(): ApplicationReference = {
-    val reference = List.fill(ApplicationReference.validLength)(randomChar(ApplicationReference.validCharacters)).mkString("")
+    val reference = List.fill(validLength)(randomChar(validCharacters)).mkString("")
     ApplicationReference(reference)
   }

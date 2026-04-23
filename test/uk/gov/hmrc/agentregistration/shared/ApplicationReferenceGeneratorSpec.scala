@@ -23,11 +23,11 @@ extends UnitSpec:
 
   "generateApplicationReference should create unique references in the agreed format" in:
 
-    val generator = new ApplicationReferenceGenerator
-    val formatRegex = "^[A-HJ-NP-RTXYZ2346789]{9}$"
+    val generator: ApplicationReferenceGenerator = new ApplicationReferenceGenerator
+    val formatRegex: String = "^[A-HJ-NP-RTXYZ2346789]{9}$"
 
-    val ref1 = generator.generateApplicationReference()
-    val ref2 = generator.generateApplicationReference()
+    val ref1: ApplicationReference = generator.generateApplicationReference()
+    val ref2: ApplicationReference = generator.generateApplicationReference()
     ref1 should not be ref2
     ref1.value.length shouldBe 9
     ref2.value.length shouldBe 9

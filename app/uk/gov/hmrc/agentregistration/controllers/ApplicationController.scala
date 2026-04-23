@@ -88,7 +88,7 @@ extends BackendController(cc):
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  def findByApplicationReference(applicationReference: ApplicationReference): Action[AnyContent] = Action.async: request =>
+  def findByApplicationReference(applicationReference: ApplicationReference): Action[AnyContent] = actions.default.async: request =>
     agentApplicationRepo
       .findByApplicationReference(applicationReference)
       .map:
