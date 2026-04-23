@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import javax.inject.Singleton
+import scala.annotation.nowarn
 import scala.util.Random
 
 @Singleton
@@ -38,6 +39,7 @@ class ApplicationReferenceGenerator:
 
   private val random: Random = new Random()
 
+  @nowarn()
   private def randomChar(chars: IndexedSeq[Char]): Char = chars(random.nextInt(chars.size))
 
   def generateApplicationReference(): ApplicationReference = {
