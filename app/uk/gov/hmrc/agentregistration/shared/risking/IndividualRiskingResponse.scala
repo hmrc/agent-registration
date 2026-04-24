@@ -24,7 +24,6 @@ import uk.gov.hmrc.agentregistration.shared.PersonReference
 final case class IndividualRiskingResponse(
   personReference: PersonReference,
   providedName: IndividualName,
-  status: ApplicationForRiskingStatus,
   failures: Option[List[IndividualFailure]]
 )
 
