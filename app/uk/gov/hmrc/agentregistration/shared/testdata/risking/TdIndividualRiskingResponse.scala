@@ -17,8 +17,6 @@
 package uk.gov.hmrc.agentregistration.shared.testdata.risking
 
 import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualRiskingResponse
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
@@ -31,16 +29,17 @@ trait TdIndividualRiskingResponse:
     val readyForSubmissionResponse: IndividualRiskingResponse = IndividualRiskingResponse(
       personReference = PersonReference(dependencies.individualProvidedDetailsId.value),
       providedName = dependencies.getIndividualName(0),
-      status = ApplicationForRiskingStatus.ReadyForSubmission,
+//      status = ApplicationForRiskingStatus.ReadyForSubmission,
       failures = None
     )
 
-    val submittedForRiskingResponse: IndividualRiskingResponse = readyForSubmissionResponse.copy(
-      status = ApplicationForRiskingStatus.SubmittedForRisking
-    )
+    val submittedForRiskingResponse: IndividualRiskingResponse = readyForSubmissionResponse
+//      .copy(
+//      status = ApplicationForRiskingStatus.SubmittedForRisking
+//    )
 
     val failedNonFixableResponse: IndividualRiskingResponse = readyForSubmissionResponse.copy(
-      status = FailedNonFixable,
+//      status = FailedNonFixable,
       failures = Some(List(
         IndividualFailure._5._1(325),
         IndividualFailure._6

@@ -22,7 +22,8 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 
 final case class ApplicationRiskingResponse(
   applicationReference: ApplicationReference,
-  status: ApplicationForRiskingStatus,
+  status: RiskingStatus,
+  isSubscribed: Boolean,
   individuals: List[IndividualRiskingResponse],
   failures: Option[List[EntityFailure]]
 )
