@@ -17,17 +17,68 @@
 package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.Json
+import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import scala.annotation.nowarn
 
-final case class ApplicationRiskingResponse(
-  applicationReference: ApplicationReference,
-  status: RiskingStatus,
-  isSubscribed: Boolean,
-  individuals: List[IndividualRiskingResponse],
-  failures: Option[List[EntityFailure]]
-)
+import java.time.LocalDate
+
+/** Represents the risking results for an agent application along with all individuals in the application.
+  *
+  * The risking follows the heuristic that one spoiled apple makes a spoiled basket - a single failure can impact the overall application status.
+  */
+sealed trait ApplicationRiskingResponse
 
 object ApplicationRiskingResponse:
 
-  given OFormat[ApplicationRiskingResponse] = Json.format[ApplicationRiskingResponse]
+  /** Indicates that the application was accepted by the risking microservice, and not yet submitted for risking at Minerva
+    */
+  case object ReadyForSubmission
+  extends ApplicationRiskingResponse
+
+  /** Indicates that the application has been submitted for risking and is awaiting results. The application is currently being processed by the risking system.
+    */
+  case object SubmittedForRisking
+  extends ApplicationRiskingResponse
+
+  /** Represents states where risking results for all Applications and Individuals have been received from the risking system. These are terminal states for
+    * this round that indicate the outcome of the risking process.
+    */
+  sealed trait ReceivedRiskingResults
+  extends ApplicationRiskingResponse
+
+  /** Represents a risking outcome with at least one FIXABLE failure, but without NON FIXABLE failures.
+    */
+  final case class FailedFixable(
+    riskedEntity: RiskedEntity,
+    riskedIndividuals: List[RiskedIndividual],
+    riskingCompletedDate: LocalDate
+  )
+  extends ReceivedRiskingResults
+
+  /** Represents a risking outcome with at least one NON FIXABLE failure which makes entire application Failed Non Fixable.
+    */
+  final case class FailedNonFixable(
+    riskedEntity: RiskedEntity,
+    riskedIndividuals: List[RiskedIndividual],
+    riskingCompletedDate: LocalDate
+  )
+  extends ReceivedRiskingResults
+
+  @nowarn()
+  given format: OFormat[ApplicationRiskingResponse] =
+    given JsonConfiguration = JsonConfig.jsonConfiguration
+    // Note: using implicit val instead of given due to Scala compiler bug with given and Play JSON macros
+
+    given OFormat[ApplicationRiskingResponse.ReadyForSubmission.type] = Json.format[ApplicationRiskingResponse.ReadyForSubmission.type]
+    given OFormat[ApplicationRiskingResponse.SubmittedForRisking.type] = Json.format[ApplicationRiskingResponse.SubmittedForRisking.type]
+    given OFormat[ApplicationRiskingResponse.FailedNonFixable] = Json.format[ApplicationRiskingResponse.FailedNonFixable]
+    given OFormat[ApplicationRiskingResponse.FailedFixable] = Json.format[ApplicationRiskingResponse.FailedFixable]
+
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emited by Play Json macro"""
+
+    Json.format[ApplicationRiskingResponse]

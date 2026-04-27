@@ -16,14 +16,16 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import play.api.libs.json.Format
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 
-enum RiskingStatus:
+final case class RiskedIndividual(
+  personReference: PersonReference,
+  individualName: IndividualName,
+  failures: List[IndividualFailure]
+)
 
-  case ReadyForSubmission
-  case SubmittedForRisking
-  case ReceivedRiskingResults
-
-object RiskingStatus:
-  given Format[RiskingStatus] = JsonFormatsFactory.makeEnumFormat[RiskingStatus]
+object RiskedIndividual:
+  given OFormat[RiskedIndividual] = Json.format[RiskedIndividual]
