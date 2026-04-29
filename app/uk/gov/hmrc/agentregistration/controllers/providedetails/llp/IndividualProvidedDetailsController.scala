@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedR
 import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
@@ -90,3 +91,11 @@ extends BackendController(cc):
     individualProvidedDetailsRepo
       .removeById(individualProvidedDetailsId)
       .map(_ => Ok(""))
+
+  def findByPersonReference(personReference: PersonReference): Action[AnyContent] = actions.authorised.async: request =>
+    individualProvidedDetailsRepo
+      .findByPersonReference(personReference)
+      .map {
+        case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
+        case None => NoContent
+      }
