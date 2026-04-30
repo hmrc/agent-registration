@@ -17,11 +17,10 @@
 package uk.gov.hmrc.agentregistration.shared.testdata.risking
 
 import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationForRiskingStatus.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.risking.ApplicationRiskingResponse
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingStatus
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
 trait TdApplicationRiskingResponse:
@@ -31,7 +30,8 @@ trait TdApplicationRiskingResponse:
 
     val readyForSubmissionResponse: ApplicationRiskingResponse = ApplicationRiskingResponse(
       applicationReference = dependencies.applicationReference,
-      status = ApplicationForRiskingStatus.ReadyForSubmission,
+      status = RiskingStatus.ReadyForSubmission,
+      isSubscribed = false,
       individuals = List(
         individualRiskingResponse.readyForSubmissionResponse,
         individualRiskingResponse.readyForSubmissionResponse.copy(
@@ -44,7 +44,8 @@ trait TdApplicationRiskingResponse:
 
     val submittedForRiskingResponse: ApplicationRiskingResponse = ApplicationRiskingResponse(
       applicationReference = dependencies.applicationReference,
-      status = ApplicationForRiskingStatus.SubmittedForRisking,
+      status = RiskingStatus.SubmittedForRisking,
+      isSubscribed = false,
       individuals = List(
         individualRiskingResponse.submittedForRiskingResponse,
         individualRiskingResponse.submittedForRiskingResponse.copy(
@@ -56,7 +57,8 @@ trait TdApplicationRiskingResponse:
 
     val failedNonFixableResponse: ApplicationRiskingResponse = ApplicationRiskingResponse(
       applicationReference = dependencies.applicationReference,
-      status = FailedNonFixable,
+      status = RiskingStatus.ReceivedRiskingResults,
+      isSubscribed = false,
       individuals = List(
         individualRiskingResponse.failedNonFixableResponse,
         individualRiskingResponse.failedNonFixableResponse.copy(
