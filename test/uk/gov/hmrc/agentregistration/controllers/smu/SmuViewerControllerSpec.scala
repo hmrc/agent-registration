@@ -23,6 +23,7 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.TestOnlyData.personReference
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll.individualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
@@ -56,7 +57,7 @@ extends ControllerSpec:
 
     val response: HttpResponse =
       httpClient
-        .get(url"$baseUrl/agent-registration/smu-viewer/individual/by-person-reference/${individualProvidedDetailsId.value}")
+        .get(url"$baseUrl/agent-registration/smu-viewer/individual/by-person-reference/${personReference.value}")
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK

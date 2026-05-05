@@ -17,33 +17,9 @@
 package uk.gov.hmrc.agentregistration.shared
 
 import javax.inject.Singleton
-import scala.util.Random
+import uk.gov.hmrc.agentregistration.shared.util.ReferenceGenerator.generateReference
 
 @Singleton
 class ApplicationReferenceGenerator:
 
-  private val validCharacters: IndexedSeq[Char] =
-    val allowedLetters = ('A' to 'Z').diff(IndexedSeq(
-      'I',
-      'O',
-      'S',
-      'U',
-      'V',
-      'W'
-    ))
-    val allowedDigits = ('0' to '9').diff(IndexedSeq('0', '1', '5'))
-    allowedLetters ++ allowedDigits
-
-  private val validLength: Int = 9
-
-  private val random: Random = new Random()
-
-  @SuppressWarnings(Array("org.wartremover.warts.SeqApply"))
-  private def randomChar(chars: IndexedSeq[Char]): Char =
-    val randomIndex = random.nextInt(chars.size)
-    chars(randomIndex)
-
-  def generateApplicationReference(): ApplicationReference = {
-    val reference = List.fill(validLength)(randomChar(validCharacters)).mkString("")
-    ApplicationReference(reference)
-  }
+  def generateApplicationReference(): ApplicationReference = ApplicationReference(generateReference())
