@@ -40,11 +40,12 @@ import uk.gov.hmrc.auth.core.ConfidenceLevel
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import uk.gov.hmrc.agentregistrationrisking.config.AppConfig
 
 trait TdBase:
 
   final val zoneOffset: ZoneOffset = ZoneOffset.UTC
-  final val zoneId: ZoneId = ZoneId.of("UTC")
+  final val zoneId: ZoneId = AppConfig.zoneId
 
   def dateString: String = "2059-11-25"
   def timeString: String = s"${dateString}T16:33:51.880"

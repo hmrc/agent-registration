@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.risking
 
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
-import uk.gov.hmrc.agentregistration.shared.risking.ApplicationRiskingResponse
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingProgress
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -31,7 +31,7 @@ trait TdApplicationRiskingResponse:
 
   object applicationRiskingResponse:
 
-    val failedFixable: ApplicationRiskingResponse.FailedFixable = ApplicationRiskingResponse.FailedFixable(
+    val failedFixable: RiskingProgress.FailedFixable = RiskingProgress.FailedFixable(
       riskedEntity = dependencies.riskedEntityApproved,
       riskedIndividuals = List(
         dependencies.riskedIndividualApproved(
@@ -43,7 +43,7 @@ trait TdApplicationRiskingResponse:
       riskingCompletedDate = riskingCompletedDate
     )
 
-    val failedNonFixable: ApplicationRiskingResponse.FailedNonFixable = ApplicationRiskingResponse.FailedNonFixable(
+    val failedNonFixable: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
       riskedEntity = dependencies.riskedEntityFailedFixable,
       riskedIndividuals = List(
         dependencies.riskedIndividualNonFixable(
@@ -58,7 +58,7 @@ trait TdApplicationRiskingResponse:
       riskingCompletedDate = riskingCompletedDate
     )
 
-    val failedNonFixable_failedApplicant_approvedIndividuls: ApplicationRiskingResponse.FailedNonFixable = ApplicationRiskingResponse.FailedNonFixable(
+    val failedNonFixable_failedApplicant_approvedIndividuls: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
       riskedEntity = dependencies.riskedEntityFailedFixable,
       riskedIndividuals = List(
         dependencies.riskedIndividualApproved(

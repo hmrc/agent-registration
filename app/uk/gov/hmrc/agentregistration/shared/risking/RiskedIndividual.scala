@@ -21,10 +21,12 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 
+/** Representation of an Individual/Person which has been risked and has a List of Failures
+  */
 final case class RiskedIndividual(
   personReference: PersonReference,
   individualName: IndividualName,
-  failures: List[IndividualFailure]
+  failures: Seq[IndividualFailure]
 )
 
 object RiskedIndividual:

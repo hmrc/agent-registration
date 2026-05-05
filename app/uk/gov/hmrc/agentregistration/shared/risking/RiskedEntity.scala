@@ -20,9 +20,11 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 
+/** Representation of an Application/Entity which has been risked and has a List of Failures
+  */
 final case class RiskedEntity(
   applicationReference: ApplicationReference,
-  failures: List[EntityFailure]
+  failures: Seq[EntityFailure]
 )
 
 object RiskedEntity:
