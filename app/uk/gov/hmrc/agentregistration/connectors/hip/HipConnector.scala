@@ -62,7 +62,7 @@ class HipConnector @Inject() (
   )(implicit
     rh: RequestHeader
   ): Future[UcrIdentifiers] =
-    val apiUrl: URL = url"$baseUrl/customer/v2/api/individuals/identifier-search"
+    val apiUrl: URL = url"$baseUrl/mulesoft/customer/v2/api/individuals/identifier-search"
 
     val (identifierType, identifierValue) =
       identifier match
@@ -101,7 +101,7 @@ class HipConnector @Inject() (
   )(implicit
     rh: RequestHeader
   ): Future[UcrIdentifiers] =
-    val apiUrl: URL = url"$baseUrl/customer/v2/api/organisations/identifier-search"
+    val apiUrl: URL = url"$baseUrl/mulesoft/customer/v2/api/organisations/identifier-search"
 
     val requestBody = Json.obj(
       "identifier" -> Json.obj(
