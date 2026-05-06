@@ -16,20 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-enum IndividualRiskingOutcome:
+enum RiskingOutcome:
 
   case FailedNonFixable
   case FailedFixable
   case Approved
-
-object IndividualRiskingOutcome:
-
-  extension (failures: List[IndividualFailure])
-    def outcome(): IndividualRiskingOutcome =
-      def hasNonFixableFailures: Boolean = failures.exists:
-        case _: IndividualFailure.NonFixable => true
-        case _: IndividualFailure.Fixable => false
-      failures match
-        case Nil => IndividualRiskingOutcome.Approved
-        case _ if hasNonFixableFailures => IndividualRiskingOutcome.FailedNonFixable
-        case _ => IndividualRiskingOutcome.FailedFixable

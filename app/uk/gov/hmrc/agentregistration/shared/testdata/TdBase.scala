@@ -48,7 +48,7 @@ trait TdBase:
 
   def dateString: String = "2059-11-25"
   def timeString: String = s"${dateString}T16:33:51.880"
-  def randomId: String = UUID.randomUUID().toString
+  def randomId(): String = UUID.randomUUID().toString
 
   def nowAsLocalDateTime: LocalDateTime =
     // the frozen time has to be in future otherwise the applications will disappear from mongodb because of expiry index

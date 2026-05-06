@@ -18,15 +18,16 @@ package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 
-final case class ApplicationRiskingResponse(
-  applicationReference: ApplicationReference,
-  status: ApplicationForRiskingStatus,
-  individuals: List[IndividualRiskingResponse],
-  failures: Option[List[EntityFailure]]
+/** Representation of an Individual/Person which has been risked and has a List of Failures
+  */
+final case class RiskedIndividual(
+  personReference: PersonReference,
+  individualName: IndividualName,
+  failures: Seq[IndividualFailure]
 )
 
-object ApplicationRiskingResponse:
-
-  given OFormat[ApplicationRiskingResponse] = Json.format[ApplicationRiskingResponse]
+object RiskedIndividual:
+  given OFormat[RiskedIndividual] = Json.format[RiskedIndividual]
