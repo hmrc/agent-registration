@@ -29,6 +29,7 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
 
     val afterStarted: AgentApplicationLimitedCompany = AgentApplicationLimitedCompany(
       _id = dependencies.agentApplicationId,
+      cachedSessionId = dependencies.cachedSessionId,
       applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,

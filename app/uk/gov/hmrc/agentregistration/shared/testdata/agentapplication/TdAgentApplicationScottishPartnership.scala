@@ -29,6 +29,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
 
     val afterStarted: AgentApplicationScottishPartnership = AgentApplicationScottishPartnership(
       _id = dependencies.agentApplicationId,
+      cachedSessionId = dependencies.cachedSessionId,
       applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,

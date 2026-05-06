@@ -27,6 +27,7 @@ trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrs
 
     val afterStarted: AgentApplicationSoleTrader = AgentApplicationSoleTrader(
       _id = dependencies.agentApplicationId,
+      cachedSessionId = dependencies.cachedSessionId,
       applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,

@@ -29,6 +29,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
 import uk.gov.hmrc.agentregistration.shared.CheckResult.Pass
+import uk.gov.hmrc.agentregistration.shared.audit.SessionId
 import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
@@ -158,6 +159,7 @@ extends BackendController(cc):
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
   private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
     _id = agentApplicationIdGenerator.nextApplicationId(),
+    cachedSessionId = SessionId(value = UUID.randomUUID().toString),
     applicationReference = applicationReferenceGenerator.generateApplicationReference(),
     linkId = LinkId(value = UUID.randomUUID().toString),
     internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),

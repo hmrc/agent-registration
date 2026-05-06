@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata
 
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.*
+import uk.gov.hmrc.agentregistration.shared.audit.SessionId
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.businessdetails.FullName
 import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
@@ -63,6 +64,7 @@ trait TdBase:
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
+  def cachedSessionId: SessionId = SessionId("session-id-123")
   def saUtr: SaUtr = SaUtr("1234567895")
   def ctUtr: CtUtr = CtUtr("2202108031")
   def internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
