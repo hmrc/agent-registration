@@ -24,5 +24,3 @@ final case class SessionId(value: String)
 object SessionId:
 
   given format: Format[SessionId] = JsonFormatsFactory.makeValueClassFormat
-
-  def make(sessionId: uk.gov.hmrc.http.SessionId): SessionId = SessionId.apply(sessionId.value)

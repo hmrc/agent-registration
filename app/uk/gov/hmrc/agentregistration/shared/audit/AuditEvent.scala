@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentregistration.shared.BusinessType
 sealed trait AuditEvent:
 
   val applicationReference: ApplicationReference
-  val auditType: String
+  val auditType: String = this.getClass.getSimpleName
 
 // The application does not support non-uk for now so isUkEntity is set to always true
 final case class StartOrContinueApplication(
@@ -36,8 +36,7 @@ final case class StartOrContinueApplication(
   entityType: BusinessType,
   isUkEntity: Boolean = true
 )
-extends AuditEvent:
-  override val auditType: String = "StartOrContinueApplication"
+extends AuditEvent
 
 object StartOrContinueApplication:
 
