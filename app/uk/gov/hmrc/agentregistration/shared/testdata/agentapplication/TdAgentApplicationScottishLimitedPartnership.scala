@@ -45,7 +45,6 @@ trait TdAgentApplicationScottishLimitedPartnership {
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
-      companyStatusCheckResult = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
@@ -68,15 +67,7 @@ trait TdAgentApplicationScottishLimitedPartnership {
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterCompaniesHouseStatusCheckPass: AgentApplicationScottishLimitedPartnership = afterRefusalToDealWithCheckPass.copy(
-      companyStatusCheckResult = Some(CheckResult.Pass)
-    )
-
-    val afterCompaniesHouseStatusCheckFail: AgentApplicationScottishLimitedPartnership = afterRefusalToDealWithCheckPass.copy(
-      companyStatusCheckResult = Some(CheckResult.Fail)
-    )
-
-    val afterContactDetailsComplete: AgentApplicationScottishLimitedPartnership = afterCompaniesHouseStatusCheckPass.copy(
+    val afterContactDetailsComplete: AgentApplicationScottishLimitedPartnership = afterRefusalToDealWithCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )

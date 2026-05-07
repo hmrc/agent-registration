@@ -196,7 +196,6 @@ extends BackendController(cc):
     numberOfIndividuals = None,
     hasOtherRelevantIndividuals = None,
     refusalToDealWithCheckResult = Some(Pass),
-    companyStatusCheckResult = Some(Pass),
     vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
     payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
   )

@@ -87,4 +87,3 @@ extends ControllerSpec:
     smuViewerIndividualResponse.hasOtherRelevantIndividuals shouldBe agentApplication.hasOtherRelevantIndividuals
     smuViewerIndividualResponse.businessDetails shouldBe agentApplication.businessDetails
     smuViewerIndividualResponse.deceasedCheckResult shouldBe None
-    smuViewerIndividualResponse.companyStatusCheckResult shouldBe agentApplication.companyStatusCheckResult
