@@ -35,6 +35,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
       createdAt = dependencies.nowAsInstant,
+      applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
@@ -134,12 +135,14 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
 
     val afterDeclarationSubmitted: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant)
+      submittedAt = Some(dependencies.nowAsInstant),
+      applicationExpiresAt = None
     )
 
     val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationScottishPartnership = afterConfirmTwoIndividuals.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant)
+      submittedAt = Some(dependencies.nowAsInstant),
+      applicationExpiresAt = None
     )
 
 }

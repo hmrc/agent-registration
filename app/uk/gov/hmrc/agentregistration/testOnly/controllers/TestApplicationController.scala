@@ -167,6 +167,7 @@ extends BackendController(cc):
     ),
     groupId = GroupId(value = UUID.randomUUID().toString),
     createdAt = Instant.now(),
+    applicationExpiresAt = Some(Instant.now().plus(java.time.Duration.ofDays(73))),
     submittedAt = Some(Instant.now()),
     applicationState = applicationState, // Provide details journeys now happen before an application is finished
     userRole = Some(UserRole.Authorised),

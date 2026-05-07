@@ -36,6 +36,7 @@ trait TdAgentApplicationLimitedPartnership {
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
       createdAt = dependencies.nowAsInstant,
+      applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
@@ -126,7 +127,8 @@ trait TdAgentApplicationLimitedPartnership {
 
     val afterDeclarationSubmitted: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant)
+      submittedAt = Some(dependencies.nowAsInstant),
+      applicationExpiresAt = None
     )
 
 }
