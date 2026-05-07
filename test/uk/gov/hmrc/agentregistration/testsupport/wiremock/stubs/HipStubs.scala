@@ -23,8 +23,8 @@ import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 
 object HipStubs:
 
-  private val identifierSearchUrl = "/customer/v2/api/individuals/identifier-search"
-  private val organisationIdentifierSearchUrl = "/customer/v2/api/organisations/identifier-search"
+  private val identifierSearchUrl = "/mulesoft/customer/v2/api/individuals/identifier-search"
+  private val organisationIdentifierSearchUrl = "/mulesoft/customer/v2/api/organisations/identifier-search"
 
   def stubIdentifierSearchSuccess(
     vrns: List[String] = Nil,
