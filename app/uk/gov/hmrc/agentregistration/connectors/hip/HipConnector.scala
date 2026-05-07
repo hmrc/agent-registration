@@ -42,7 +42,7 @@ import scala.concurrent.Future
   * Provides individual and organisation identifier searches against the UCR.
   *
   * @see
-  *   https://admin.tax.service.gov.uk/api-hub/apis/details/ucr-customer-api-v2
+  *   https://admin.tax.service.gov.uk/integration-hub/apis/details/83fa7184-ba19-43e5-a162-76a993a4db80
   */
 @Singleton
 class HipConnector @Inject() (
@@ -55,7 +55,7 @@ class HipConnector @Inject() (
 
   /** UCR Customer API v2 - Search Individual By Identifier. Searches for an individual's VRNs and PAYE refs (EMPREFs) by NINO or UTR.
     * @see
-    *   https://admin.tax.service.gov.uk/api-hub/apis/details/ucr-customer-api-v2 "Search Individual By Identifier"
+    *   https://admin.tax.service.gov.uk/integration-hub/apis/details/83fa7184-ba19-43e5-a162-76a993a4db80 "Search Individual By Identifier"
     */
   def searchByIdentifier(
     identifier: Nino | Utr
@@ -94,7 +94,7 @@ class HipConnector @Inject() (
 
   /** UCR Customer API v2 - Search Organisation By Identifier. Searches for an organisation's VRNs and PAYE refs (EMPREFs) by UTR.
     * @see
-    *   https://admin.tax.service.gov.uk/api-hub/apis/details/ucr-customer-api-v2 "Search Organisation By Identifier"
+    *   https://admin.tax.service.gov.uk/integration-hub/apis/details/83fa7184-ba19-43e5-a162-76a993a4db80 "Search Organisation By Identifier"
     */
   def searchOrganisationByIdentifier(
     utr: Utr

@@ -30,6 +30,7 @@ trait TdAgentApplicationLimitedPartnership {
 
     val afterStarted: AgentApplicationLimitedPartnership = AgentApplicationLimitedPartnership(
       _id = dependencies.agentApplicationId,
+      cachedSessionId = dependencies.cachedSessionId,
       applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,

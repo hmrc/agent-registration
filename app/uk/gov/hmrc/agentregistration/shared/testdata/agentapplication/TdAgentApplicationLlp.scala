@@ -35,6 +35,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
     val afterStarted: AgentApplicationLlp = AgentApplicationLlp(
       _id = dependencies.agentApplicationId,
+      cachedSessionId = dependencies.cachedSessionId,
       applicationReference = dependencies.applicationReference,
       internalUserId = dependencies.internalUserId,
       applicantCredentials = dependencies.credentials,

@@ -32,6 +32,9 @@ object IndividualDateOfBirth:
   final case class Provided(dateOfBirth: LocalDate)
   extends UserProvidedDateOfBirth
 
+  final case class ApplicantProvided(dateOfBirth: LocalDate)
+  extends UserProvidedDateOfBirth
+
   final case class FromCitizensDetails(dateOfBirth: LocalDate)
   extends IndividualDateOfBirth
 
@@ -45,6 +48,7 @@ object IndividualDateOfBirth:
   given OFormat[IndividualDateOfBirth] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[Provided] = Json.format[Provided]
+    given OFormat[ApplicantProvided] = Json.format[ApplicantProvided]
     given OFormat[FromCitizensDetails] = Json.format[FromCitizensDetails]
 
     val dontDeleteMe = """
