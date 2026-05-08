@@ -161,7 +161,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
         supervisoryBody = AmlsCode("HMRC"),
         amlsRegistrationNumber = Some(AmlsRegistrationNumber("XAML1234567890")),
         amlsEvidence = Some(uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence(
-          uk.gov.hmrc.agentregistration.shared.upload.UploadId("evidence-reference-123"),
+          uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("evidence-reference-123"),
           "certificate.pdf",
           uk.gov.hmrc.objectstore.client.Path.File("/test.txt")
         ))
