@@ -58,7 +58,6 @@ final case class SmuIndividualResponse(
   hasOtherRelevantIndividuals: Option[Boolean],
   businessDetails: Option[BusinessDetailsSoleTrader],
   deceasedCheckResult: Option[CheckResult],
-  companyStatusCheckResult: Option[CheckResult],
   applicationReference: ApplicationReference
 )
 
@@ -99,14 +98,6 @@ object SmuIndividualResponse:
     deceasedCheckResult =
       aa match {
         case st: AgentApplicationSoleTrader => st.deceasedCheckResult
-        case _ => None
-      },
-    companyStatusCheckResult =
-      aa match {
-        case lp: AgentApplicationLimitedPartnership => lp.companyStatusCheckResult
-        case slp: AgentApplicationScottishLimitedPartnership => slp.companyStatusCheckResult
-        case llp: AgentApplicationLlp => llp.companyStatusCheckResult
-        case lc: AgentApplicationLimitedCompany => lc.companyStatusCheckResult
         case _ => None
       },
     aa.applicationReference
