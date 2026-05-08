@@ -61,6 +61,7 @@ trait TdBase:
 
   def nowAsInstant: Instant = nowAsLocalDateTime.toInstant(ZoneOffset.UTC)
   def newInstant: Instant = nowAsInstant.plusSeconds(20) // used when a new application is created from existing one
+  def applicationExpiresAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(73)) // matches days-to-submit-application config
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
