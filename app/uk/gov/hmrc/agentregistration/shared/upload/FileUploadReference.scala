@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.amls
+package uk.gov.hmrc.agentregistration.shared.upload
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference
-import uk.gov.hmrc.objectstore.client.Path
+import play.api.libs.json.Format
+import play.api.mvc.PathBindable
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+import uk.gov.hmrc.agentregistration.shared.util.ValueClassBinder
 
-final case class AmlsEvidence(
-  fileUploadReference: FileUploadReference,
-  fileName: String,
-  objectStoreLocation: Path.File
-)
+/** Upscan File Reference
+  */
+final case class FileUploadReference(value: String)
 
-object AmlsEvidence:
-  given OFormat[AmlsEvidence] =
-    given OFormat[Path.File] = Json.format[Path.File]
-    given OFormat[Path.Directory] = Json.format[Path.Directory]
-    Json.format[AmlsEvidence]
+object FileUploadReference:
+
+  given format: Format[FileUploadReference] = JsonFormatsFactory.makeValueClassFormat
+  given pathBindable: PathBindable[FileUploadReference] = ValueClassBinder.valueClassBinder[FileUploadReference](_.value)
