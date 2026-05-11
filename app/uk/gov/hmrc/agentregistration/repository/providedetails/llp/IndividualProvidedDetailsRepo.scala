@@ -21,10 +21,12 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
+import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
+import uk.gov.hmrc.agentregistration.repository.formats.IndividualProvidedDetailsMongoFormat
 import uk.gov.hmrc.agentregistration.repository.providedetails
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.ProvidedDetailsRepoHelp.given
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
@@ -32,11 +34,15 @@ import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -45,19 +51,23 @@ import scala.concurrent.duration.FiniteDuration
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  @Named("ars") crypto: Encrypter & Decrypter
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = "individual",
   mongoComponent = mongoComponent,
+  domainFormat = IndividualProvidedDetailsMongoFormat.mongoFormat(using crypto),
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetails.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetailsMongoFormat.mongoFormat(using crypto))),
   replaceIndexes = true
 ):
 
+  private def encryptedString(plain: String): String = crypto.encrypt(PlainText(plain)).value
+
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
+      filter = Filters.eq("internalUserId", encryptedString(internalUserId.value))
     )
     .toFuture()
     .map(_.toList)
@@ -82,7 +92,7 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", internalUserId.value),
+        Filters.eq("internalUserId", encryptedString(internalUserId.value)),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )

@@ -46,16 +46,17 @@ extends Module:
     bind[Encrypter & Decrypter].qualifiedWith("ars").toInstance(aesCryptoInstance(configuration))
   )
 
-/** Encrypter/decrypter that does nothing (i.e. leaves content in plaintext). Only to be used for local development when
-  * fieldLevelEncryption.enable=false so we can read documents as plain text in mongo.
+/** Encrypter/decrypter that does nothing (i.e. leaves content in plaintext). Only to be used for local development when fieldLevelEncryption.enable=false so we
+  * can read documents as plain text in mongo.
   */
 trait NoCrypto
 extends Encrypter
 with Decrypter:
 
-  def encrypt(plain: PlainContent): Crypted = plain match
-    case PlainText(text) => Crypted(text)
-    case PlainBytes(bytes) => Crypted(new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8))
+  def encrypt(plain: PlainContent): Crypted =
+    plain match
+      case PlainText(text) => Crypted(text)
+      case PlainBytes(bytes) => Crypted(new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8))
 
   def decrypt(notEncrypted: Crypted): PlainText = PlainText(notEncrypted.value)
 
