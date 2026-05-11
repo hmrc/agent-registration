@@ -100,6 +100,16 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
     )
 
+    val afterZeroCompaniesHouseOfficers: AgentApplicationLlp = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        FiveOrLessOfficers(
+          numberOfCompaniesHouseOfficers = 0,
+          isCompaniesHouseOfficersListCorrect = true
+        )
+      ),
+      hasOtherRelevantIndividuals = Some(true)
+    )
+
     val afterConfirmCompaniesHouseOfficersYes: AgentApplicationLlp = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.fiveOrLessCompaniesHouseOfficers

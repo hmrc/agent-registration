@@ -40,7 +40,7 @@ final case class FiveOrLess(
 )
 extends NumberOfRequiredKeyIndividuals:
 
-  override def isValid: Boolean = numberOfKeyIndividuals <= 5 && numberOfKeyIndividuals >= 1
+  override def isValid: Boolean = numberOfKeyIndividuals <= 5
   override def totalListSize: Int = numberOfKeyIndividuals
 
   override def numberOfIndividuals: Int = totalListSize
@@ -95,7 +95,7 @@ final case class FiveOrLessOfficers(
 )
 extends NumberOfCompaniesHouseOfficers:
 
-  override def isValid: Boolean = numberOfCompaniesHouseOfficers <= 5 && numberOfCompaniesHouseOfficers >= 1
+  override def isValid: Boolean = numberOfCompaniesHouseOfficers <= 5
   override def totalListSize: Int = numberOfCompaniesHouseOfficers
   override def numberOfIndividuals: Int = totalListSize
 

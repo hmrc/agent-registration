@@ -91,6 +91,10 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
         )
       )
     )
+    val afterConfirmOtherRelevantIndividualsNo: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
+      .copy(
+        hasOtherRelevantIndividuals = Some(false)
+      )
 
     val afterOnlyOneKeyIndividual: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
