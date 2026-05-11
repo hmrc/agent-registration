@@ -96,6 +96,15 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
       )
     )
 
+    val afterZeroKeyIndividuals: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        FiveOrLess(
+          numberOfKeyIndividuals = 0
+        )
+      ),
+      hasOtherRelevantIndividuals = Some(true)
+    )
+
     val afterOnlyOneKeyIndividual: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         FiveOrLess(
