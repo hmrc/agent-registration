@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Client
+    participant ApplicationController
+    participant HMRC_Auth as HMRC Auth
+    participant MongoDB as MongoDB (agent-application)
+
+    Client->>ApplicationController: POST /application (AgentApplication JSON)
+    ApplicationController->>HMRC_Auth: Authenticate (GG, Agent affinity, User/Admin roles)
+    alt Auth fails or HMRC-AS-AGENT active
+        HMRC_Auth-->>ApplicationController: 401 Unauthorised
+        ApplicationController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>ApplicationController: internalUserId
+        ApplicationController->>ApplicationController: Parse request body
+        alt Body parse fails
+            ApplicationController-->>Client: 400 Bad Request
+        else Body parse succeeds
+            ApplicationController->>ApplicationController: ensureInternalUserId guard
+            alt internalUserId mismatch
+                ApplicationController-->>Client: 401 Unauthorised (AuthorisationException)
+            else internalUserId matches
+                ApplicationController->>MongoDB: upsert (filter: internalUserId)
+                MongoDB-->>ApplicationController: Updated/Inserted
+                ApplicationController-->>Client: 200 OK (AgentApplication JSON)
+            end
+        end
+    end
