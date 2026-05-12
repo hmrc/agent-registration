@@ -200,12 +200,9 @@ extends UnitSpec:
       (json \ "businessDetails" \ "postcode").as[String] shouldBe enc(sp.getBusinessDetails.postcode)
 
     "BusinessDetailsSoleTrader.trn is encrypted when provided" in:
-      val baseline = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
-      val withTrn = baseline.copy(
-        businessDetails = baseline.businessDetails.map(_.copy(trn = Some("ST-TRN-987654321")))
-      )
+      val withTrn = tdAll.agentApplicationSoleTrader.soleTraderWithTrn
       val json: JsObject = Json.toJson[AgentApplication](withTrn)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
-      (json \ "businessDetails" \ "trn").as[String] shouldBe enc("ST-TRN-987654321")
+      (json \ "businessDetails" \ "trn").as[String] shouldBe enc(tdAll.trn)
 
     "BusinessDetailsSoleTrader.fullName fields are encrypted" in:
       val st: AgentApplicationSoleTrader = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
@@ -222,10 +219,7 @@ extends UnitSpec:
   "mongoFormat round-trips every AgentApplication subtype and does not leak plaintext PII" - {
     val subtypes: Seq[(String, AgentApplication)] = Seq(
       "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmitted,
-      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted.copy(
-        businessDetails = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted.businessDetails
-          .map(_.copy(trn = Some("ST-TRN-987654321")))
-      ),
+      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.soleTraderWithTrn,
       "AgentApplicationLimitedCompany" -> tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted,
       "AgentApplicationGeneralPartnership" -> tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted,
       "AgentApplicationLimitedPartnership" -> tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted,
@@ -242,7 +236,7 @@ extends UnitSpec:
         val rendered = Json.toJson[AgentApplication](instance)(AgentApplicationMongoFormat.mongoFormat).toString
         piiStringsFor(instance).foreach { plaintext =>
           withClue(s"plaintext '$plaintext' must not appear in $name's raw JSON: ") {
-            rendered should not include s"\"$plaintext\""
+            rendered should not include plaintext
           }
         }
     }

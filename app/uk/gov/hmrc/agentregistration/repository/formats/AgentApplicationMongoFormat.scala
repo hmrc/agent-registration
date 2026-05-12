@@ -121,8 +121,26 @@ object AgentApplicationMongoFormat:
   private def companyProfileMongoFormat(using crypto: Encrypter & Decrypter): OFormat[CompanyProfile] =
     given Format[Crn] = SensitiveFieldFormats.crnMongoFormat
     given OFormat[ChroAddress] = chroAddressMongoFormat
-    given Format[String] = encryptedString
-    Json.format[CompanyProfile]
+    (
+      (__ \ "companyNumber").format[Crn] and
+        (__ \ "companyName").format[String](encryptedString) and
+        (__ \ "dateOfIncorporation").formatNullable[LocalDate] and
+        (__ \ "unsanitisedCHROAddress").formatNullable[ChroAddress]
+    )(
+      (
+        companyNumber,
+        companyName,
+        doi,
+        address
+      ) =>
+        CompanyProfile(
+          companyNumber,
+          companyName,
+          doi,
+          address
+        ),
+      c => (c.companyNumber, c.companyName, c.dateOfIncorporation, c.unsanitisedCHROAddress)
+    )
 
   private def fullNameMongoFormat(using crypto: Encrypter & Decrypter): OFormat[FullName] =
     given Format[String] = encryptedString
