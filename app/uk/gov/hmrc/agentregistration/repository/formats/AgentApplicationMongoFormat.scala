@@ -37,6 +37,7 @@ import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.PayeRef
+import uk.gov.hmrc.agentregistration.shared.SafeId
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.Vrn
@@ -64,6 +65,7 @@ import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
 
+import java.time.LocalDate
 import scala.annotation.nowarn
 
 object AgentApplicationMongoFormat:
@@ -200,25 +202,97 @@ object AgentApplicationMongoFormat:
   private def businessDetailsPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
     given OFormat[CompanyProfile] = companyProfileMongoFormat
-    given Format[String] = encryptedString
-    Json.format[BusinessDetailsPartnership]
+    (
+      (__ \ "safeId").format[SafeId] and
+        (__ \ "saUtr").format[SaUtr] and
+        (__ \ "companyProfile").format[CompanyProfile] and
+        (__ \ "postcode").format[String](encryptedString)
+    )(
+      (
+        safeId,
+        saUtr,
+        companyProfile,
+        postcode
+      ) =>
+        BusinessDetailsPartnership(
+          safeId,
+          saUtr,
+          companyProfile,
+          postcode
+        ),
+      b => (b.safeId, b.saUtr, b.companyProfile, b.postcode)
+    )
 
   private def businessDetailsGeneralPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsGeneralPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
-    given Format[String] = encryptedString
-    Json.format[BusinessDetailsGeneralPartnership]
+    (
+      (__ \ "safeId").format[SafeId] and
+        (__ \ "saUtr").format[SaUtr] and
+        (__ \ "postcode").format[String](encryptedString)
+    )(
+      (
+        safeId,
+        saUtr,
+        postcode
+      ) =>
+        BusinessDetailsGeneralPartnership(
+          safeId,
+          saUtr,
+          postcode
+        ),
+      b => (b.safeId, b.saUtr, b.postcode)
+    )
 
   private def businessDetailsScottishPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsScottishPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
-    given Format[String] = encryptedString
-    Json.format[BusinessDetailsScottishPartnership]
+    (
+      (__ \ "safeId").format[SafeId] and
+        (__ \ "saUtr").format[SaUtr] and
+        (__ \ "postcode").format[String](encryptedString)
+    )(
+      (
+        safeId,
+        saUtr,
+        postcode
+      ) =>
+        BusinessDetailsScottishPartnership(
+          safeId,
+          saUtr,
+          postcode
+        ),
+      b => (b.safeId, b.saUtr, b.postcode)
+    )
 
   private def businessDetailsSoleTraderMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsSoleTrader] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
     given Format[Nino] = SensitiveFieldFormats.ninoMongoFormat
     given OFormat[FullName] = fullNameMongoFormat
-    given Format[String] = encryptedString
-    Json.format[BusinessDetailsSoleTrader]
+    (
+      (__ \ "safeId").format[SafeId] and
+        (__ \ "saUtr").format[SaUtr] and
+        (__ \ "fullName").format[FullName] and
+        (__ \ "dateOfBirth").format[LocalDate] and
+        (__ \ "nino").formatNullable[Nino] and
+        (__ \ "trn").formatNullable[String](encryptedString)
+    )(
+      (
+        safeId,
+        saUtr,
+        fullName,
+        dateOfBirth,
+        nino,
+        trn
+      ) =>
+        BusinessDetailsSoleTrader(
+          safeId,
+          saUtr,
+          fullName,
+          dateOfBirth,
+          nino,
+          trn
+        ),
+      b => (b.safeId, b.saUtr, b.fullName, b.dateOfBirth, b.nino, b.trn)
+    )
 
   @nowarn()
   def mongoFormat(using crypto: Encrypter & Decrypter): OFormat[AgentApplication] =

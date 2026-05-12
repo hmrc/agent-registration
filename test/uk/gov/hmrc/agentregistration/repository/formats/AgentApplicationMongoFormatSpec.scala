@@ -19,7 +19,14 @@ package uk.gov.hmrc.agentregistration.repository.formats
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationScottishLimitedPartnership
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationScottishPartnership
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationSoleTrader
+import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.crypto.Decrypter
@@ -170,10 +177,55 @@ extends UnitSpec:
   "mongoFormat round-trips an AgentApplicationLlp" in:
     rendered.as[AgentApplication](AgentApplicationMongoFormat.mongoFormat) shouldBe model
 
-  "mongoFormat round-trips every AgentApplication subtype" - {
+  "mongoFormat encrypts subtype-specific PII fields" - {
+
+    "BusinessDetailsPartnership.postcode is encrypted (LimitedPartnership)" in:
+      val lp: AgentApplicationLimitedPartnership = tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](lp)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "postcode").as[String] shouldBe enc(lp.getBusinessDetails.postcode)
+
+    "BusinessDetailsPartnership.postcode is encrypted (ScottishLimitedPartnership)" in:
+      val slp: AgentApplicationScottishLimitedPartnership = tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](slp)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "postcode").as[String] shouldBe enc(slp.getBusinessDetails.postcode)
+
+    "BusinessDetailsGeneralPartnership.postcode is encrypted" in:
+      val gp: AgentApplicationGeneralPartnership = tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](gp)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "postcode").as[String] shouldBe enc(gp.getBusinessDetails.postcode)
+
+    "BusinessDetailsScottishPartnership.postcode is encrypted" in:
+      val sp: AgentApplicationScottishPartnership = tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](sp)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "postcode").as[String] shouldBe enc(sp.getBusinessDetails.postcode)
+
+    "BusinessDetailsSoleTrader.trn is encrypted when provided" in:
+      val baseline = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
+      val withTrn = baseline.copy(
+        businessDetails = baseline.businessDetails.map(_.copy(trn = Some("ST-TRN-987654321")))
+      )
+      val json: JsObject = Json.toJson[AgentApplication](withTrn)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "trn").as[String] shouldBe enc("ST-TRN-987654321")
+
+    "BusinessDetailsSoleTrader.fullName fields are encrypted" in:
+      val st: AgentApplicationSoleTrader = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](st)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "fullName" \ "firstName").as[String] shouldBe enc(st.getBusinessDetails.fullName.firstName)
+      (json \ "businessDetails" \ "fullName" \ "lastName").as[String] shouldBe enc(st.getBusinessDetails.fullName.lastName)
+
+    "BusinessDetailsLimitedCompany.ctUtr is encrypted" in:
+      val ltd: AgentApplicationLimitedCompany = tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted
+      val json: JsObject = Json.toJson[AgentApplication](ltd)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+      (json \ "businessDetails" \ "ctUtr").as[String] shouldBe enc(ltd.getBusinessDetails.ctUtr.value)
+  }
+
+  "mongoFormat round-trips every AgentApplication subtype and does not leak plaintext PII" - {
     val subtypes: Seq[(String, AgentApplication)] = Seq(
       "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmitted,
-      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted,
+      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted.copy(
+        businessDetails = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted.businessDetails
+          .map(_.copy(trn = Some("ST-TRN-987654321")))
+      ),
       "AgentApplicationLimitedCompany" -> tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted,
       "AgentApplicationGeneralPartnership" -> tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted,
       "AgentApplicationLimitedPartnership" -> tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted,
@@ -185,5 +237,78 @@ extends UnitSpec:
       s"$name writes and reads back equal" in:
         val json = Json.toJson[AgentApplication](instance)(AgentApplicationMongoFormat.mongoFormat)
         json.as[AgentApplication](AgentApplicationMongoFormat.mongoFormat) shouldBe instance
+
+      s"$name rendered JSON does not contain any plaintext PII" in:
+        val rendered = Json.toJson[AgentApplication](instance)(AgentApplicationMongoFormat.mongoFormat).toString
+        piiStringsFor(instance).foreach { plaintext =>
+          withClue(s"plaintext '$plaintext' must not appear in $name's raw JSON: ") {
+            rendered should not include s"\"$plaintext\""
+          }
+        }
     }
+  }
+
+  private def companyProfilePiiStrings(cp: CompanyProfile): Seq[String] =
+    Seq(cp.companyNumber.value, cp.companyName) ++
+      cp.unsanitisedCHROAddress.toList.flatMap(a =>
+        Seq(
+          a.address_line_1,
+          a.address_line_2,
+          a.postal_code
+        ).flatten
+      )
+
+  private def piiStringsFor(application: AgentApplication): Seq[String] = {
+    val common: Seq[String] =
+      Seq(
+        application.internalUserId.value,
+        application.groupId.value,
+        application.applicantCredentials.providerId
+      ) ++
+        application.applicantContactDetails.toList.flatMap { c =>
+          Seq(c.applicantName.value) ++
+            c.telephoneNumber.toList.map(_.value) ++
+            c.applicantEmailAddress.toList.map(_.emailAddress.value)
+        } ++
+        application.agentDetails.toList.flatMap { a =>
+          Seq(a.businessName.agentBusinessName) ++
+            a.businessName.otherAgentBusinessName.toList ++
+            a.telephoneNumber.toList.flatMap(t => Seq(t.agentTelephoneNumber) ++ t.otherAgentTelephoneNumber.toList) ++
+            a.agentEmailAddress.toList.flatMap(e => Seq(e.emailAddress.agentEmailAddress) ++ e.emailAddress.otherAgentEmailAddress.toList) ++
+            a.agentCorrespondenceAddress.toList.flatMap(addr => Seq(addr.addressLine1) ++ addr.addressLine2.toList ++ addr.postalCode.toList)
+        } ++
+        application.vrns.toList.flatten.map(_.value) ++
+        application.payeRefs.toList.flatten.map(_.value)
+
+    val businessSpecific: Seq[String] =
+      application match
+        case llp: AgentApplicationLlp =>
+          val bd = llp.getBusinessDetails
+          bd.saUtr.value +: companyProfilePiiStrings(bd.companyProfile)
+        case ltd: AgentApplicationLimitedCompany =>
+          val bd = ltd.getBusinessDetails
+          bd.ctUtr.value +: companyProfilePiiStrings(bd.companyProfile)
+        case lp: AgentApplicationLimitedPartnership =>
+          val bd = lp.getBusinessDetails
+          Seq(bd.saUtr.value, bd.postcode) ++ companyProfilePiiStrings(bd.companyProfile)
+        case slp: AgentApplicationScottishLimitedPartnership =>
+          val bd = slp.getBusinessDetails
+          Seq(bd.saUtr.value, bd.postcode) ++ companyProfilePiiStrings(bd.companyProfile)
+        case gp: AgentApplicationGeneralPartnership =>
+          val bd = gp.getBusinessDetails
+          Seq(bd.saUtr.value, bd.postcode)
+        case sp: AgentApplicationScottishPartnership =>
+          val bd = sp.getBusinessDetails
+          Seq(bd.saUtr.value, bd.postcode)
+        case st: AgentApplicationSoleTrader =>
+          val bd = st.getBusinessDetails
+          Seq(
+            bd.saUtr.value,
+            bd.fullName.firstName,
+            bd.fullName.lastName
+          ) ++
+            bd.nino.map(_.value).toList ++
+            bd.trn.toList
+
+    common ++ businessSpecific
   }
