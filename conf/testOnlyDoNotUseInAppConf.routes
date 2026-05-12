@@ -23,7 +23,3 @@ POST          /                                                                 
 GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
 GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.recentApplications
 GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
-
-
-POST          /agent-registration/test-only/smu-viewer-individual                                             uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestSmuIndividual
-DELETE        /agent-registration/test-only/smu-viewer-individual/by-person-reference/:personReference        uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteTestSmuIndividual(personReference: IndividualProvidedDetailsId)

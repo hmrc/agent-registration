@@ -124,30 +124,6 @@ extends BackendController(cc):
             case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
             case None => NoContent
 
-  def createTestSmuIndividual: Action[AnyContent] = Action
-    .async:
-      implicit request =>
-        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor(applicationState = ApplicationState.SentForRisking)
-        val individual: IndividualProvidedDetails = makeIndividualProvidedDetailsFor(agentApplication.agentApplicationId)
-        for
-          _ <- agentApplicationRepo.upsert(agentApplication)
-          _ <- individualProvidedDetailsRepo.upsert(individual)
-        yield Created(Json.obj(
-          "individualProvidedDetailsId" -> individual.individualProvidedDetailsId.value
-        ))
-
-  def deleteTestSmuIndividual(individualId: IndividualProvidedDetailsId): Action[AnyContent] = Action
-    .async:
-      implicit request =>
-        for
-          maybeIndividual <- individualProvidedDetailsRepo.findById(individualId)
-          applicationId = maybeIndividual.map(_.agentApplicationId).getOrThrowExpectedDataMissing("agentApplicationId")
-          maybeAaRes <- agentApplicationRepo.removeById(applicationId)
-          maybeIpdRes <- individualProvidedDetailsRepo.removeById(individualId)
-        yield (maybeAaRes, maybeIpdRes) match
-          case (Some(aaRes), Some(ipdRes)) if aaRes.wasAcknowledged() && ipdRes.wasAcknowledged() => NoContent
-          case _ => BadRequest("Something went wrong")
-
   def createTestApplication: Action[AnyContent] = Action
     .async:
       implicit request =>

@@ -21,5 +21,3 @@ DELETE      /individual-provided-details/delete-by-id/:individualProvidedDetails
 GET         /unified-customer-registry/individual/nino/:nino                                            uk.gov.hmrc.agentregistration.controllers.UcrController.searchByNino(nino: Nino)
 GET         /unified-customer-registry/individual/utr/:utr                                              uk.gov.hmrc.agentregistration.controllers.UcrController.searchIndividualByUtr(utr: Utr)
 GET         /unified-customer-registry/organisation/utr/:utr                                            uk.gov.hmrc.agentregistration.controllers.UcrController.searchOrganisationByUtr(utr: Utr)
-
-GET         /smu-viewer/individual/by-person-reference/:personReference                                 uk.gov.hmrc.agentregistration.controllers.smu.SmuViewerController.findIndividualByPersonReference(personReference: PersonReference)
