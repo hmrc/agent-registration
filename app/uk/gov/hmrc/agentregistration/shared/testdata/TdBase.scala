@@ -183,7 +183,8 @@ trait TdBase:
       year = 1990
     )),
     resignedOn = None,
-    officerRole = Some(LlpMember)
+    officerRole = Some(LlpMember),
+    identification = None
   )
   def businessPartnerRecordResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
     organisationName = Some("Test Company Name"),

@@ -25,7 +25,8 @@ final case class CompaniesHouseOfficer(
   name: String,
   dateOfBirth: Option[CompaniesHouseDateOfBirth],
   resignedOn: Option[LocalDate],
-  officerRole: Option[CompaniesHouseOfficerRole]
+  officerRole: Option[CompaniesHouseOfficerRole],
+  identification: Option[CompaniesHouseOfficerIdentification]
 )
 
 object CompaniesHouseOfficer:
