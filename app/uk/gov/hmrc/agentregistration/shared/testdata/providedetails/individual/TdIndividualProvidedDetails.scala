@@ -156,6 +156,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .setTo(StateOfAgreement.Agreed)
 
     val afterFinished: IndividualProvidedDetails = afterHmrcStandardforAgentsAgreed
+      .modify(_.providedByApplicant)
+      .setTo(Some(false))
       .modify(_.providedDetailsState)
       .setTo(Finished)
 
@@ -174,7 +176,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
         emailAddress = Some(IndividualVerifiedEmailAddress(applicantEmailAddress, isVerified = true)),
         hmrcStandardForAgentsAgreed = Agreed,
         hasApprovedApplication = Some(true),
-        passedIv = None
+        passedIv = None,
+        providedByApplicant = Some(false)
       )
 
 }
