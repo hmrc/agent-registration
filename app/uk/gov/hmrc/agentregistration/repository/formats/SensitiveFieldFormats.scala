@@ -18,13 +18,17 @@ package uk.gov.hmrc.agentregistration.repository.formats
 
 import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.Crn
+import uk.gov.hmrc.agentregistration.shared.CtUtr
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.PayeRef
 import uk.gov.hmrc.agentregistration.shared.SaUtr
 import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
 import uk.gov.hmrc.agentregistration.shared.Vrn
+import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
@@ -62,5 +66,16 @@ object SensitiveFieldFormats:
 
   def emailAddressMongoFormat(using crypto: Encrypter & Decrypter): Format[EmailAddress] = stringEncrypterDecrypter.inmap[EmailAddress](
     EmailAddress.apply,
+    _.value
+  )
+
+  def crnMongoFormat(using crypto: Encrypter & Decrypter): Format[Crn] = stringEncrypterDecrypter.inmap[Crn](Crn.apply, _.value)
+
+  def ctUtrMongoFormat(using crypto: Encrypter & Decrypter): Format[CtUtr] = stringEncrypterDecrypter.inmap[CtUtr](CtUtr.apply, _.value)
+
+  def groupIdMongoFormat(using crypto: Encrypter & Decrypter): Format[GroupId] = stringEncrypterDecrypter.inmap[GroupId](GroupId.apply, _.value)
+
+  def applicantNameMongoFormat(using crypto: Encrypter & Decrypter): Format[ApplicantName] = stringEncrypterDecrypter.inmap[ApplicantName](
+    ApplicantName.apply,
     _.value
   )

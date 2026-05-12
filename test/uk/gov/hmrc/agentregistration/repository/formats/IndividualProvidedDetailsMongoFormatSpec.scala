@@ -34,8 +34,7 @@ extends UnitSpec:
 
   private val tdAll: TdAll = TdAll()
 
-  private given crypto: Encrypter & Decrypter =
-    SymmetricCryptoFactory.aesCrypto("HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=")
+  private given crypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesCrypto("HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=")
 
   private def enc(plain: String): String = crypto.encrypt(PlainText(plain)).value
 

@@ -23,16 +23,21 @@ import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
+import uk.gov.hmrc.agentregistration.repository.formats.AgentApplicationMongoFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -42,20 +47,23 @@ import AgentApplicationRepoHelp.given
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  @Named("ars") crypto: Encrypter & Decrypter
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
-  domainFormat = AgentApplication.format,
+  domainFormat = AgentApplicationMongoFormat.mongoFormat(using crypto),
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplicationMongoFormat.mongoFormat(using crypto))),
   replaceIndexes = true
 ):
 
+  private def encryptedString(plain: String): String = crypto.encrypt(PlainText(plain)).value
+
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
+      filter = Filters.eq("internalUserId", encryptedString(internalUserId.value))
     )
     .headOption()
 
