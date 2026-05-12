@@ -70,27 +70,51 @@ object AgentApplicationMongoFormat:
 
   private def encryptedString(using crypto: Encrypter & Decrypter): Format[String] = stringEncrypterDecrypter
 
-  private def credentialsMongoFormat(using crypto: Encrypter & Decrypter): OFormat[Credentials] = (
-    (__ \ "providerId").format[String](encryptedString) and
-      (__ \ "providerType").format[String]
-  )(
-    (providerId, providerType) => Credentials(providerId, providerType),
-    c => (c.providerId, c.providerType)
-  )
+  private def credentialsMongoFormat(using crypto: Encrypter & Decrypter): OFormat[Credentials] =
+    (
+      (__ \ "providerId").format[String](encryptedString) and
+        (__ \ "providerType").format[String]
+    )(
+      (
+        providerId,
+        providerType
+      ) => Credentials(providerId, providerType),
+      c => (c.providerId, c.providerType)
+    )
 
-  private def chroAddressMongoFormat(using crypto: Encrypter & Decrypter): OFormat[ChroAddress] = (
-    (__ \ "address_line_1").formatNullable[String](encryptedString) and
-      (__ \ "address_line_2").formatNullable[String](encryptedString) and
-      (__ \ "locality").formatNullable[String] and
-      (__ \ "care_of").formatNullable[String] and
-      (__ \ "po_box").formatNullable[String] and
-      (__ \ "postal_code").formatNullable[String](encryptedString) and
-      (__ \ "premises").formatNullable[String] and
-      (__ \ "country").formatNullable[String]
-  )(
-    (l1, l2, loc, co, pb, pc, pr, country) => ChroAddress(l1, l2, loc, co, pb, pc, pr, country),
-    c => (c.address_line_1, c.address_line_2, c.locality, c.care_of, c.po_box, c.postal_code, c.premises, c.country)
-  )
+  private def chroAddressMongoFormat(using crypto: Encrypter & Decrypter): OFormat[ChroAddress] =
+    (
+      (__ \ "address_line_1").formatNullable[String](encryptedString) and
+        (__ \ "address_line_2").formatNullable[String](encryptedString) and
+        (__ \ "locality").formatNullable[String] and
+        (__ \ "care_of").formatNullable[String] and
+        (__ \ "po_box").formatNullable[String] and
+        (__ \ "postal_code").formatNullable[String](encryptedString) and
+        (__ \ "premises").formatNullable[String] and
+        (__ \ "country").formatNullable[String]
+    )(
+      (
+        l1,
+        l2,
+        loc,
+        co,
+        pb,
+        pc,
+        pr,
+        country
+      ) =>
+        ChroAddress(
+          l1,
+          l2,
+          loc,
+          co,
+          pb,
+          pc,
+          pr,
+          country
+        ),
+      c => (c.address_line_1, c.address_line_2, c.locality, c.care_of, c.po_box, c.postal_code, c.premises, c.country)
+    )
 
   private def companyProfileMongoFormat(using crypto: Encrypter & Decrypter): OFormat[CompanyProfile] =
     given Format[Crn] = SensitiveFieldFormats.crnMongoFormat
@@ -128,17 +152,33 @@ object AgentApplicationMongoFormat:
     given OFormat[AgentEmailAddress] = agentEmailAddressMongoFormat
     Json.format[AgentVerifiedEmailAddress]
 
-  private def agentCorrespondenceAddressMongoFormat(using crypto: Encrypter & Decrypter): OFormat[AgentCorrespondenceAddress] = (
-    (__ \ "addressLine1").format[String](encryptedString) and
-      (__ \ "addressLine2").formatNullable[String](encryptedString) and
-      (__ \ "addressLine3").formatNullable[String] and
-      (__ \ "addressLine4").formatNullable[String] and
-      (__ \ "postalCode").formatNullable[String](encryptedString) and
-      (__ \ "countryCode").format[String]
-  )(
-    (l1, l2, l3, l4, pc, cc) => AgentCorrespondenceAddress(l1, l2, l3, l4, pc, cc),
-    a => (a.addressLine1, a.addressLine2, a.addressLine3, a.addressLine4, a.postalCode, a.countryCode)
-  )
+  private def agentCorrespondenceAddressMongoFormat(using crypto: Encrypter & Decrypter): OFormat[AgentCorrespondenceAddress] =
+    (
+      (__ \ "addressLine1").format[String](encryptedString) and
+        (__ \ "addressLine2").formatNullable[String](encryptedString) and
+        (__ \ "addressLine3").formatNullable[String] and
+        (__ \ "addressLine4").formatNullable[String] and
+        (__ \ "postalCode").formatNullable[String](encryptedString) and
+        (__ \ "countryCode").format[String]
+    )(
+      (
+        l1,
+        l2,
+        l3,
+        l4,
+        pc,
+        cc
+      ) =>
+        AgentCorrespondenceAddress(
+          l1,
+          l2,
+          l3,
+          l4,
+          pc,
+          cc
+        ),
+      a => (a.addressLine1, a.addressLine2, a.addressLine3, a.addressLine4, a.postalCode, a.countryCode)
+    )
 
   private def agentDetailsMongoFormat(using crypto: Encrypter & Decrypter): OFormat[AgentDetails] =
     given OFormat[AgentBusinessName] = agentBusinessNameMongoFormat
@@ -160,20 +200,24 @@ object AgentApplicationMongoFormat:
   private def businessDetailsPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
     given OFormat[CompanyProfile] = companyProfileMongoFormat
+    given Format[String] = encryptedString
     Json.format[BusinessDetailsPartnership]
 
   private def businessDetailsGeneralPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsGeneralPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
+    given Format[String] = encryptedString
     Json.format[BusinessDetailsGeneralPartnership]
 
   private def businessDetailsScottishPartnershipMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsScottishPartnership] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
+    given Format[String] = encryptedString
     Json.format[BusinessDetailsScottishPartnership]
 
   private def businessDetailsSoleTraderMongoFormat(using crypto: Encrypter & Decrypter): OFormat[BusinessDetailsSoleTrader] =
     given Format[SaUtr] = SensitiveFieldFormats.saUtrMongoFormat
     given Format[Nino] = SensitiveFieldFormats.ninoMongoFormat
     given OFormat[FullName] = fullNameMongoFormat
+    given Format[String] = encryptedString
     Json.format[BusinessDetailsSoleTrader]
 
   @nowarn()

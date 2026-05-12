@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.repository.formats
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
@@ -31,14 +32,15 @@ extends UnitSpec:
 
   private val tdAll: TdAll = TdAll()
 
-  private given crypto: Encrypter & Decrypter =
-    SymmetricCryptoFactory.aesCrypto("HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=")
+  private given crypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesCrypto("HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=")
 
   private def enc(plain: String): String = crypto.encrypt(PlainText(plain)).value
 
   private val model: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
 
-  private val rendered: JsObject = Json.toJson[uk.gov.hmrc.agentregistration.shared.AgentApplication](model)(AgentApplicationMongoFormat.mongoFormat).as[JsObject]
+  private val rendered: JsObject = Json.toJson[uk.gov.hmrc.agentregistration.shared.AgentApplication](model)(
+    AgentApplicationMongoFormat.mongoFormat
+  ).as[JsObject]
   private val renderedString: String = rendered.toString
 
   "mongoFormat encrypts PII fields at the expected paths" - {
@@ -136,26 +138,27 @@ extends UnitSpec:
       (rendered \ "linkId").as[String] shouldBe model.linkId.value
 
     "raw JSON does not contain any plaintext PII" in:
-      val plaintextPii = Seq(
-        model.internalUserId.value,
-        model.groupId.value,
-        model.applicantCredentials.providerId,
-        model.getBusinessDetails.saUtr.value,
-        model.getBusinessDetails.companyProfile.companyNumber.value,
-        model.getBusinessDetails.companyProfile.companyName,
-        model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value,
-        model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value,
-        model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value,
-        model.getApplicantContactDetails.applicantName.value,
-        model.getApplicantContactDetails.getTelephoneNumber.value,
-        model.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value,
-        model.getAgentDetails.businessName.agentBusinessName,
-        model.getAgentDetails.getTelephoneNumber.agentTelephoneNumber,
-        model.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress,
-        model.getAgentDetails.getAgentCorrespondenceAddress.addressLine1,
-        model.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value,
-        model.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value
-      ) ++ model.vrns.value.map(_.value) ++ model.payeRefs.value.map(_.value)
+      val plaintextPii =
+        Seq(
+          model.internalUserId.value,
+          model.groupId.value,
+          model.applicantCredentials.providerId,
+          model.getBusinessDetails.saUtr.value,
+          model.getBusinessDetails.companyProfile.companyNumber.value,
+          model.getBusinessDetails.companyProfile.companyName,
+          model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value,
+          model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value,
+          model.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value,
+          model.getApplicantContactDetails.applicantName.value,
+          model.getApplicantContactDetails.getTelephoneNumber.value,
+          model.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value,
+          model.getAgentDetails.businessName.agentBusinessName,
+          model.getAgentDetails.getTelephoneNumber.agentTelephoneNumber,
+          model.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress,
+          model.getAgentDetails.getAgentCorrespondenceAddress.addressLine1,
+          model.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value,
+          model.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value
+        ) ++ model.vrns.value.map(_.value) ++ model.payeRefs.value.map(_.value)
 
       plaintextPii.foreach { plaintext =>
         withClue(s"plaintext '$plaintext' must not appear in raw JSON: ") {
@@ -165,4 +168,22 @@ extends UnitSpec:
   }
 
   "mongoFormat round-trips an AgentApplicationLlp" in:
-    rendered.as[uk.gov.hmrc.agentregistration.shared.AgentApplication](AgentApplicationMongoFormat.mongoFormat) shouldBe model
+    rendered.as[AgentApplication](AgentApplicationMongoFormat.mongoFormat) shouldBe model
+
+  "mongoFormat round-trips every AgentApplication subtype" - {
+    val subtypes: Seq[(String, AgentApplication)] = Seq(
+      "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmitted,
+      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted,
+      "AgentApplicationLimitedCompany" -> tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted,
+      "AgentApplicationGeneralPartnership" -> tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted,
+      "AgentApplicationLimitedPartnership" -> tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted,
+      "AgentApplicationScottishLimitedPartnership" -> tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted,
+      "AgentApplicationScottishPartnership" -> tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
+    )
+
+    subtypes.foreach { case (name, instance) =>
+      s"$name writes and reads back equal" in:
+        val json = Json.toJson[AgentApplication](instance)(AgentApplicationMongoFormat.mongoFormat)
+        json.as[AgentApplication](AgentApplicationMongoFormat.mongoFormat) shouldBe instance
+    }
+  }
