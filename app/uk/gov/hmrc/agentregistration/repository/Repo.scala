@@ -42,11 +42,11 @@ abstract class Repo[
 ](
   collectionName: String,
   mongoComponent: MongoComponent,
-  domainFormat: OFormat[A],
   indexes: Seq[IndexModel],
   extraCodecs: Seq[Codec[?]],
   replaceIndexes: Boolean = false
 )(using
+  domainFormat: OFormat[A],
   executionContext: ExecutionContext,
   idString: IdString[ID],
   idExtractor: IdExtractor[A, ID]

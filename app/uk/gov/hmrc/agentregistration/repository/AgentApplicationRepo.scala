@@ -21,30 +21,24 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
-import uk.gov.hmrc.agentregistration.repository.formats.AgentApplicationMongoFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.crypto.Decrypter
-import uk.gov.hmrc.crypto.Encrypter
-import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import javax.inject.Named
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
-import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
-import uk.gov.hmrc.agentregistration.crypto.FiledLevelEncryption
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -55,13 +49,16 @@ final class AgentApplicationRepo @Inject() (
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
-  domainFormat = AgentApplicationMongoFormat.mongoFormat(using crypto), // TO wywalić
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplicationMongoFormat.mongoFormat(using crypto))),
+  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
   replaceIndexes = true
 ):
 
   import agentApplicationEncryption.*
+
+  override def upsert(a: AgentApplication): Future[Unit] = super.upsert(encrypt(a))
+
+  override def findById(id: AgentApplicationId): Future[Option[AgentApplication]] = super.findById(id).map(_.map(decrypt))
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
@@ -75,16 +72,14 @@ extends Repo[AgentApplicationId, AgentApplication](
       filter = Filters.eq("linkId", linkId.value)
     )
     .headOption()
+    .map(_.map(decrypt))
 
   def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("applicationReference", applicationReference.value)
     )
     .headOption()
-
-  /** Update or Insert (UpSert)
-    */
-  override def upsert(a: AgentApplication): Future[Unit] = super.upsert(encrypt(a))
+    .map(_.map(decrypt))
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...

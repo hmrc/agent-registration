@@ -26,7 +26,7 @@ class IndividualProvidedDetailsFleSpec
 extends ISpec:
 
   override protected def configOverrides: Map[String, Any] = Map[String, Any](
-    "fieldLevelEncryption.enable" -> true
+    "field-level-encryption.enabled" -> true
   )
 
   private lazy val repo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]

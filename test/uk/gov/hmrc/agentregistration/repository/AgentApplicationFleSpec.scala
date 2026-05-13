@@ -26,7 +26,7 @@ class AgentApplicationFleSpec
 extends ISpec:
 
   override protected def configOverrides: Map[String, Any] = Map[String, Any](
-    "fieldLevelEncryption.enable" -> true
+    "field-level-encryption.enabled" -> true
   )
 
   private lazy val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
