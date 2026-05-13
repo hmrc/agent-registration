@@ -74,5 +74,7 @@ final case class IndividualProvidedDetails(
 
   def getDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
 
+  def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("Passed IV")
+
 object IndividualProvidedDetails:
   given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
