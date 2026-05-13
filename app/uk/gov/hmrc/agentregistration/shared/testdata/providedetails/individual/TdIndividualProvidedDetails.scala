@@ -44,7 +44,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Precreated,
       isPersonOfControl = true,
-      passedIv = None
+      passedIv = None,
+      providedByApplicant = None
     )
 
     val afterAccessConfirmed: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -56,7 +57,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = AccessConfirmed,
       isPersonOfControl = true,
-      passedIv = None
+      passedIv = None,
+      providedByApplicant = None
     )
 
     val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -68,7 +70,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Started,
       isPersonOfControl = true,
-      passedIv = Some(true)
+      passedIv = Some(true),
+      providedByApplicant = None
     )
 
     val afterTelephoneNumberProvided: IndividualProvidedDetails = afterStarted
