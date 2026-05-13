@@ -21,6 +21,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -42,7 +43,8 @@ import AgentApplicationRepoHelp.given
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  agentApplicationEncryption: AgentApplicationEncryption
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
@@ -52,23 +54,32 @@ extends Repo[AgentApplicationId, AgentApplication](
   replaceIndexes = true
 ):
 
+  import agentApplicationEncryption.*
+
+  override def upsert(a: AgentApplication): Future[Unit] = super.upsert(encrypt(a))
+
+  override def findById(id: AgentApplicationId): Future[Option[AgentApplication]] = super.findById(id).map(_.map(decrypt))
+
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
+      filter = Filters.eq("internalUserId", encrypt(internalUserId).value)
     )
     .headOption()
+    .map(_.map(decrypt))
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("linkId", linkId.value)
     )
     .headOption()
+    .map(_.map(decrypt))
 
   def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("applicationReference", applicationReference.value)
     )
     .headOption()
+    .map(_.map(decrypt))
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...

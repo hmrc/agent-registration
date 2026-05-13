@@ -22,16 +22,16 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
-import uk.gov.hmrc.agentregistration.repository.providedetails
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.ProvidedDetailsRepoHelp.given
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -45,7 +45,8 @@ import scala.concurrent.duration.FiniteDuration
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = "individual",
@@ -55,19 +56,25 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   replaceIndexes = true
 ):
 
+  import individualProvidedDetailsEncryption.*
+
+  override def upsert(d: IndividualProvidedDetails): Future[Unit] = super.upsert(encrypt(d))
+
+  override def findById(id: IndividualProvidedDetailsId): Future[Option[IndividualProvidedDetails]] = super.findById(id).map(_.map(decrypt))
+
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", internalUserId.value)
+      filter = Filters.eq("internalUserId", encrypt(internalUserId).value)
     )
     .toFuture()
-    .map(_.toList)
+    .map(_.toList.map(decrypt))
 
   def findForApplication(agentApplicationId: AgentApplicationId): Future[List[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.eq("agentApplicationId", agentApplicationId.value)
     )
     .toFuture()
-    .map(_.toList)
+    .map(_.toList.map(decrypt))
 
   def deleteByApplicationId(agentApplicationId: AgentApplicationId): Future[Unit] = collection
     .deleteMany(
@@ -82,17 +89,19 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", internalUserId.value),
+        Filters.eq("internalUserId", encrypt(internalUserId).value),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )
     .headOption()
+    .map(_.map(decrypt))
 
   def findByPersonReference(personReference: PersonReference): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.eq("personReference", personReference.value)
     )
     .headOption()
+    .map(_.map(decrypt))
 
 object ProvidedDetailsRepoHelp:
 

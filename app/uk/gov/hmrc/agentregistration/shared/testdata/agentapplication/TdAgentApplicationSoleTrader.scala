@@ -96,4 +96,8 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       applicationExpiresAt = None
     )
 
+    val soleTraderWithTrn: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
+      businessDetails = afterDeclarationSubmitted.businessDetails.map(_.copy(trn = Some(dependencies.trn)))
+    )
+
 }
