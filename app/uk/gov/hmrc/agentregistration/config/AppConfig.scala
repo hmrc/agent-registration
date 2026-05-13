@@ -48,6 +48,6 @@ class AppConfig @Inject() (
 
   object FieldLevelEncryption:
 
-    val enable: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
+    val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
     val key: String = configuration.get[String]("field-level-encryption.key")
     val previousKeys: Seq[String] = configuration.get[Seq[String]]("field-level-encryption.previousKeys")

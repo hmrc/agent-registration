@@ -201,4 +201,28 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       payeRefs = Some(List(PayeRef("123/AB12345"), PayeRef("123/AB12345")))
     )
 
+    /** Variant of [[afterDeclarationSubmitted]] with every optional agent field populated. Used by encryption tests to exercise paths like
+      * `otherAgentBusinessName`, `otherAgentTelephoneNumber`, `otherAgentEmailAddress` which the default fixture leaves as `None`.
+      */
+    val afterDeclarationSubmittedWithAllOptionalFields: AgentApplicationLlp = afterDeclarationSubmitted.copy(
+      agentDetails = Some(AgentDetails(
+        businessName = AgentBusinessName(
+          agentBusinessName = "Test LLP Trading Name",
+          otherAgentBusinessName = Some("Other LLP Trading Name")
+        ),
+        telephoneNumber = Some(AgentTelephoneNumber(
+          agentTelephoneNumber = dependencies.telephoneNumber.value,
+          otherAgentTelephoneNumber = Some("+44 1234 567890")
+        )),
+        agentEmailAddress = Some(AgentVerifiedEmailAddress(
+          emailAddress = AgentEmailAddress(
+            agentEmailAddress = dependencies.applicantEmailAddress.value,
+            otherAgentEmailAddress = Some("other.address@example.com")
+          ),
+          isVerified = true
+        )),
+        agentCorrespondenceAddress = Some(dependencies.chroAddress)
+      ))
+    )
+
 }

@@ -36,14 +36,10 @@ import javax.inject.Singleton
 @Singleton
 class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncryption):
 
-  // Full-document encrypt / decrypt -----------------------------------------------------------
-
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)
   def decrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.decrypt)
 
-  // Type-preserving overloads — pick the right per-subtype transform so callers that already
-  // hold a concrete subtype get the same subtype back without an unsafe cast.
-
+  // Type-preserving overloads so callers that already hold a concrete subtype get the same subtype back without an unsafe cast.
   def encrypt(app: AgentApplicationLlp): AgentApplicationLlp = transformLlp(app, fieldLevelEncryption.encrypt)
   def decrypt(app: AgentApplicationLlp): AgentApplicationLlp = transformLlp(app, fieldLevelEncryption.decrypt)
 
@@ -71,8 +67,7 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
   def encrypt(app: AgentApplicationScottishPartnership): AgentApplicationScottishPartnership = transformScottishPartnership(app, fieldLevelEncryption.encrypt)
   def decrypt(app: AgentApplicationScottishPartnership): AgentApplicationScottishPartnership = transformScottishPartnership(app, fieldLevelEncryption.decrypt)
 
-  // Single-value helpers, for use in Mongo filters --------------------------------------------
-
+  // Single-value helpers, for use in Mongo filters.
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
 
@@ -94,8 +89,6 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
   def encrypt(crn: Crn): Crn = crn.modify(_.value).using(fieldLevelEncryption.encrypt)
   def decrypt(crn: Crn): Crn = crn.modify(_.value).using(fieldLevelEncryption.decrypt)
 
-  // Subtype dispatch --------------------------------------------------------------------------
-
   private def transform(
     app: AgentApplication,
     cryptoOp: String => String
@@ -109,10 +102,8 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
       case x: AgentApplicationScottishLimitedPartnership => transformScottishLimitedPartnership(x, cryptoOp)
       case x: AgentApplicationScottishPartnership => transformScottishPartnership(x, cryptoOp)
 
-  // Per-subtype transforms --------------------------------------------------------------------
-  // Each subtype lists every PII field on it. The common-trait fields are repeated per subtype
-  // because quicklens needs concrete types — the repetition is the audit surface, intentional.
-
+  // Per-subtype transforms. Each subtype lists every PII field on it. The common-trait fields are repeated per subtype because quicklens needs concrete types —
+  // the repetition is the audit surface, intentional.
   private def transformLlp(
     app: AgentApplicationLlp,
     cryptoOp: String => String
@@ -216,8 +207,7 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
     .modify(_.businessDetails.each.saUtr.value).using(cryptoOp)
     .modify(_.businessDetails.each.postcode).using(cryptoOp)
 
-  // Nested-type helpers (reused across subtypes) ----------------------------------------------
-
+  // Nested-type helpers (reused across subtypes).
   private def transformApplicantContactDetails(
     c: ApplicantContactDetails,
     cryptoOp: String => String

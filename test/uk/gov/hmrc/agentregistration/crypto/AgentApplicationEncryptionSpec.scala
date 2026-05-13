@@ -61,8 +61,6 @@ extends UnitSpec:
 
   private def enc(plain: String): String = fle.encrypt(plain)
 
-  // ── LLP — detailed assertions for every encrypted path ────────────────────
-
   private val llpModel: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
   private val llpEncrypted: AgentApplicationLlp = service.encrypt(llpModel)
 
@@ -216,7 +214,7 @@ extends UnitSpec:
 
   "AgentApplicationEncryption round-trips every subtype and does not leak plaintext PII" - {
     val subtypes: Seq[(String, AgentApplication)] = Seq(
-      "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmitted,
+      "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmittedWithAllOptionalFields,
       "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.soleTraderWithTrn,
       "AgentApplicationLimitedCompany" -> tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted,
       "AgentApplicationGeneralPartnership" -> tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted,
@@ -241,7 +239,13 @@ extends UnitSpec:
 
   private def companyProfilePiiStrings(cp: CompanyProfile): List[String] =
     List(cp.companyNumber.value, cp.companyName) ++
-      cp.unsanitisedCHROAddress.toList.flatMap(a => List(a.address_line_1, a.address_line_2, a.postal_code).flatten)
+      cp.unsanitisedCHROAddress.toList.flatMap(a =>
+        List(
+          a.address_line_1,
+          a.address_line_2,
+          a.postal_code
+        ).flatten
+      )
 
   private def piiStringsFor(application: AgentApplication): List[String] = {
     val common: List[String] =
@@ -287,7 +291,11 @@ extends UnitSpec:
           List(bd.saUtr.value, bd.postcode)
         case st: AgentApplicationSoleTrader =>
           val bd = st.getBusinessDetails
-          List(bd.saUtr.value, bd.fullName.firstName, bd.fullName.lastName) ++
+          List(
+            bd.saUtr.value,
+            bd.fullName.firstName,
+            bd.fullName.lastName
+          ) ++
             bd.nino.map(_.value).toList ++
             bd.trn.toList
 

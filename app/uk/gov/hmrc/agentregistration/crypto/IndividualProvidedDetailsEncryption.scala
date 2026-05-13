@@ -40,7 +40,10 @@ class IndividualProvidedDetailsEncryption @Inject() (fieldLevelEncryption: Field
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
 
-  private def transform(d: IndividualProvidedDetails, cryptoOp: String => String): IndividualProvidedDetails = d
+  private def transform(
+    d: IndividualProvidedDetails,
+    cryptoOp: String => String
+  ): IndividualProvidedDetails = d
     .modify(_.individualName.value).using(cryptoOp)
     .modify(_.internalUserId.each.value).using(cryptoOp)
     .modify(_.telephoneNumber.each.value).using(cryptoOp)
@@ -50,13 +53,21 @@ class IndividualProvidedDetailsEncryption @Inject() (fieldLevelEncryption: Field
     .modify(_.vrns.each.each.value).using(cryptoOp)
     .modify(_.payeRefs.each.each.value).using(cryptoOp)
 
-  private def transformIndividualNino(n: IndividualNino, cryptoOp: String => String): IndividualNino = n match
-    case IndividualNino.NotProvided => n
-    case p: IndividualNino.Provided => p.modify(_.nino.value).using(cryptoOp)
-    case a: IndividualNino.FromAuth => a.modify(_.nino.value).using(cryptoOp)
+  private def transformIndividualNino(
+    n: IndividualNino,
+    cryptoOp: String => String
+  ): IndividualNino =
+    n match
+      case IndividualNino.NotProvided => n
+      case p: IndividualNino.Provided => p.modify(_.nino.value).using(cryptoOp)
+      case a: IndividualNino.FromAuth => a.modify(_.nino.value).using(cryptoOp)
 
-  private def transformIndividualSaUtr(s: IndividualSaUtr, cryptoOp: String => String): IndividualSaUtr = s match
-    case IndividualSaUtr.NotProvided        => s
-    case p: IndividualSaUtr.Provided        => p.modify(_.saUtr.value).using(cryptoOp)
-    case a: IndividualSaUtr.FromAuth        => a.modify(_.saUtr.value).using(cryptoOp)
-    case c: IndividualSaUtr.FromCitizenDetails => c.modify(_.saUtr.value).using(cryptoOp)
+  private def transformIndividualSaUtr(
+    s: IndividualSaUtr,
+    cryptoOp: String => String
+  ): IndividualSaUtr =
+    s match
+      case IndividualSaUtr.NotProvided => s
+      case p: IndividualSaUtr.Provided => p.modify(_.saUtr.value).using(cryptoOp)
+      case a: IndividualSaUtr.FromAuth => a.modify(_.saUtr.value).using(cryptoOp)
+      case c: IndividualSaUtr.FromCitizenDetails => c.modify(_.saUtr.value).using(cryptoOp)

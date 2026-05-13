@@ -30,7 +30,7 @@ import javax.inject.Singleton
 class FieldLevelEncryption @Inject() (appConfig: AppConfig):
 
   def encrypt(plain: String): String =
-    if appConfig.FieldLevelEncryption.enable
+    if appConfig.FieldLevelEncryption.enabled
     then
       crypto
         .encrypt(PlainText(plain))
@@ -38,7 +38,7 @@ class FieldLevelEncryption @Inject() (appConfig: AppConfig):
     else plain
 
   def decrypt(encrypted: String): String =
-    if appConfig.FieldLevelEncryption.enable
+    if appConfig.FieldLevelEncryption.enabled
     then
       crypto
         .decrypt(Crypted(encrypted))

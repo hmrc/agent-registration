@@ -73,20 +73,22 @@ extends UnitSpec:
       encrypted.getEmailAddress.emailAddress.value shouldBe enc(model.getEmailAddress.emailAddress.value)
 
     "individualNino.Provided.nino is encrypted" in:
-      val originalNino = model.getNino match
-        case IndividualNino.Provided(n) => n
-        case other                      => fail(s"expected IndividualNino.Provided, got $other")
+      val originalNino =
+        model.getNino match
+          case IndividualNino.Provided(n) => n
+          case other => fail(s"expected IndividualNino.Provided, got $other")
       encrypted.getNino match
         case IndividualNino.Provided(n) => n.value shouldBe enc(originalNino.value)
-        case other                      => fail(s"expected IndividualNino.Provided after encrypt, got $other")
+        case other => fail(s"expected IndividualNino.Provided after encrypt, got $other")
 
     "individualSaUtr.Provided.saUtr is encrypted" in:
-      val originalSaUtr = model.getSaUtr match
-        case IndividualSaUtr.Provided(s) => s
-        case other                       => fail(s"expected IndividualSaUtr.Provided, got $other")
+      val originalSaUtr =
+        model.getSaUtr match
+          case IndividualSaUtr.Provided(s) => s
+          case other => fail(s"expected IndividualSaUtr.Provided, got $other")
       encrypted.getSaUtr match
         case IndividualSaUtr.Provided(s) => s.value shouldBe enc(originalSaUtr.value)
-        case other                       => fail(s"expected IndividualSaUtr.Provided after encrypt, got $other")
+        case other => fail(s"expected IndividualSaUtr.Provided after encrypt, got $other")
 
     "vrns are encrypted element-wise" in:
       encrypted.vrns.value.map(_.value) shouldBe model.vrns.value.map(v => enc(v.value))
@@ -117,7 +119,7 @@ extends UnitSpec:
       val originalNino = tdAll.nino.value
       service.encrypt(withFromAuth).getNino match
         case IndividualNino.FromAuth(n) => n.value shouldBe enc(originalNino)
-        case other                      => fail(s"expected IndividualNino.FromAuth after encrypt, got $other")
+        case other => fail(s"expected IndividualNino.FromAuth after encrypt, got $other")
 
     "IndividualNino.NotProvided is unchanged" in:
       val withNotProvided: IndividualProvidedDetails = model.copy(individualNino = Some(IndividualNino.NotProvided))
@@ -128,14 +130,14 @@ extends UnitSpec:
       val originalSaUtr = tdAll.saUtr.value
       service.encrypt(withFromAuth).getSaUtr match
         case IndividualSaUtr.FromAuth(s) => s.value shouldBe enc(originalSaUtr)
-        case other                       => fail(s"expected IndividualSaUtr.FromAuth after encrypt, got $other")
+        case other => fail(s"expected IndividualSaUtr.FromAuth after encrypt, got $other")
 
     "IndividualSaUtr.FromCitizenDetails is encrypted" in:
       val withFromCitizen: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.FromCitizenDetails(tdAll.saUtr)))
       val originalSaUtr = tdAll.saUtr.value
       service.encrypt(withFromCitizen).getSaUtr match
         case IndividualSaUtr.FromCitizenDetails(s) => s.value shouldBe enc(originalSaUtr)
-        case other                                 => fail(s"expected IndividualSaUtr.FromCitizenDetails after encrypt, got $other")
+        case other => fail(s"expected IndividualSaUtr.FromCitizenDetails after encrypt, got $other")
 
     "IndividualSaUtr.NotProvided is unchanged" in:
       val withNotProvided: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.NotProvided))
