@@ -24,8 +24,8 @@ import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
 /** Regression for the local-dev path where field-level encryption is turned off.
   *
-  * In deployed environments the flag is always on; locally it is off so engineers can read Mongo documents as plaintext. The whole encrypt/decrypt pipeline must
-  * therefore be a no-op when the flag is false.
+  * In deployed environments the flag is always on; locally it is off so engineers can read Mongo documents as plaintext. The whole encrypt/decrypt pipeline
+  * must therefore be a no-op when the flag is false.
   */
 class AgentApplicationFleDisabledSpec
 extends ISpec:
