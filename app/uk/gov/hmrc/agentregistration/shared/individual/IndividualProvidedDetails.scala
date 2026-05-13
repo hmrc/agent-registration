@@ -52,7 +52,8 @@ final case class IndividualProvidedDetails(
   hasApprovedApplication: Option[Boolean] = None,
   vrns: Option[List[Vrn]] = None,
   payeRefs: Option[List[PayeRef]] = None,
-  passedIv: Option[Boolean] = None
+  passedIv: Option[Boolean] = None,
+  providedByApplicant: Option[Boolean] = None
 ):
 
   val individualProvidedDetailsId: IndividualProvidedDetailsId = _id
@@ -72,8 +73,6 @@ final case class IndividualProvidedDetails(
   def getSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("SaUtr")
 
   def getDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
-
-  def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("Passed IV")
 
 object IndividualProvidedDetails:
   given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
