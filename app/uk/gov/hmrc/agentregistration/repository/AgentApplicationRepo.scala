@@ -43,29 +43,30 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
+import uk.gov.hmrc.agentregistration.crypto.{AgentApplicationEncryption, FiledLevelEncryption}
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
   appConfig: AppConfig,
-  @Named("ars") crypto: Encrypter & Decrypter
+  agentApplicationEncryption: AgentApplicationEncryption
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
-  domainFormat = AgentApplicationMongoFormat.mongoFormat(using crypto),
+  domainFormat = AgentApplicationMongoFormat.mongoFormat(using crypto), //TO wywalić
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(AgentApplicationMongoFormat.mongoFormat(using crypto))),
   replaceIndexes = true
 ):
 
-  private def encryptedString(plain: String): String = crypto.encrypt(PlainText(plain)).value
-
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", encryptedString(internalUserId.value))
+      filter = Filters.eq("internalUserId", agentApplicationEncryption.encrypt(internalUserId).value)
     )
     .headOption()
+    .map(_.map(agentApplicationEncryption.decrypt))
+
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(
