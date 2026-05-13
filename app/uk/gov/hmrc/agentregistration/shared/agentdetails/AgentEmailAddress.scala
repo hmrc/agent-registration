@@ -18,11 +18,13 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
 final case class AgentEmailAddress(
-  agentEmailAddress: String,
-  otherAgentEmailAddress: Option[String]
-)
+  agentEmailAddress: String, // TODO: use EmailAddress instead of String
+  otherAgentEmailAddress: Option[String] // TODO: use EmailAddress instead of String
+):
+  def getEmailAddress: EmailAddress = EmailAddress(otherAgentEmailAddress.getOrElse(agentEmailAddress))
 
 object AgentEmailAddress:
 

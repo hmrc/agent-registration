@@ -106,7 +106,6 @@ trait TdBase:
   def amlsRegistrationNumber: AmlsRegistrationNumber = AmlsRegistrationNumber("XAML00000123456")
   def vrn = Vrn("123456789")
   def payeRef = PayeRef("123/AB12345")
-  def trn: String = "ST-TRN-987654321"
   def individualDateOfBirth: LocalDate = LocalDate.of(1980, 1, 1)
   def agentTelephoneNumber = AgentTelephoneNumber(agentTelephoneNumber = telephoneNumber.value, otherAgentTelephoneNumber = None)
 

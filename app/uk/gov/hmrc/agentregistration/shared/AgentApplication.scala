@@ -61,12 +61,6 @@ sealed trait AgentApplication:
   def vrns: Option[List[Vrn]]
   def payeRefs: Option[List[PayeRef]]
 
-  //  /** Updates the application state to the next state */
-  //  def updateApplicationState: AgentApplication =
-  //    this match
-  //      case st: AgentApplicationSoleTrader => st.copy(applicationState = nextApplicationState)
-  //      case llp: ApplicationLlp => llp.copy(applicationState = nextApplicationState)
-
   /* derived stuff: */
   val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
