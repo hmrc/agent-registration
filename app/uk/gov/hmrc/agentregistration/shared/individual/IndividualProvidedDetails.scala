@@ -70,7 +70,7 @@ final case class IndividualProvidedDetails(
 
   def getNino: IndividualNino = individualNino.getOrThrowExpectedDataMissing("Nino")
 
-  def getIndividualSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("SaUtr")
+  def getIndividualSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("saUtr")
 
   def getIndividualDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
 
