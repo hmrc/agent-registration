@@ -14,40 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.crypto
+package uk.gov.hmrc.agentregistration.shared.crypto
 
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class FieldLevelEncryptionSpec
 extends UnitSpec:
 
-  private val baseConfigString: String =
-    """
-      |appName = "agent-registration"
-      |microservice.services.des.host = "localhost"
-      |microservice.services.des.port = 1234
-      |microservice.services.des.protocol = "http"
-      |microservice.services.des.environment = "test"
-      |microservice.services.des.authorization-token = "test-token"
-      |microservice.services.hip.host = "localhost"
-      |microservice.services.hip.port = 1234
-      |microservice.services.hip.protocol = "http"
-      |microservice.services.hip.authorization-token = "test-token"
-      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
-      |field-level-encryption.previousKeys = []
-      |""".stripMargin
-
-  private def fleWith(enabled: Boolean): FieldLevelEncryption = {
-    val configuration: Configuration = Configuration(ConfigFactory.parseString(
-      s"$baseConfigString\nfield-level-encryption.enabled = $enabled"
+  private def fleWith(enabled: Boolean): FieldLevelEncryption =
+    new FieldLevelEncryption(FieldLevelEncryptionConfig(
+      enabled = enabled,
+      key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=",
+      previousKeys = Seq.empty
     ))
-    val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-    new FieldLevelEncryption(appConfig)
-  }
 
   "FieldLevelEncryption with enabled = true" - {
     val fle = fleWith(enabled = true)

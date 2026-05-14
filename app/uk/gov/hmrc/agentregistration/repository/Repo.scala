@@ -60,12 +60,21 @@ extends PlayMongoRepository[A](
   extraCodecs = extraCodecs
 ):
 
+  /** Storage transforms applied at the collection boundary. Default to identity.
+    *
+    * A repo that needs field-level encryption overrides these two and gets it applied consistently across every read/write path below, so a new query method
+    * cannot silently bypass encryption by forgetting a per-method override. The two must be exact inverses: `decryptFromStorage(encryptForStorage(a)) == a`.
+    */
+  protected def encryptForStorage(a: A): A = a
+
+  protected def decryptFromStorage(a: A): A = a
+
   /** Update or Insert (UpSert)
     */
   def upsert(a: A): Future[Unit] = collection
     .replaceOne(
       filter = Filters.eq("_id", idString.idString(idExtractor.id(a))),
-      replacement = a,
+      replacement = encryptForStorage(a),
       options = ReplaceOptions().upsert(true)
     )
     .toFuture()
@@ -76,6 +85,7 @@ extends PlayMongoRepository[A](
       filter = Filters.eq("_id", idString.idString(i))
     )
     .headOption()
+    .map(_.map(decryptFromStorage))
 
   def removeById(i: ID): Future[Option[DeleteResult]] = collection
     .deleteOne(

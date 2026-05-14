@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.crypto
+package uk.gov.hmrc.agentregistration.shared.crypto
 
 import com.softwaremill.quicklens.*
 import uk.gov.hmrc.agentregistration.shared.*

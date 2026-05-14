@@ -21,6 +21,7 @@ import com.google.inject.Provides
 import com.google.inject.Singleton
 import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
+import uk.gov.hmrc.agentregistration.shared.crypto.FieldLevelEncryptionConfig
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
@@ -41,3 +42,11 @@ extends AbstractModule:
   def authorisedFunctions(ac: AuthConnector): AuthorisedFunctions =
     new AuthorisedFunctions:
       override def authConnector: AuthConnector = ac
+
+  @Provides
+  @Singleton
+  def fieldLevelEncryptionConfig(appConfig: AppConfig): FieldLevelEncryptionConfig = FieldLevelEncryptionConfig(
+    enabled = appConfig.FieldLevelEncryption.enabled,
+    key = appConfig.FieldLevelEncryption.key,
+    previousKeys = appConfig.FieldLevelEncryption.previousKeys
+  )

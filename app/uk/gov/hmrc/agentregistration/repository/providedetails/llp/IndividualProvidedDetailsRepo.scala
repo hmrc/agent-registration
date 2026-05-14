@@ -22,7 +22,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
+import uk.gov.hmrc.agentregistration.shared.crypto.IndividualProvidedDetailsEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -58,9 +58,9 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
 
   import individualProvidedDetailsEncryption.*
 
-  override def upsert(d: IndividualProvidedDetails): Future[Unit] = super.upsert(encrypt(d))
+  override protected def encryptForStorage(d: IndividualProvidedDetails): IndividualProvidedDetails = encrypt(d)
 
-  override def findById(id: IndividualProvidedDetailsId): Future[Option[IndividualProvidedDetails]] = super.findById(id).map(_.map(decrypt))
+  override protected def decryptFromStorage(d: IndividualProvidedDetails): IndividualProvidedDetails = decrypt(d)
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
