@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.risking
+package uk.gov.hmrc.agentregistration.shared.risking.submitforrisking
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormats
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import play.api.libs.json.*
+import uk.gov.hmrc.agentregistration.shared.risking.*
 
 final case class SubmitForRiskingRequest(
-  agentApplication: AgentApplication,
-  individuals: List[IndividualProvidedDetails]
+  applicationData: ApplicationData,
+  individuals: List[IndividualData]
 )
 
 object SubmitForRiskingRequest:
-
-  import AgentApplicationFormats.format
-
   given OFormat[SubmitForRiskingRequest] = Json.format[SubmitForRiskingRequest]

@@ -29,6 +29,7 @@ import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Fini
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Started
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
+import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.IndividualData
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
 trait TdIndividualProvidedDetails { dependencies: TdBase =>
@@ -44,8 +45,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Precreated,
       isPersonOfControl = true,
-      passedIv = None,
-      providedByApplicant = None
+      passedIv = None
     )
 
     val afterAccessConfirmed: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -57,8 +57,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = AccessConfirmed,
       isPersonOfControl = true,
-      passedIv = None,
-      providedByApplicant = None
+      passedIv = None
     )
 
     val afterStarted: IndividualProvidedDetails = IndividualProvidedDetails(
@@ -70,8 +69,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Started,
       isPersonOfControl = true,
-      passedIv = Some(true),
-      providedByApplicant = None
+      passedIv = Some(true)
     )
 
     val afterTelephoneNumberProvided: IndividualProvidedDetails = afterStarted
@@ -163,6 +161,21 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .setTo(Some(false))
       .modify(_.providedDetailsState)
       .setTo(Finished)
+
+    val individualData: IndividualData = IndividualData(
+      personReference = dependencies.personReference,
+      individualName = dependencies.individualName,
+      isPersonOfControl = true,
+      internalUserId = dependencies.internalUserId,
+      individualDateOfBirth = dependencies.dateOfBirthProvided,
+      telephoneNumber = dependencies.telephoneNumber,
+      emailAddress = dependencies.individualEmailAddress,
+      individualNino = dependencies.ninoProvided,
+      individualSaUtr = dependencies.saUtrProvided,
+      vrns = List(dependencies.vrn),
+      payeRefs = List(dependencies.payeRef),
+      passedIv = true
+    )
 
     object soleTrader:
 

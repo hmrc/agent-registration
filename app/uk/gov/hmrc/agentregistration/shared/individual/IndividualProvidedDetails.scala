@@ -70,11 +70,15 @@ final case class IndividualProvidedDetails(
 
   def getNino: IndividualNino = individualNino.getOrThrowExpectedDataMissing("Nino")
 
-  def getSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("SaUtr")
+  def getIndividualSaUtr: IndividualSaUtr = individualSaUtr.getOrThrowExpectedDataMissing("saUtr")
 
-  def getDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
+  def getIndividualDateOfBirth: IndividualDateOfBirth = individualDateOfBirth.getOrThrowExpectedDataMissing("Date of birth")
 
-  def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("Passed IV")
+  def getVrns: List[Vrn] = vrns.getOrThrowExpectedDataMissing("vrns")
+
+  def getPayeRefs: List[PayeRef] = payeRefs.getOrThrowExpectedDataMissing("payeRefs")
+
+  def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("passedIv")
 
 object IndividualProvidedDetails:
   given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]

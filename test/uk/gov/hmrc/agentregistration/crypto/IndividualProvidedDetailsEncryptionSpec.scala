@@ -83,10 +83,10 @@ extends UnitSpec:
 
     "individualSaUtr.Provided.saUtr is encrypted" in:
       val originalSaUtr =
-        model.getSaUtr match
+        model.getIndividualSaUtr match
           case IndividualSaUtr.Provided(s) => s
           case other => fail(s"expected IndividualSaUtr.Provided, got $other")
-      encrypted.getSaUtr match
+      encrypted.getIndividualSaUtr match
         case IndividualSaUtr.Provided(s) => s.value shouldBe enc(originalSaUtr.value)
         case other => fail(s"expected IndividualSaUtr.Provided after encrypt, got $other")
 
@@ -128,20 +128,20 @@ extends UnitSpec:
     "IndividualSaUtr.FromAuth is encrypted" in:
       val withFromAuth: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.FromAuth(tdAll.saUtr)))
       val originalSaUtr = tdAll.saUtr.value
-      service.encrypt(withFromAuth).getSaUtr match
+      service.encrypt(withFromAuth).getIndividualSaUtr match
         case IndividualSaUtr.FromAuth(s) => s.value shouldBe enc(originalSaUtr)
         case other => fail(s"expected IndividualSaUtr.FromAuth after encrypt, got $other")
 
     "IndividualSaUtr.FromCitizenDetails is encrypted" in:
       val withFromCitizen: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.FromCitizenDetails(tdAll.saUtr)))
       val originalSaUtr = tdAll.saUtr.value
-      service.encrypt(withFromCitizen).getSaUtr match
+      service.encrypt(withFromCitizen).getIndividualSaUtr match
         case IndividualSaUtr.FromCitizenDetails(s) => s.value shouldBe enc(originalSaUtr)
         case other => fail(s"expected IndividualSaUtr.FromCitizenDetails after encrypt, got $other")
 
     "IndividualSaUtr.NotProvided is unchanged" in:
       val withNotProvided: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.NotProvided))
-      service.encrypt(withNotProvided).getSaUtr shouldBe IndividualSaUtr.NotProvided
+      service.encrypt(withNotProvided).getIndividualSaUtr shouldBe IndividualSaUtr.NotProvided
   }
 
   "IndividualProvidedDetailsEncryption round-trips and does not leak plaintext PII" - {
@@ -159,7 +159,7 @@ extends UnitSpec:
           model.getEmailAddress.emailAddress.value
         ) ++
           (model.getNino match { case IndividualNino.Provided(n) => List(n.value); case _ => Nil }) ++
-          (model.getSaUtr match { case IndividualSaUtr.Provided(s) => List(s.value); case _ => Nil }) ++
+          (model.getIndividualSaUtr match { case IndividualSaUtr.Provided(s) => List(s.value); case _ => Nil }) ++
           model.vrns.value.map(_.value) ++
           model.payeRefs.value.map(_.value)
 

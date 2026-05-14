@@ -61,12 +61,6 @@ sealed trait AgentApplication:
   def vrns: Option[List[Vrn]]
   def payeRefs: Option[List[PayeRef]]
 
-  //  /** Updates the application state to the next state */
-  //  def updateApplicationState: AgentApplication =
-  //    this match
-  //      case st: AgentApplicationSoleTrader => st.copy(applicationState = nextApplicationState)
-  //      case llp: ApplicationLlp => llp.copy(applicationState = nextApplicationState)
-
   /* derived stuff: */
   val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
@@ -129,6 +123,10 @@ sealed trait AgentApplication:
 
   def getSubmittedAt: Instant = submittedAt.getOrElse(expectedDataNotDefinedError("submittedAt"))
 
+  def getVrns: List[Vrn] = vrns.getOrThrowExpectedDataMissing("vrns")
+
+  def getPayeRefs: List[PayeRef] = payeRefs.getOrThrowExpectedDataMissing("payeRefs")
+
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
       case t: T => Some(t)
@@ -178,6 +176,7 @@ extends AgentApplication:
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
   override def numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
   def isOwner: Boolean = userRole.contains(UserRole.Owner)
+  def getDeceasedCheckResult: CheckResult = deceasedCheckResult.getOrThrowExpectedDataMissing("deceasedCheckResult")
 
 object AgentApplicationSoleTrader:
   val numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = FiveOrLess(1)
