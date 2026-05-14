@@ -18,15 +18,15 @@ package uk.gov.hmrc.agentregistration.shared.risking.submitforrisking
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentBusinessName
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentCorrespondenceAddress
-import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentEmailAddress
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentTelephoneNumber
 
 final case class AgentDetailsData(
   businessName: AgentBusinessName,
   telephoneNumber: AgentTelephoneNumber,
-  agentEmailAddress: AgentEmailAddress,
+  agentEmailAddress: EmailAddress,
   agentCorrespondenceAddress: AgentCorrespondenceAddress
 )
 

@@ -30,22 +30,12 @@ final case class ApplicationData(
   applicantContactDetails: ApplicantContactDetailsData,
   amlsDetails: AmlsDetailsData,
   agentDetails: AgentDetailsData,
-  deceasedCheckResult: CheckResult,
   vrns: List[Vrn],
   payeRefs: List[PayeRef],
   crn: Option[Crn],
   utr: Utr,
   safeId: SafeId
 )
-
-//
-//private def getMaybeCrn(agentApplication: AgentApplication): Option[Crn] =
-//  agentApplication match
-//    case a: AgentApplicationLimitedCompany => Some(a.getBusinessDetails.companyProfile.companyNumber)
-//    case a: AgentApplicationLimitedPartnership => Some(a.getBusinessDetails.companyProfile.companyNumber)
-//    case a: AgentApplicationLlp => Some(a.getBusinessDetails.companyProfile.companyNumber)
-//    case a: AgentApplicationScottishLimitedPartnership => Some(a.getBusinessDetails.companyProfile.companyNumber)
-//    case _ => None
 
 object ApplicationData:
 

@@ -26,6 +26,10 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLessOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
+import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.AgentDetailsData
+import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.AmlsDetailsData
+import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.ApplicantContactDetailsData
+import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.ApplicationData
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
@@ -151,6 +155,37 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
     )
+
+    val applicationData: ApplicationData =
+      val a: AgentApplicationLlp = afterDeclarationSubmitted
+      ApplicationData(
+        applicationReference = dependencies.applicationReference,
+        internalUserId = dependencies.internalUserId,
+        applicantCredentials = dependencies.credentials,
+        businessType = BusinessType.Partnership.LimitedLiabilityPartnership,
+        groupId = dependencies.groupId,
+        applicantContactDetails = ApplicantContactDetailsData(
+          applicantName = dependencies.applicantName,
+          telephoneNumber = dependencies.telephoneNumber,
+          applicantEmailAddress = dependencies.applicantEmailAddress
+        ),
+        amlsDetails = AmlsDetailsData(
+          supervisoryBody = dependencies.amlsCode,
+          amlsRegistrationNumber = dependencies.amlsRegistrationNumber,
+          amlsEvidence = None
+        ),
+        agentDetails = AgentDetailsData(
+          businessName = dependencies.agentBusinessName,
+          telephoneNumber = dependencies.agentTelephoneNumber,
+          agentEmailAddress = dependencies.applicantEmailAddress,
+          agentCorrespondenceAddress = dependencies.chroAddress
+        ),
+        vrns = List(dependencies.vrn),
+        payeRefs = List(dependencies.payeRef),
+        crn = Some(dependencies.crn),
+        utr = a.getUtr,
+        safeId = a.getSafeId
+      )
 
     val afterSentForRisking: AgentApplicationLlp = afterDeclarationSubmitted.copy(
       userRole = Some(UserRole.Partner),

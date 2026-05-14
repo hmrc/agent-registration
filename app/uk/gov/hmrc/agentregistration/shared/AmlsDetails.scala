@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 final case class AmlsDetails(
   supervisoryBody: AmlsCode,
@@ -43,11 +44,9 @@ final case class AmlsDetails(
         true
       case _ => false
 
-  def getAmlsEvidence: AmlsEvidence = amlsEvidence.getOrElse(throw new RuntimeException("AmlsEvidence missing when required"))
+  def getAmlsEvidence: AmlsEvidence = amlsEvidence.getOrThrowExpectedDataMissing("amlsEvidence")
 
-  def getRegistrationNumber: AmlsRegistrationNumber = amlsRegistrationNumber.getOrElse(
-    throw new RuntimeException("amlsRegistrationNumber missing when required")
-  )
+  def getAmlsRegistrationNumber: AmlsRegistrationNumber = amlsRegistrationNumber.getOrThrowExpectedDataMissing("amlsRegistrationNumber")
 
 object AmlsDetails:
   implicit val format: Format[AmlsDetails] = Json.format[AmlsDetails]

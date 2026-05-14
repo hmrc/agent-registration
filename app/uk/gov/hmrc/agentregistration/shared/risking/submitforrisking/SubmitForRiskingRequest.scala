@@ -16,34 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking.submitforrisking
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.*
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualDateOfBirth
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualVerifiedEmailAddress
-import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState
-import uk.gov.hmrc.agentregistration.shared.risking.*
 import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.PayeRef
-import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
-import uk.gov.hmrc.agentregistration.shared.TelephoneNumber
-import uk.gov.hmrc.agentregistration.shared.Vrn
-import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
-import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
-import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
-import uk.gov.hmrc.agentregistration.shared.util.Errors.*
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
-
-import java.time.Instant
+import uk.gov.hmrc.agentregistration.shared.risking.*
 
 final case class SubmitForRiskingRequest(
-  agentApplication: ApplicationData,
+  applicationData: ApplicationData,
   individuals: List[IndividualData]
 )
 
