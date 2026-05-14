@@ -60,11 +60,6 @@ extends PlayMongoRepository[A](
   extraCodecs = extraCodecs
 ):
 
-  /** Storage transforms applied at the collection boundary. Default to identity.
-    *
-    * A repo that needs field-level encryption overrides these two and gets it applied consistently across every read/write path below, so a new query method
-    * cannot silently bypass encryption by forgetting a per-method override. The two must be exact inverses: `decryptFromStorage(encryptForStorage(a)) == a`.
-    */
   protected def encryptForStorage(a: A): A = a
 
   protected def decryptFromStorage(a: A): A = a
