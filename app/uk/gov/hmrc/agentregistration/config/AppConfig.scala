@@ -39,6 +39,7 @@ class AppConfig @Inject() (
 
   val hipBaseUrl: String = servicesConfig.baseUrl("hip")
   val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
+  val hipSystemId: String = servicesConfig.getString("microservice.services.hip.system-id")
 
   object AgentApplicationRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-repo-ttl", servicesConfig)

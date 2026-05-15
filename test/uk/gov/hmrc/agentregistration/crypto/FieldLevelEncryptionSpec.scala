@@ -37,6 +37,7 @@ extends UnitSpec:
       |microservice.services.hip.port = 1234
       |microservice.services.hip.protocol = "http"
       |microservice.services.hip.authorization-token = "test-token"
+      |microservice.services.hip.system-id = "agent-registration"
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
       |""".stripMargin

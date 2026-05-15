@@ -44,7 +44,7 @@ class HipHeaders @Inject() (
       xOriginatingSystemHeader -> "MDTP-AgentRegistration",
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP",
-      "system-id" -> "agent-registration"
+      "system-id" -> appConfig.hipSystemId
     )
 
   private def formatISOInstantSeconds(now: Instant): String = DateTimeFormatter.ISO_INSTANT
