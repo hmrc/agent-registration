@@ -50,9 +50,9 @@ extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.formats)),
   replaceIndexes = true
-):
+)(using domainFormat = agentApplicationEncryption.formats):
 
   import agentApplicationEncryption.*
 
