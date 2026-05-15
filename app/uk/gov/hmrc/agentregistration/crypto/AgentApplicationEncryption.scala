@@ -39,9 +39,12 @@ import javax.inject.Singleton
 @Singleton
 class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncryption):
 
+  /** Mongo Format that encrypts on write and decrypts on read. Wired into the repo as `domainFormat` so PII can never be persisted in plaintext, no matter what
+    * code path performs the write.
+    */
   val formats: OFormat[AgentApplication] = OFormat[AgentApplication](
     r = AgentApplication.format.map[AgentApplication](decrypt),
-    w = AgentApplication.format.contramap[AgentApplication](decrypt)
+    w = AgentApplication.format.contramap[AgentApplication](encrypt)
   )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)

@@ -52,29 +52,23 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = "individual",
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(IndividualProvidedDetails.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.formats)),
   replaceIndexes = true
-):
-
-  import individualProvidedDetailsEncryption.*
-
-  override def upsert(d: IndividualProvidedDetails): Future[Unit] = super.upsert(encrypt(d))
-
-  override def findById(id: IndividualProvidedDetailsId): Future[Option[IndividualProvidedDetails]] = super.findById(id).map(_.map(decrypt))
+)(using domainFormat = individualProvidedDetailsEncryption.formats):
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value)
     )
     .toFuture()
-    .map(_.toList.map(decrypt))
+    .map(_.toList)
 
   def findForApplication(agentApplicationId: AgentApplicationId): Future[List[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.eq("agentApplicationId", agentApplicationId.value)
     )
     .toFuture()
-    .map(_.toList.map(decrypt))
+    .map(_.toList)
 
   def deleteByApplicationId(agentApplicationId: AgentApplicationId): Future[Unit] = collection
     .deleteMany(
@@ -89,19 +83,17 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", encrypt(internalUserId).value),
+        Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )
     .headOption()
-    .map(_.map(decrypt))
 
   def findByPersonReference(personReference: PersonReference): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.eq("personReference", personReference.value)
     )
     .headOption()
-    .map(_.map(decrypt))
 
 object ProvidedDetailsRepoHelp:
 
