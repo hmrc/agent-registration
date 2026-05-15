@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -33,6 +34,14 @@ import javax.inject.Singleton
   */
 @Singleton
 class IndividualProvidedDetailsEncryption @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+
+  /** Mongo Format that encrypts on write and decrypts on read. Wired into the repo as `domainFormat` so PII can never be persisted in plaintext, no matter what
+    * code path performs the write.
+    */
+  val formats: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
+    r = IndividualProvidedDetails.format.map[IndividualProvidedDetails](decrypt),
+    w = IndividualProvidedDetails.format.contramap[IndividualProvidedDetails](encrypt)
+  )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
   def decrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)

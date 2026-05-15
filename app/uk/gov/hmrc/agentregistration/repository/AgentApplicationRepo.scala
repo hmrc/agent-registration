@@ -50,36 +50,27 @@ extends Repo[AgentApplicationId, AgentApplication](
   collectionName = "agent-application",
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(AgentApplication.format)),
+  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.formats)),
   replaceIndexes = true
-):
-
-  import agentApplicationEncryption.*
-
-  override def upsert(a: AgentApplication): Future[Unit] = super.upsert(encrypt(a))
-
-  override def findById(id: AgentApplicationId): Future[Option[AgentApplication]] = super.findById(id).map(_.map(decrypt))
+)(using domainFormat = agentApplicationEncryption.formats):
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", agentApplicationEncryption.encrypt(internalUserId).value)
     )
     .headOption()
-    .map(_.map(decrypt))
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("linkId", linkId.value)
     )
     .headOption()
-    .map(_.map(decrypt))
 
   def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("applicationReference", applicationReference.value)
     )
     .headOption()
-    .map(_.map(decrypt))
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
