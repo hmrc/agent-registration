@@ -174,7 +174,8 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       individualSaUtr = dependencies.saUtrProvided,
       vrns = List(dependencies.vrn),
       payeRefs = List(dependencies.payeRef),
-      passedIv = true
+      passedIv = true,
+      providedByApplicant = false
     )
 
     object soleTrader:

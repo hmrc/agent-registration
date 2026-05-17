@@ -36,11 +36,12 @@ final case class IndividualData(
   individualSaUtr: IndividualSaUtr,
   vrns: List[Vrn],
   payeRefs: List[PayeRef],
-  passedIv: Boolean
+  passedIv: Boolean,
+  providedByApplicant: Boolean
 ):
 
   // values that we do not store at the moment
-  def providedByApplicant: Boolean = false // TODO: APB-11409
+  // def providedByApplicant: Boolean = false // TODO: APB-11409
   def companiesHouseName = None // TODO: APB-11409
   def companiesHouseDateOfBirth = None // TODO: APB-11409
 
