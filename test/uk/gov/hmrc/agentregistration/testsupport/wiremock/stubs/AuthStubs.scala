@@ -79,7 +79,6 @@ object AuthStubs {
        }]
      }],
      "groupIdentifier": "3E7R-E0V0-5V4N-Q5S0",
-     "affinityGroup": "Individual",
      "confidenceLevel": 250,
      "internalId": "${internalUserId.value}"
     }
@@ -118,9 +117,6 @@ object AuthStubs {
         "authProviders": [
           "GovernmentGateway"
         ]
-      },
-      {
-        "affinityGroup": "Individual"
       }
       ],
       "retrieve": [
