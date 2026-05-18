@@ -40,7 +40,7 @@ extends ISpec:
 
     IndividualAuthStubs.verifyAuthorise(0)
 
-  "Successfully authorise when user is logged in with AffinityGroup.Individual and internalId present" in:
+  "Successfully authorise when user is logged in with internalId present" in:
     val individualAuthorisedAction: IndividualAuthorisedAction = app.injector.instanceOf[IndividualAuthorisedAction]
     val backendRequest: Request[?] = tdAll.backendRequest
 
@@ -51,7 +51,6 @@ extends ISpec:
            |{
            |  "authorisedEnrolments": [],
            |  "allEnrolments": [],
-           |  "affinityGroup": "Individual",
            |  "internalId": "${tdAll.internalUserId.value}"
            |}
            |""".stripMargin
@@ -82,8 +81,7 @@ extends ISpec:
         s"""
            |{
            |  "authorisedEnrolments": [],
-           |  "allEnrolments": [],
-           |  "affinityGroup": "Individual"
+           |  "allEnrolments": []
            |}
            |""".stripMargin
     )

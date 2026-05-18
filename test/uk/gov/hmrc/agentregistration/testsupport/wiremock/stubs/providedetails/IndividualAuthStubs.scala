@@ -66,9 +66,6 @@ object IndividualAuthStubs {
       |      "authProviders": [
       |        "GovernmentGateway"
       |      ]
-      |    },
-      |    {
-      |      "affinityGroup": "Individual"
       |    }
       |  ],
       |  "retrieve": [
