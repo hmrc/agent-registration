@@ -18,10 +18,8 @@ package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.domain.TaxIdentifier
 
 final case class Arn(value: String)
-extends TaxIdentifier
 
 object Arn:
   given Format[Arn] = JsonFormatsFactory.makeValueClassFormat

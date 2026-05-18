@@ -21,6 +21,7 @@ import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.shared.Arn
 import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.Utr
@@ -63,6 +64,7 @@ class BusinessPartnerRecordConnector @Inject() (
       Some(
         BusinessPartnerRecordResponse(
           organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
+          agentReferenceNumber = (r \ "agentReferenceNumber").asOpt[Arn],
           individualName = (r \ "individual" \ "firstName").asOpt[String]
             .flatMap { firstName =>
               (r \ "individual" \ "lastName").asOpt[String].map { lastName =>
@@ -77,7 +79,8 @@ class BusinessPartnerRecordConnector @Inject() (
           emailAddress = (r \ "agencyDetails" \ "agencyEmail")
             .asOpt[String]
             .orElse((r \ "contactDetails" \ "emailAddress").asOpt[String]),
-          primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String]
+          primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
+          isAnASAgent = (r \ "isAnASAgent").as[Boolean]
         )
       )
     case _ => None
