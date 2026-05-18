@@ -28,7 +28,6 @@ final case class IndividualData(
   personReference: PersonReference,
   individualName: IndividualName,
   isPersonOfControl: Boolean,
-  internalUserId: InternalUserId,
   individualDateOfBirth: IndividualDateOfBirth,
   telephoneNumber: TelephoneNumber,
   emailAddress: EmailAddress,

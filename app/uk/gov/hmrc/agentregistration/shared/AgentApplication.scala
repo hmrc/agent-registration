@@ -52,6 +52,7 @@ sealed trait AgentApplication:
   def amlsDetails: Option[AmlsDetails]
   def agentDetails: Option[AgentDetails]
   def refusalToDealWithCheckResult: Option[CheckResult]
+  def isDuplicateAsa: Option[Boolean]
   def hmrcStandardForAgentsAgreed: StateOfAgreement
   def numberOfIndividuals: Option[NumberOfIndividuals] // all applications require this, sole traders will have a list of one
   def hasOtherRelevantIndividuals: Option[Boolean]
@@ -164,6 +165,7 @@ final case class AgentApplicationSoleTrader(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   deceasedCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -201,6 +203,7 @@ final case class AgentApplicationLlp(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -234,6 +237,7 @@ final case class AgentApplicationLimitedCompany(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -267,6 +271,7 @@ final case class AgentApplicationGeneralPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -299,6 +304,7 @@ final case class AgentApplicationLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -330,6 +336,7 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
@@ -361,6 +368,7 @@ final case class AgentApplicationScottishPartnership(
   override val amlsDetails: Option[AmlsDetails],
   override val agentDetails: Option[AgentDetails],
   override val refusalToDealWithCheckResult: Option[CheckResult],
+  override val isDuplicateAsa: Option[Boolean],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],

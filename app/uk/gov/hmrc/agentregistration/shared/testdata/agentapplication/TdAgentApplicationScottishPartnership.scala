@@ -45,6 +45,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
+      isDuplicateAsa = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
@@ -67,7 +68,15 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterContactDetailsComplete: AgentApplicationScottishPartnership = afterRefusalToDealWithCheckPass.copy(
+    val afterIsDuplicateAsaFalse: AgentApplicationScottishPartnership = afterRefusalToDealWithCheckPass.copy(
+      isDuplicateAsa = Some(false)
+    )
+
+    val afterIsDuplicateAsaTrue: AgentApplicationScottishPartnership = afterRefusalToDealWithCheckPass.copy(
+      isDuplicateAsa = Some(true)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationScottishPartnership = afterIsDuplicateAsaFalse.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )

@@ -166,7 +166,6 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       personReference = dependencies.personReference,
       individualName = dependencies.individualName,
       isPersonOfControl = true,
-      internalUserId = dependencies.internalUserId,
       individualDateOfBirth = dependencies.dateOfBirthProvided,
       telephoneNumber = dependencies.telephoneNumber,
       emailAddress = dependencies.individualEmailAddress,

@@ -55,6 +55,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
+      isDuplicateAsa = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
@@ -87,7 +88,15 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       payeRefs = Some(List.empty)
     )
 
-    val afterContactDetailsComplete: AgentApplicationLlp = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+    val afterIsDuplicateAsaFalse: AgentApplicationLlp = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      isDuplicateAsa = Some(false)
+    )
+
+    val afterIsDuplicateAsaTrue: AgentApplicationLlp = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      isDuplicateAsa = Some(true)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationLlp = afterIsDuplicateAsaFalse.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )

@@ -43,6 +43,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
+      isDuplicateAsa = None,
       deceasedCheckResult = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       hasOtherRelevantIndividuals = None,
@@ -73,7 +74,15 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       deceasedCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterContactDetailsComplete: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
+    val afterIsDuplicateAsaFalse: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
+      isDuplicateAsa = Some(false)
+    )
+
+    val afterIsDuplicateAsaTrue: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
+      isDuplicateAsa = Some(true)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationSoleTrader = afterIsDuplicateAsaFalse.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )
