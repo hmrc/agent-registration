@@ -65,8 +65,11 @@ with RequestAwareLogging:
       case allEnrolments ~ credentialRole ~ maybeInternalId =>
         if isUnsupportedCredentialRole(credentialRole) then
           Future.failed(UnsupportedCredentialRole(s"UnsupportedCredentialRole: $credentialRole"))
-        else if isHmrcAsAgentEnrolmentAssignedToUser(allEnrolments) then
-          Future.failed(AuthorisationException.fromString(s"Enrolment ${appConfig.hmrcAsAgentEnrolment} is assigned to user"))
+//        This is failing for the frontend de-enrolled users check, it is not allowing newly enrolled users to continue to the ASA dashboard.
+//        I propose that we remove this check on the backend, we already have the check on the frontend that forwards users to the ASA dashboard if
+//        they are enrolled
+//        else if isHmrcAsAgentEnrolmentAssignedToUser(allEnrolments) then
+//          Future.failed(AuthorisationException.fromString(s"Enrolment ${appConfig.hmrcAsAgentEnrolment} is assigned to user"))
         else
           Future.successful(Right(new AuthorisedRequest(
             internalUserId = maybeInternalId
