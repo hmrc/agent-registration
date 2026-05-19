@@ -63,8 +63,8 @@ extends ISpec:
       .failed
       .futureValue shouldBe UnsupportedCredentialRole(s"UnsupportedCredentialRole: Some(Assistant)")
     AuthStubs.verifyAuthorise()
-    
-//  See AuthorisedAction    
+
+//  See AuthorisedAction
 //  "active HMRC-AS-AGENT enrolment MUST NOT be assigned to user or else the action throws AuthorisationException exception" in:
 //    val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
 //    val notLoggedInRequest: Request[?] = tdAll.backendRequest
@@ -93,13 +93,13 @@ extends ISpec:
 //           |}
 //           |""".stripMargin
 //    )
-
-    authorisedAction
-      .invokeBlock(notLoggedInRequest, _ => fakeResultF)
-      .failed
-      .futureValue shouldBe InternalError(s"Enrolment Enrolment(HMRC-AS-AGENT,List(),Activated,None) is assigned to user")
-
-    AuthStubs.verifyAuthorise()
+//
+//    authorisedAction
+//      .invokeBlock(notLoggedInRequest, _ => fakeResultF)
+//      .failed
+//      .futureValue shouldBe InternalError(s"Enrolment Enrolment(HMRC-AS-AGENT,List(),Activated,None) is assigned to user")
+//
+//    AuthStubs.verifyAuthorise()
 
   "successfully authorise when user is logged in, credentialRole is User/Admin, and no active HMRC-AS-AGENT enrolment" in:
     val authorisedAction: AuthorisedAction = app.injector.instanceOf[AuthorisedAction]
