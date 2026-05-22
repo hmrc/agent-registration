@@ -37,6 +37,7 @@ extends ControllerSpec:
 
   val desRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
     organisationName = Some("Test Company Name"),
+    agentReferenceNumber = Some(tdAll.arn),
     individualName = None,
     address = DesBusinessAddress(
       addressLine1 = "Line 1",
@@ -47,6 +48,7 @@ extends ControllerSpec:
       countryCode = "GB"
     ),
     emailAddress = Some(tdAll.email),
+    isAnAsaAgent = false,
     primaryPhoneNumber = Some(tdAll.telephoneNumber.value)
   )
 

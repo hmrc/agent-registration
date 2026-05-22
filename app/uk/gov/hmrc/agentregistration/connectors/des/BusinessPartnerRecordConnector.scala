@@ -63,6 +63,7 @@ class BusinessPartnerRecordConnector @Inject() (
       Some(
         BusinessPartnerRecordResponse(
           organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
+          agentReferenceNumber = (r \ "agentReferenceNumber").asOpt[String],
           individualName = (r \ "individual" \ "firstName").asOpt[String]
             .flatMap { firstName =>
               (r \ "individual" \ "lastName").asOpt[String].map { lastName =>
@@ -77,7 +78,8 @@ class BusinessPartnerRecordConnector @Inject() (
           emailAddress = (r \ "agencyDetails" \ "agencyEmail")
             .asOpt[String]
             .orElse((r \ "contactDetails" \ "emailAddress").asOpt[String]),
-          primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String]
+          primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
+          isAnAsaAgent = (r \ "isAnASAgent").as[Boolean]
         )
       )
     case _ => None

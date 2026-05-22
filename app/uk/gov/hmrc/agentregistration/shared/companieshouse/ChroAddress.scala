@@ -37,7 +37,6 @@ final case class ChroAddress(
   premises: Option[String] = None,
   country: Option[String] = None
 ):
-
   // concat address fields into a single string to use in radio values and labels
   def toValueString: String = Seq(
     // concatenate optional care_of, po_box, premises values into a single line to
@@ -52,7 +51,7 @@ final case class ChroAddress(
     address_line_2.getOrElse("").replaceCommasWithSpaces.trim,
     locality.getOrElse("").replaceCommasWithSpaces.trim,
     postal_code.getOrElse("").replaceCommasWithSpaces.trim,
-    country.getOrElse("").replaceCommasWithSpaces.trim
+    country.getOrElse("GB").replaceCommasWithSpaces.trim // as per APB-11439 this can be missing but we require it
   )
     .filter(_.nonEmpty).mkString(", ")
 
