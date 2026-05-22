@@ -65,8 +65,6 @@ with RequestAwareLogging:
       case allEnrolments ~ credentialRole ~ maybeInternalId =>
         if isUnsupportedCredentialRole(credentialRole) then
           Future.failed(UnsupportedCredentialRole(s"UnsupportedCredentialRole: $credentialRole"))
-        else if isHmrcAsAgentEnrolmentAssignedToUser(allEnrolments) then
-          Future.failed(AuthorisationException.fromString(s"Enrolment ${appConfig.hmrcAsAgentEnrolment} is assigned to user"))
         else
           Future.successful(Right(new AuthorisedRequest(
             internalUserId = maybeInternalId
@@ -77,10 +75,6 @@ with RequestAwareLogging:
 
   private given ExecutionContext = cc.executionContext
   override protected def executionContext: ExecutionContext = cc.executionContext
-
-  private def isHmrcAsAgentEnrolmentAssignedToUser[A](allEnrolments: Enrolments) = allEnrolments
-    .getEnrolment(appConfig.hmrcAsAgentEnrolment.key)
-    .exists(_.isActivated)
 
   private def isUnsupportedCredentialRole[A](maybeCredentialRole: Option[CredentialRole])(using request: RequestHeader) =
     @nowarn
