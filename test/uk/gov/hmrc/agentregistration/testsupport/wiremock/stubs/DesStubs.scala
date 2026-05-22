@@ -58,7 +58,7 @@ object DesStubs {
       {
         "businessPartnerExists" : true,
         "safeId" : "X00000123456789",
-        "agentReferenceNumber" : "",
+        "agentReferenceNumber" : "${desRegistrationResponse.agentReferenceNumber.getOrElse("")}",
         "uniqueTaxReference" : "${utr.value}",
         "utr" : "${utr.value}",
         "urn" : "",
