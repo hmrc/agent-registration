@@ -28,7 +28,7 @@ trait TdGrsBusinessDetails {
       val businessDetails = BusinessDetailsLlp(
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
-        companyProfile = dependencies.companyProfile
+        companyProfile = dependencies.companyProfileLimitedPartnership
       )
 
     object soleTrader:
@@ -47,7 +47,7 @@ trait TdGrsBusinessDetails {
       val businessDetails: BusinessDetailsLimitedCompany = BusinessDetailsLimitedCompany(
         safeId = dependencies.safeId,
         ctUtr = dependencies.ctUtr,
-        companyProfile = dependencies.companyProfile
+        companyProfile = dependencies.companyProfileLimited
       )
 
     object ltdPartnership:
@@ -56,7 +56,7 @@ trait TdGrsBusinessDetails {
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
         postcode = dependencies.postcode,
-        companyProfile = dependencies.companyProfile
+        companyProfile = dependencies.companyProfileLimitedPartnership
       )
 
     object scottishLtdPartnership:
@@ -65,7 +65,7 @@ trait TdGrsBusinessDetails {
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
         postcode = dependencies.postcode,
-        companyProfile = dependencies.companyProfile
+        companyProfile = dependencies.companyProfileLimitedPartnership
       )
 
     object generalPartnership:
