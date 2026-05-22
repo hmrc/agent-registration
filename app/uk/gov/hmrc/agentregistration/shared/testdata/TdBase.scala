@@ -201,7 +201,7 @@ trait TdBase:
     address = bprRegisteredAddress,
     primaryPhoneNumber = Some(bprPrimaryTelephoneNumber),
     emailAddress = Some(bprEmailAddress),
-    isAnASAgent = false
+    isAnAsaAgent = false
   )
 
   def businessPartnerRecordResponseSoleTrader: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
@@ -211,7 +211,7 @@ trait TdBase:
     address = bprRegisteredAddress,
     primaryPhoneNumber = Some(bprPrimaryTelephoneNumber),
     emailAddress = Some(bprEmailAddress),
-    isAnASAgent = false
+    isAnAsaAgent = false
   )
 
   def fiveOrFewerKeyIndividuals: FiveOrLess = FiveOrLess(

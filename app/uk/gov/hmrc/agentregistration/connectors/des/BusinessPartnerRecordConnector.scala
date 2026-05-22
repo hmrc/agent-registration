@@ -79,7 +79,7 @@ class BusinessPartnerRecordConnector @Inject() (
             .asOpt[String]
             .orElse((r \ "contactDetails" \ "emailAddress").asOpt[String]),
           primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
-          isAnASAgent = (r \ "isAnASAgent").as[Boolean]
+          isAnAsaAgent = (r \ "isAnASAgent").as[Boolean]
         )
       )
     case _ => None

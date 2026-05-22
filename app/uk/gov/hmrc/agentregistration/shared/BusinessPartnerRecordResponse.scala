@@ -27,10 +27,10 @@ final case class BusinessPartnerRecordResponse(
   address: DesBusinessAddress,
   emailAddress: Option[String],
   primaryPhoneNumber: Option[String],
-  isAnASAgent: Boolean
+  isAnAsaAgent: Boolean
 ):
 
-  def isAlreadyRegisteredAsAgent: Boolean = agentReferenceNumber.isDefined && isAnASAgent
+  def isAlreadyRegisteredAsAgent: Boolean = agentReferenceNumber.isDefined && isAnAsaAgent
 
   def getEntityName: String = organisationName.orElse(individualName).getOrThrowExpectedDataMissing("No entity name found")
 

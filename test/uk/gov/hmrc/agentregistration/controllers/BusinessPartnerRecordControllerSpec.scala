@@ -48,7 +48,7 @@ extends ControllerSpec:
       countryCode = "GB"
     ),
     emailAddress = Some(tdAll.email),
-    isAnASAgent = false,
+    isAnAsaAgent = false,
     primaryPhoneNumber = Some(tdAll.telephoneNumber.value)
   )
 
