@@ -54,7 +54,8 @@ object RiskingProgress:
   final case class FailedFixable(
     riskedEntity: RiskedEntity,
     riskedIndividuals: Seq[RiskedIndividual],
-    riskingCompletedDate: LocalDate
+    riskingCompletedDate: LocalDate,
+    failureMessageExpiryDate: Option[LocalDate]
   )
   extends ReceivedRiskingResults
 
@@ -63,7 +64,8 @@ object RiskingProgress:
   final case class FailedNonFixable(
     riskedEntity: RiskedEntity,
     riskedIndividuals: Seq[RiskedIndividual],
-    riskingCompletedDate: LocalDate
+    riskingCompletedDate: LocalDate,
+    failureMessageExpiryDate: Option[LocalDate]
   )
   extends ReceivedRiskingResults
 
