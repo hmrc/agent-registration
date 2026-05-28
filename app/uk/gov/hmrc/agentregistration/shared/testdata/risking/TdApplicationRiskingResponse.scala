@@ -41,7 +41,7 @@ trait TdApplicationRiskingResponse:
         dependencies.riskedIndividualFixable(individualName = dependencies.getIndividualName(1))
       ),
       riskingCompletedDate = riskingCompletedDate,
-      failureMessageExpiryDate = None
+      correctiveActionExpiryDate = None
     )
 
     val failedNonFixable: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
@@ -57,7 +57,7 @@ trait TdApplicationRiskingResponse:
         )
       ),
       riskingCompletedDate = riskingCompletedDate,
-      failureMessageExpiryDate = None
+      correctiveActionExpiryDate = None
     )
 
     val failedNonFixable_failedApplicant_approvedIndividuls: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
@@ -73,7 +73,7 @@ trait TdApplicationRiskingResponse:
         )
       ),
       riskingCompletedDate = riskingCompletedDate,
-      failureMessageExpiryDate = None
+      correctiveActionExpiryDate = None
     )
 
     // TODO: more cases possible, those should be created and used in tests

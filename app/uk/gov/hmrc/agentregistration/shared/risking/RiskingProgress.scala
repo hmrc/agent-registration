@@ -55,7 +55,7 @@ object RiskingProgress:
     riskedEntity: RiskedEntity,
     riskedIndividuals: Seq[RiskedIndividual],
     riskingCompletedDate: LocalDate,
-    failureMessageExpiryDate: Option[LocalDate]
+    correctiveActionExpiryDate: Option[LocalDate]
   )
   extends ReceivedRiskingResults
 
@@ -65,7 +65,7 @@ object RiskingProgress:
     riskedEntity: RiskedEntity,
     riskedIndividuals: Seq[RiskedIndividual],
     riskingCompletedDate: LocalDate,
-    failureMessageExpiryDate: Option[LocalDate]
+    correctiveActionExpiryDate: Option[LocalDate]
   )
   extends ReceivedRiskingResults
 
