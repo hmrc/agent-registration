@@ -47,6 +47,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton()
 class TestApplicationController @Inject() (
@@ -131,6 +132,15 @@ extends BackendController(cc):
         agentApplicationRepo
           .upsert(agentApplication)
           .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
+
+  def deleteAllApplications: Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        for
+          _ <- agentApplicationRepo.deleteAll
+          _ <- individualProvidedDetailsRepo.deleteAll
+        yield NoContent
 
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
   private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(

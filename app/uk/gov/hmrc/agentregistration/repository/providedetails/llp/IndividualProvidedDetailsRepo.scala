@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 
 import org.bson.BsonType
+import org.mongodb.scala.Document
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -94,6 +95,11 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
       filter = Filters.eq("personReference", personReference.value)
     )
     .headOption()
+
+  def deleteAll: Future[Unit] = collection
+    .deleteMany(Document())
+    .toFuture()
+    .map(_ => ())
 
 object ProvidedDetailsRepoHelp:
 

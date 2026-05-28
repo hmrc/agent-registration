@@ -39,6 +39,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
+import org.mongodb.scala.Document
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -71,6 +72,11 @@ extends Repo[AgentApplicationId, AgentApplication](
       filter = Filters.eq("applicationReference", applicationReference.value)
     )
     .headOption()
+
+  def deleteAll: Future[Unit] = collection
+    .deleteMany(Document())
+    .toFuture()
+    .map(_ => ())
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
