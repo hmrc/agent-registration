@@ -38,7 +38,7 @@ extends ISpec:
 
   private def rawDocumentFor(record: IndividualProvidedDetails): Document =
     mongoComponent.database
-      .getCollection("individual")
+      .getCollection(repo.collectionName)
       .find(Filters.eq("_id", record._id.value))
       .first()
       .toFuture()

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 
 import org.bson.BsonType
+import org.mongodb.scala.Document
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -49,7 +50,7 @@ final class IndividualProvidedDetailsRepo @Inject() (
   individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
-  collectionName = "individual",
+  collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.formats)),
@@ -94,6 +95,9 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
       filter = Filters.eq("personReference", personReference.value)
     )
     .headOption()
+
+object IndividualProvidedDetailsRepo:
+  val collectionName = "individual"
 
 object ProvidedDetailsRepoHelp:
 
