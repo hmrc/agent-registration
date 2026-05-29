@@ -97,7 +97,7 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     .headOption()
 
 object IndividualProvidedDetailsRepo:
-  val collectionName = "individuals"
+  val collectionName = "individual"
 
 object ProvidedDetailsRepoHelp:
 
