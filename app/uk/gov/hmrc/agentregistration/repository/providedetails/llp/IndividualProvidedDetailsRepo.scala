@@ -50,7 +50,7 @@ final class IndividualProvidedDetailsRepo @Inject() (
   individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
-  collectionName = "individual",
+  collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.formats)),
@@ -96,10 +96,8 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     )
     .headOption()
 
-  def deleteAll: Future[Unit] = collection
-    .deleteMany(Document())
-    .toFuture()
-    .map(_ => ())
+object IndividualProvidedDetailsRepo:
+  val collectionName = "individuals"
 
 object ProvidedDetailsRepoHelp:
 

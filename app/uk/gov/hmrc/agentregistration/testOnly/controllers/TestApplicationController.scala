@@ -38,6 +38,7 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.testOnly.util.TestMongoCleanup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -58,7 +59,8 @@ class TestApplicationController @Inject() (
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
   individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator,
   applicationReferenceGenerator: ApplicationReferenceGenerator,
-  personReferenceGenerator: PersonReferenceGenerator
+  personReferenceGenerator: PersonReferenceGenerator,
+  testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
 
@@ -138,8 +140,8 @@ extends BackendController(cc):
     .async:
       implicit request =>
         for
-          _ <- agentApplicationRepo.deleteAll
-          _ <- individualProvidedDetailsRepo.deleteAll
+          _ <- testMongoCleanup.deleteAllApplications
+          _ <- testMongoCleanup.deleteAllIndividuals
         yield NoContent
 
   // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space

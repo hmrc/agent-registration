@@ -48,7 +48,7 @@ final class AgentApplicationRepo @Inject() (
   agentApplicationEncryption: AgentApplicationEncryption
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
-  collectionName = "agent-application",
+  collectionName = AgentApplicationRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
   extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.formats)),
@@ -73,10 +73,8 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .headOption()
 
-  def deleteAll: Future[Unit] = collection
-    .deleteMany(Document())
-    .toFuture()
-    .map(_ => ())
+object AgentApplicationRepo:
+  val collectionName = "agent-application"
 
 // when named it AgentApplicationRepo, Scala 3 compiler complains
 // about cyclic reference error during compilation ...
