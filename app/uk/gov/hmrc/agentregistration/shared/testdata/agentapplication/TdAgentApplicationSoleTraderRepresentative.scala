@@ -73,7 +73,12 @@ trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrs
       deceasedCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterContactDetailsComplete: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
+    val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
+      vrns = Some(List(dependencies.vrn)),
+      payeRefs = Some(List(dependencies.payeRef))
+    )
+
+    val afterContactDetailsComplete: AgentApplicationSoleTrader = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )

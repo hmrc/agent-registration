@@ -67,7 +67,12 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
     )
 
-    val afterContactDetailsComplete: AgentApplicationLimitedCompany = afterRefusalToDealWithCheckPass.copy(
+    val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationLimitedCompany = afterRefusalToDealWithCheckPass.copy(
+      vrns = Some(List(dependencies.vrn)),
+      payeRefs = Some(List(dependencies.payeRef))
+    )
+
+    val afterContactDetailsComplete: AgentApplicationLimitedCompany = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )
