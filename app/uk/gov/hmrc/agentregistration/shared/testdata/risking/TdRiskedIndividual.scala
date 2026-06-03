@@ -23,7 +23,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
 trait TdRiskedIndividual:
-  dependencies: (TdBase) =>
+  dependencies: TdBase =>
 
   def riskedIndividualApproved(
     personReference: PersonReference = dependencies.personReference,
@@ -40,6 +40,15 @@ trait TdRiskedIndividual:
   ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
     failures = List(
       IndividualFailure._4._1 // Fixable
+    )
+  )
+
+  def riskedIndividualWithSingleNonFixable(
+    personReference: PersonReference = dependencies.personReference,
+    individualName: IndividualName = dependencies.individualName
+  ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
+    failures = List(
+      IndividualFailure._4._1 // NonFixable
     )
   )
 
