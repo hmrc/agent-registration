@@ -44,3 +44,12 @@ trait TdRiskedEntity:
       EntityFailure._7 // non fixable
     )
   )
+
+  val riskedEntityFailedNonFixableWithDuplicates: RiskedEntity = RiskedEntity(
+    applicationReference = dependencies.applicationReference,
+    failures = List(
+      EntityFailure._4._1, // fixable
+      EntityFailure._8._4, // non fixable
+      EntityFailure._8._6 // non fixable
+    )
+  )

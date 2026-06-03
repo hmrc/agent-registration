@@ -44,14 +44,14 @@ trait TdApplicationRiskingResponse:
       correctiveActionExpiryDate = None
     )
 
-    val failedNonFixable: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
-      riskedEntity = dependencies.riskedEntityFailedFixable,
+    val failedNonFixableIndividualsOnly: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityApproved,
       riskedIndividuals = List(
         dependencies.riskedIndividualNonFixable(
           personReference = PersonReference("PREF0"),
           individualName = dependencies.getIndividualName(0)
         ),
-        dependencies.riskedIndividualFixable(
+        dependencies.riskedIndividualWithSingleNonFixable(
           personReference = PersonReference("PREF1"),
           individualName = dependencies.getIndividualName(1)
         )
@@ -60,8 +60,40 @@ trait TdApplicationRiskingResponse:
       correctiveActionExpiryDate = None
     )
 
-    val failedNonFixable_failedApplicant_approvedIndividuls: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
-      riskedEntity = dependencies.riskedEntityFailedFixable,
+    val allFailedNonFixable: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityFailedNonFixable,
+      riskedIndividuals = List(
+        dependencies.riskedIndividualNonFixable(
+          personReference = PersonReference("PREF0"),
+          individualName = dependencies.getIndividualName(0)
+        ),
+        dependencies.riskedIndividualNonFixable(
+          personReference = PersonReference("PREF1"),
+          individualName = dependencies.getIndividualName(1)
+        )
+      ),
+      riskingCompletedDate = riskingCompletedDate,
+      correctiveActionExpiryDate = None
+    )
+
+    val failedNonFixableWithDuplicates: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityFailedNonFixableWithDuplicates,
+      riskedIndividuals = List(
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF0"),
+          individualName = dependencies.getIndividualName(0)
+        ),
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF1"),
+          individualName = dependencies.getIndividualName(1)
+        )
+      ),
+      riskingCompletedDate = riskingCompletedDate,
+      correctiveActionExpiryDate = None
+    )
+
+    val failedNonFixableFailedApplicantOnly: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityFailedNonFixable,
       riskedIndividuals = List(
         dependencies.riskedIndividualApproved(
           personReference = PersonReference("PREF0"),
