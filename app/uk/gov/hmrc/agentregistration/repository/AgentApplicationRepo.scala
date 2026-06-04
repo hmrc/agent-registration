@@ -39,7 +39,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
-import org.mongodb.scala.Document
+import com.mongodb.ErrorCategory
+import org.mongodb.scala.{Document, MongoWriteException}
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -60,6 +61,22 @@ extends Repo[AgentApplicationId, AgentApplication](
       filter = Filters.eq("internalUserId", agentApplicationEncryption.encrypt(internalUserId).value)
     )
     .headOption()
+
+  def createIfAbsentByInternalUserId(agentApplication: AgentApplication): Future[AgentApplication] =
+    findByInternalUserId(agentApplication.internalUserId).flatMap:
+      case Some(existingApplication) =>
+        Future.successful(existingApplication)
+
+      case None =>
+        collection
+          .insertOne(agentApplication)
+          .toFuture()
+          .map(_ => agentApplication)
+          .recoverWith:
+            case e: MongoWriteException if e.getError.getCategory == ErrorCategory.DUPLICATE_KEY =>
+              findByInternalUserId(agentApplication.internalUserId).flatMap:
+                case Some(existingApplication) => Future.successful(existingApplication)
+                case None => Future.failed(e)
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(

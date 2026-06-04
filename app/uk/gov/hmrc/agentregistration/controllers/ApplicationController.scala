@@ -59,7 +59,7 @@ extends BackendController(cc):
           val agentApplication: AgentApplication = request.body
           ensureInternalUserId(agentApplication)
           agentApplicationRepo
-            .upsert(request.body)
+            .createIfAbsentByInternalUserId(agentApplication)
             .map(_ => Ok(""))
 
   def deleteApplication(): Action[AnyContent] = actions.authorised.async: request =>
