@@ -84,6 +84,31 @@ extends ControllerSpec:
     ).futureValue.value shouldBe exampleAgentApplication withClue "after http request there should be records in mongo"
     AuthStubs.verifyAuthorise()
 
+  "upsert application doesn't replace application in mongo if internal user id application already exists" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    AuthStubs.stubAuthorise()
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+
+    val alreadyExistingAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    val newApplication: AgentApplication = tdAll.agentApplicationLimitedCompany.afterStarted
+
+    repo.upsert(alreadyExistingAgentApplication).futureValue
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/application")
+        .withBody(Json.toJson(newApplication))
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    response.body shouldBe ""
+
+    repo.findByInternalUserId(
+      tdAll.internalUserId
+    ).futureValue.value shouldBe alreadyExistingAgentApplication withClue "record shouldn't be replaced in mongo if already exists by internal user id"
+    AuthStubs.verifyAuthorise()
+
   "find application by linkId returns NO_CONTENT if there is no underlying records" in:
 
     given Request[?] = tdAll.backendRequest

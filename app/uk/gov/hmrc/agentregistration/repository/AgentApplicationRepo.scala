@@ -40,7 +40,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 import com.mongodb.ErrorCategory
-import org.mongodb.scala.{Document, MongoWriteException}
+import org.mongodb.scala.MongoWriteException
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -62,21 +63,21 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .headOption()
 
-  def createIfAbsentByInternalUserId(agentApplication: AgentApplication): Future[AgentApplication] =
-    findByInternalUserId(agentApplication.internalUserId).flatMap:
-      case Some(existingApplication) =>
-        Future.successful(existingApplication)
+  def createIfAbsentByInternalUserId(
+    agentApplication: AgentApplication
+  ): Future[AgentApplication] = findByInternalUserId(agentApplication.internalUserId).flatMap:
+    case Some(existingApplication) => Future.successful(existingApplication)
 
-      case None =>
-        collection
-          .insertOne(agentApplication)
-          .toFuture()
-          .map(_ => agentApplication)
-          .recoverWith:
-            case e: MongoWriteException if e.getError.getCategory == ErrorCategory.DUPLICATE_KEY =>
-              findByInternalUserId(agentApplication.internalUserId).flatMap:
-                case Some(existingApplication) => Future.successful(existingApplication)
-                case None => Future.failed(e)
+    case None =>
+      collection
+        .insertOne(agentApplication)
+        .toFuture()
+        .map(_ => agentApplication)
+        .recoverWith:
+          case e: MongoWriteException if e.getError.getCategory === ErrorCategory.DUPLICATE_KEY =>
+            findByInternalUserId(agentApplication.internalUserId).flatMap:
+              case Some(existingApplication) => Future.successful(existingApplication)
+              case None => Future.failed(e)
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(
