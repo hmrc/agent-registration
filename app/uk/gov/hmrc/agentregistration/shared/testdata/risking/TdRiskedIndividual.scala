@@ -57,7 +57,7 @@ trait TdRiskedIndividual:
     individualName: IndividualName = dependencies.individualName
   ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
     failures = List(
-      IndividualFailure._5._1(325), // Fixable
+      IndividualFailure._5._1, // Fixable
       IndividualFailure._6 // NonFixable
     )
   )

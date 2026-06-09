@@ -85,37 +85,37 @@ object EntityFailure:
   object _5:
 
     /** 5.1: One or more overdue SA liabilities */
-    final case class _1(value: Double)
+    case object _1
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.1"
 
     /** 5.2: One or more overdue CoTax liabilities */
-    final case class _2(value: Double)
+    case object _2
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.2"
 
     /** 5.3: One or more overdue VAT liabilities */
-    final case class _3(value: Double)
+    case object _3
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.3"
 
     /** 5.4: One or more overdue PAYE liabilities */
-    final case class _4(value: Double)
+    case object _4
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.4"
 
     /** 5.5: One or more overdue civil penalties */
-    final case class _5(value: Double)
+    case object _5
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.5"
 
     /** 5.6: One or more overdue Stamp Duty liabilities */
-    final case class _6(value: Double)
+    case object _6
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.6"
 
     /** 5.7: One or more overdue Capital Gains Tax liabilities */
-    final case class _7(value: Double)
+    case object _7
     extends EntityFailure.Fixable:
       override def toString: String = "EntityFailure.5.7"
 
@@ -175,13 +175,13 @@ object EntityFailureFormats:
     implicit val _4_2: OFormat[EntityFailure._4._2.type] = Json.format[EntityFailure._4._2.type]
     implicit val _4_3: OFormat[EntityFailure._4._3.type] = Json.format[EntityFailure._4._3.type]
     implicit val _4_4: OFormat[EntityFailure._4._4.type] = Json.format[EntityFailure._4._4.type]
-    implicit val _5_1: OFormat[EntityFailure._5._1] = Json.format[EntityFailure._5._1]
-    implicit val _5_2: OFormat[EntityFailure._5._2] = Json.format[EntityFailure._5._2]
-    implicit val _5_3: OFormat[EntityFailure._5._3] = Json.format[EntityFailure._5._3]
-    implicit val _5_4: OFormat[EntityFailure._5._4] = Json.format[EntityFailure._5._4]
-    implicit val _5_5: OFormat[EntityFailure._5._5] = Json.format[EntityFailure._5._5]
-    implicit val _5_6: OFormat[EntityFailure._5._6] = Json.format[EntityFailure._5._6]
-    implicit val _5_7: OFormat[EntityFailure._5._7] = Json.format[EntityFailure._5._7]
+    implicit val _5_1: OFormat[EntityFailure._5._1.type] = Json.format[EntityFailure._5._1.type]
+    implicit val _5_2: OFormat[EntityFailure._5._2.type] = Json.format[EntityFailure._5._2.type]
+    implicit val _5_3: OFormat[EntityFailure._5._3.type] = Json.format[EntityFailure._5._3.type]
+    implicit val _5_4: OFormat[EntityFailure._5._4.type] = Json.format[EntityFailure._5._4.type]
+    implicit val _5_5: OFormat[EntityFailure._5._5.type] = Json.format[EntityFailure._5._5.type]
+    implicit val _5_6: OFormat[EntityFailure._5._6.type] = Json.format[EntityFailure._5._6.type]
+    implicit val _5_7: OFormat[EntityFailure._5._7.type] = Json.format[EntityFailure._5._7.type]
     implicit val _7: OFormat[EntityFailure._7.type] = Json.format[EntityFailure._7.type]
     implicit val _8_1: OFormat[EntityFailure._8._1.type] = Json.format[EntityFailure._8._1.type]
     implicit val _8_4: OFormat[EntityFailure._8._4.type] = Json.format[EntityFailure._8._4.type]
