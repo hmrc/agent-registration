@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,18 @@
 
 package uk.gov.hmrc.agentregistration.util
 
-import play.api.Logger
+import play.api.mvc.RequestHeader
 
-trait RequestAwareLogging:
-  implicit val logger: RequestAwareLogger =
-    new RequestAwareLogger(
-      delegateLogger = Logger(getClass)
-    )
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+
+object FutureUtil:
+
+  extension [T](f: Future[T])(using
+    logger: RequestAwareLogger,
+    requestHeader: RequestHeader,
+    ec: ExecutionContext
+  )
+    def andLogOnFailure(message: => String): Future[T] = f.andThen:
+      case Failure(exception) => logger.error(message, exception)
