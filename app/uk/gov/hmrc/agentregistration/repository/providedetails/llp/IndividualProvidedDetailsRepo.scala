@@ -24,6 +24,7 @@ import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -59,21 +60,21 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value)
+      filter = Filters.eq(FieldNames.internalUserId, individualProvidedDetailsEncryption.encrypt(internalUserId).value)
     )
     .toFuture()
     .map(_.toList)
 
   def findForApplication(agentApplicationId: AgentApplicationId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+      filter = Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
     )
     .toFuture()
     .map(_.toList)
 
   def deleteByApplicationId(agentApplicationId: AgentApplicationId): Future[Unit] = collection
     .deleteMany(
-      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+      filter = Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
     )
     .toFuture()
     .map(_ => ())
@@ -84,15 +85,15 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value),
-        Filters.eq("agentApplicationId", agentApplicationId.value)
+        Filters.eq(FieldNames.internalUserId, individualProvidedDetailsEncryption.encrypt(internalUserId).value),
+        Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
       )
     )
     .headOption()
 
   def findByPersonReference(personReference: PersonReference): Future[Option[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("personReference", personReference.value)
+      filter = Filters.eq(FieldNames.personReference, personReference.value)
     )
     .headOption()
 
@@ -111,26 +112,26 @@ object ProvidedDetailsRepoHelp:
 
   def indexes(ttl: FiniteDuration): Seq[IndexModel] = Seq(
     IndexModel(
-      Indexes.ascending("lastUpdated"),
+      Indexes.ascending(FieldNames.lastUpdated),
       IndexOptions().expireAfter(ttl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
     ),
     IndexModel(
-      Indexes.ascending("agentApplicationId")
+      Indexes.ascending(FieldNames.agentApplicationId)
     ),
     IndexModel(
-      Indexes.ascending("internalUserId", "agentApplicationId"),
+      Indexes.ascending(FieldNames.internalUserId, FieldNames.agentApplicationId),
       IndexOptions()
         .unique(true)
         .partialFilterExpression(
           Filters.and(
-            Filters.exists("internalUserId", true),
-            Filters.`type`("internalUserId", BsonType.STRING) // we cannot use "null" because of wart remover
+            Filters.exists(FieldNames.internalUserId, true),
+            Filters.`type`(FieldNames.internalUserId, BsonType.STRING) // we cannot use "null" because of wart remover
           )
         )
         .name("internalUserId_applicationId_unique")
     ),
     IndexModel(
-      keys = Indexes.ascending("personReference"),
+      keys = Indexes.ascending(FieldNames.personReference),
       IndexOptions()
         .unique(true)
         .name("personReference")
