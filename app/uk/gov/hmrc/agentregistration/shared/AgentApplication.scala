@@ -48,7 +48,7 @@ sealed trait AgentApplication:
   def createdAt: Instant
   def applicationExpiresAt: Option[Instant] // set at creation time as createdAt + days-to-submit-application; cleared when the application is sent to Risking
   def submittedAt: Option[Instant] // only populated when the application is submitted, not during the registration journey
-  def isApplicationReadyToSubmitEmailSent: Option[Boolean]
+  def isApplicationReadyToSubmitEmailSent: Option[Boolean] // None = runner hasn't decided yet. Some(true) = email sent. Some(false) = email suppressed (sole trader applicant who is the business owner).
   def applicationState: ApplicationState
   def businessType: BusinessType
   def userRole: Option[UserRole]

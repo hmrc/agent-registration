@@ -23,7 +23,7 @@ enum EmailTemplateId(val id: String):
 
   case ApplicationReadyToSubmit
   extends EmailTemplateId("agent_registration_application_ready_to_submit")
-  
+
   case ApplicationReadyToSubmitSoleTraderNotBusinessOwner
   extends EmailTemplateId("agent_registration_application_ready_to_submit_sole_trader_not_business_owner")
 

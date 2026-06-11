@@ -24,8 +24,8 @@ import uk.gov.hmrc.agentregistration.model.EmailTemplateId
 import uk.gov.hmrc.agentregistration.model.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.UserRole
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.agentregistration.util.EmptyRequest
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
@@ -46,50 +46,49 @@ extends RequestAwareLogging:
 
   def processEmails()(using RequestHeader): Future[Unit] =
     for
-      applications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForReadyToSubmitEmail()
-      applicationsCount: Int = applications.size
-      _ = logger.info(s"Found $applicationsCount application(s) ready to be sent the application-ready-to-submit email")
-      processedCount <- ProcessInSequence
-        .processAllInSequence(applications)(process):
-          case (ex, application) =>
-            logger.error(s"Failed to process ready-to-submit email for ${application.applicationReference.value}", ex)
-      _ = logger.info(s"Processed $processedCount/$applicationsCount application-ready-to-submit emails")
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForReadyToSubmitEmail()
+      agentApplicationsCount: Int = agentApplications.size
+      _ = logger.info(s"Found $agentApplicationsCount application(s) ready to be sent the application-ready-to-submit email")
+      processedCount <-
+        ProcessInSequence
+          .processAllInSequence(agentApplications)(process):
+            case (ex, agentApplication) => logger.error(s"Failed to process ready-to-submit email for ${agentApplication.applicationReference.value}", ex)
+      _ = logger.info(s"Processed $processedCount/$agentApplicationsCount application-ready-to-submit emails")
     yield ()
 
-  private def process(application: AgentApplication)(using RequestHeader): Future[Unit] =
-    val flagged: AgentApplication = application.modify(_.isApplicationReadyToSubmitEmailSent).setTo(Some(true))
-    selectTemplate(application) match
+  private def process(agentApplication: AgentApplication)(using RequestHeader): Future[Unit] =
+    selectTemplate(agentApplication) match
       case Some(templateId) =>
+        val sendEmailRequest = makeSendEmailRequest(agentApplication, templateId)
+        logger.info(s"Sending $templateId email for ${agentApplication.applicationReference.value}")
         for
-          sendEmailRequest <- Future.successful(makeSendEmailRequest(application, templateId))
-          _ = logger.info(s"Sending $templateId email for ${application.applicationReference.value}")
           _ <- emailConnector.sendEmail(sendEmailRequest)
-          _ <- agentApplicationRepo.upsert(flagged)
-          _ = logger.info(s"Sent $templateId email for ${application.applicationReference.value} and recorded send")
-        yield ()
+          _ <- agentApplicationRepo.upsert(agentApplication.modify(_.isApplicationReadyToSubmitEmailSent).setTo(Some(true)))
+        yield logger.info(s"Sent $templateId email for ${agentApplication.applicationReference.value}")
       case None =>
-        logger.info(s"Suppressing application-ready-to-submit email for ${application.applicationReference.value} (sole trader + applicant is business owner)")
-        agentApplicationRepo.upsert(flagged)
+        logger.info(s"Skipping email for ${agentApplication.applicationReference.value} (sole trader who is the business owner)")
+        agentApplicationRepo.upsert(agentApplication.modify(_.isApplicationReadyToSubmitEmailSent).setTo(Some(false)))
 
-  private def selectTemplate(application: AgentApplication): Option[EmailTemplateId] = application.businessType match
-    case BusinessType.SoleTrader if application.userRole.contains(UserRole.Owner) => None
-    case BusinessType.SoleTrader => Some(EmailTemplateId.ApplicationReadyToSubmitSoleTraderNotBusinessOwner)
-    case _ => Some(EmailTemplateId.ApplicationReadyToSubmit)
+  private def selectTemplate(agentApplication: AgentApplication): Option[EmailTemplateId] =
+    agentApplication match
+      case _: AgentApplication.IsSoleTrader if agentApplication.getUserRole === UserRole.Owner => None
+      case _: AgentApplication.IsSoleTrader => Some(EmailTemplateId.ApplicationReadyToSubmitSoleTraderNotBusinessOwner)
+      case _: AgentApplication.IsNotSoleTrader => Some(EmailTemplateId.ApplicationReadyToSubmit)
 
   private def makeSendEmailRequest(
-    application: AgentApplication,
+    agentApplication: AgentApplication,
     templateId: EmailTemplateId
   ): SendEmailRequest = SendEmailRequest(
-    to = Seq(application.getApplicantContactDetails.getVerifiedEmail),
+    to = Seq(agentApplication.getApplicantContactDetails.getVerifiedEmail),
     templateId = templateId,
     parameters = Map(
-      "agentName" -> application.getApplicantContactDetails.applicantName.value,
-      "applicationRef" -> application.applicationReference.value,
-      "applicationExpiryDate" -> formatApplicationExpiryDate(application)
+      "agentName" -> agentApplication.getApplicantContactDetails.applicantName.value,
+      "applicationRef" -> agentApplication.applicationReference.value,
+      "applicationExpiryDate" -> formatApplicationExpiryDate(agentApplication)
     )
   )
 
-  private def formatApplicationExpiryDate(application: AgentApplication): String = application
+  private def formatApplicationExpiryDate(agentApplication: AgentApplication): String = agentApplication
     .applicationExpiresAt
     .map(instant => LocalDate.ofInstant(instant, AppConfig.zoneId).format(EmailServiceForApplicationsReadyToSubmit.dateFormatter))
     .getOrElse("")

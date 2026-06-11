@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object ProcessInSequence:
-  
+
   def processInSequence[Item, Result](items: Seq[Item])(f: Item => Future[Result])(using ExecutionContext): Future[List[Result]] = items
     .foldLeft[Future[List[Result]]](Future.successful(List.empty[Result])):
       (

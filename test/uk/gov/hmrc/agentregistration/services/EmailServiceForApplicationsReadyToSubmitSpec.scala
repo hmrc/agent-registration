@@ -43,25 +43,25 @@ extends ISpec:
   private lazy val service: EmailServiceForApplicationsReadyToSubmit = app.injector.instanceOf[EmailServiceForApplicationsReadyToSubmit]
   private lazy val applicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   private lazy val individualRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-  
+
   private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy").withLocale(java.util.Locale.UK)
 
   private def expectedEmail(
-    application: AgentApplication,
+    agentApplication: AgentApplication,
     templateId: EmailTemplateId
   ): SendEmailRequest = SendEmailRequest(
-    to = Seq(application.getApplicantContactDetails.getVerifiedEmail),
+    to = Seq(agentApplication.getApplicantContactDetails.getVerifiedEmail),
     templateId = templateId,
     parameters = Map(
-      "agentName" -> application.getApplicantContactDetails.applicantName.value,
-      "applicationRef" -> application.applicationReference.value,
-      "applicationExpiryDate" -> application
+      "agentName" -> agentApplication.getApplicantContactDetails.applicantName.value,
+      "applicationRef" -> agentApplication.applicationReference.value,
+      "applicationExpiryDate" -> agentApplication
         .applicationExpiresAt
         .map(LocalDate.ofInstant(_, AppConfig.zoneId).format(dateFormatter))
         .getOrElse(fail("fixture must have applicationExpiresAt set"))
     )
   )
-  
+
   private def finishedIndividualFor(suffix: String): IndividualProvidedDetails =
     val base = tdAll.providedDetails.precreated
     base.copy(
@@ -70,8 +70,9 @@ extends ISpec:
       providedDetailsState = ProvidedDetailsState.Finished
     )
 
-  private def startedIndividualFor(suffix: String): IndividualProvidedDetails =
-    finishedIndividualFor(suffix).copy(providedDetailsState = ProvidedDetailsState.Started)
+  private def startedIndividualFor(suffix: String): IndividualProvidedDetails = finishedIndividualFor(suffix).copy(providedDetailsState =
+    ProvidedDetailsState.Started
+  )
 
   private val llpReady = tdAll.agentApplicationLlp.afterContactDetailsComplete
   private val llpAlreadyFlagged = llpReady.copy(isApplicationReadyToSubmitEmailSent = Some(true))
@@ -105,18 +106,25 @@ extends ISpec:
         expectedFlagAfter = Some(true)
       ),
       TestCase(
-        description = "suppresses the email but still flips the flag for sole trader where the applicant IS the business owner",
+        description = "marks Some(false) and does not send email for sole trader who is the business owner",
         application = soleTraderOwner,
+        individuals = Seq(finishedIndividualFor("a")),
+        expectedEmails = Seq.empty,
+        expectedFlagAfter = Some(false)
+      ),
+      TestCase(
+        description = "skips applications already decided as sent (Some(true))",
+        application = llpAlreadyFlagged,
         individuals = Seq(finishedIndividualFor("a")),
         expectedEmails = Seq.empty,
         expectedFlagAfter = Some(true)
       ),
       TestCase(
-        description = "skips applications where isApplicationReadyToSubmitEmailSent is already true",
-        application = llpAlreadyFlagged,
+        description = "skips applications already decided as suppressed (Some(false))",
+        application = llpReady.copy(isApplicationReadyToSubmitEmailSent = Some(false)),
         individuals = Seq(finishedIndividualFor("a")),
         expectedEmails = Seq.empty,
-        expectedFlagAfter = Some(true)
+        expectedFlagAfter = Some(false)
       ),
       TestCase(
         description = "skips applications where not every individual is Finished",
@@ -128,6 +136,13 @@ extends ISpec:
       TestCase(
         description = "skips applications not in GrsDataReceived state",
         application = llpNotYetGrs,
+        individuals = Seq(finishedIndividualFor("a")),
+        expectedEmails = Seq.empty,
+        expectedFlagAfter = None
+      ),
+      TestCase(
+        description = "skips applications already sent for risking",
+        application = tdAll.agentApplicationLlp.afterDeclarationSubmitted,
         individuals = Seq(finishedIndividualFor("a")),
         expectedEmails = Seq.empty,
         expectedFlagAfter = None

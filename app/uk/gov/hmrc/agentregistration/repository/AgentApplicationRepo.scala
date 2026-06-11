@@ -85,7 +85,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       Aggregates.filter(
         Filters.and(
           Filters.eq(FieldNames.applicationState, ApplicationState.GrsDataReceived.toString),
-          Filters.ne(FieldNames.isApplicationReadyToSubmitEmailSent, true)
+          Filters.exists(FieldNames.isApplicationReadyToSubmitEmailSent, false)
         )
       ),
       Aggregates.lookup(
