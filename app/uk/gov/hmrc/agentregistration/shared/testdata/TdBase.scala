@@ -268,4 +268,4 @@ trait TdBase:
     payeRefs = List.empty
   )
 
-  val arn = "TARN0000001"
+  def arn: Arn = Arn("TARN0000001")

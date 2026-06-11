@@ -35,8 +35,11 @@ extension (agentApplication: AgentApplication)
         case a: AgentApplicationSoleTrader => a.deceasedCheckResult === Some(CheckResult.Pass)
         case _ => true // not required so passed
 
+    val globalAsaEnrolmentPassed: Boolean = agentApplication.globalAsaEnrolmentCheckResult === Some(CheckResult.Pass)
+
     refusalToDealWithCheckResultPassed
     && deceasedCheckPassed
+    && globalAsaEnrolmentPassed
 
 extension (agentApplication: AgentApplication.IsIncorporated)
 

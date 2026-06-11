@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMi
 
 final case class BusinessPartnerRecordResponse(
   organisationName: Option[String],
-  agentReferenceNumber: Option[String],
+  agentReferenceNumber: Option[Arn],
   individualName: Option[String],
   address: DesBusinessAddress,
   emailAddress: Option[String],
@@ -33,6 +33,8 @@ final case class BusinessPartnerRecordResponse(
   def isAlreadyRegisteredAsAgent: Boolean = agentReferenceNumber.isDefined && isAnAsaAgent
 
   def getEntityName: String = organisationName.orElse(individualName).getOrThrowExpectedDataMissing("No entity name found")
+
+  def getAgentReferenceNumber: Arn = agentReferenceNumber.getOrThrowExpectedDataMissing("agentReferenceNumber")
 
 object BusinessPartnerRecordResponse:
   given format: Format[BusinessPartnerRecordResponse] = Json.format[BusinessPartnerRecordResponse]
