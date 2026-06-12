@@ -45,6 +45,7 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
+      globalAsaEnrolmentCheckResult = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
@@ -71,8 +72,15 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       vrns = Some(List(dependencies.vrn)),
       payeRefs = Some(List(dependencies.payeRef))
     )
+    val afterGlobalAsaEnrolmentCheckPass: AgentApplicationLimitedCompany = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      globalAsaEnrolmentCheckResult = Some(CheckResult.Pass)
+    )
 
-    val afterContactDetailsComplete: AgentApplicationLimitedCompany = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+    val afterGlobalAsaEnrolmentCheckFail: AgentApplicationLimitedCompany = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      globalAsaEnrolmentCheckResult = Some(CheckResult.Fail)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationLimitedCompany = afterGlobalAsaEnrolmentCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )

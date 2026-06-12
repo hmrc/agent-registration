@@ -46,6 +46,7 @@ trait TdAgentApplicationScottishLimitedPartnership {
       amlsDetails = None,
       agentDetails = None,
       refusalToDealWithCheckResult = None,
+      globalAsaEnrolmentCheckResult = None,
       hmrcStandardForAgentsAgreed = StateOfAgreement.NotSet,
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
@@ -73,7 +74,15 @@ trait TdAgentApplicationScottishLimitedPartnership {
       payeRefs = Some(List(dependencies.payeRef))
     )
 
-    val afterContactDetailsComplete: AgentApplicationScottishLimitedPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+    val afterGlobalAsaEnrolmentCheckPass: AgentApplicationScottishLimitedPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      globalAsaEnrolmentCheckResult = Some(CheckResult.Pass)
+    )
+
+    val afterGlobalAsaEnrolmentCheckFail: AgentApplicationScottishLimitedPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
+      globalAsaEnrolmentCheckResult = Some(CheckResult.Fail)
+    )
+
+    val afterContactDetailsComplete: AgentApplicationScottishLimitedPartnership = afterGlobalAsaEnrolmentCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
     )
