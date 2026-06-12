@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.util
+package uk.gov.hmrc.agentregistration.model
 
-import play.api.Logger
+import play.api.libs.json.JsString
+import play.api.libs.json.Writes
 
-trait RequestAwareLogging:
-  implicit val logger: RequestAwareLogger =
-    new RequestAwareLogger(
-      delegateLogger = Logger(getClass)
-    )
+enum EmailTemplateId(val id: String):
+
+  case ApplicationReadyToSubmit
+  extends EmailTemplateId("agent_registration_application_ready_to_submit")
+  
+  case ApplicationReadyToSubmitSoleTraderNotBusinessOwner
+  extends EmailTemplateId("agent_registration_application_ready_to_submit_sole_trader_not_business_owner")
+
+object EmailTemplateId:
+
+  given Writes[EmailTemplateId] = Writes(o => JsString(o.id))

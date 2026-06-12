@@ -22,7 +22,12 @@ import play.api.Configuration
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.time.LocalTime
+import java.time.ZoneId
 import scala.concurrent.duration.FiniteDuration
+
+object AppConfig:
+  val zoneId: ZoneId = ZoneId.of("UTC")
 
 @Singleton
 class AppConfig @Inject() (
@@ -40,6 +45,8 @@ class AppConfig @Inject() (
   val hipBaseUrl: String = servicesConfig.baseUrl("hip")
   val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
 
+  val emailBaseUrl: String = servicesConfig.baseUrl("email")
+
   object AgentApplicationRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-repo-ttl", servicesConfig)
 
@@ -51,3 +58,8 @@ class AppConfig @Inject() (
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
     val key: String = configuration.get[String]("field-level-encryption.key")
     val previousKeys: Seq[String] = configuration.get[Seq[String]]("field-level-encryption.previousKeys")
+
+  object Scheduler:
+
+    val enabled: Boolean = configuration.getOptional[Boolean]("scheduler.ready-to-submit-email.enabled").getOrElse(false)
+    val time: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.ready-to-submit-email.time"))

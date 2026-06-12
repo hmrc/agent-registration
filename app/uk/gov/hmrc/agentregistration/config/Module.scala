@@ -21,6 +21,7 @@ import com.google.inject.Provides
 import com.google.inject.Singleton
 import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
+import uk.gov.hmrc.agentregistration.scheduler.ApplicationReadyToSubmitEmailSchedulerInitializer
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
@@ -30,7 +31,9 @@ import java.time.ZoneOffset
 class Module
 extends AbstractModule:
 
-  override def configure(): Unit = bind(classOf[AppConfig]).asEagerSingleton()
+  override def configure(): Unit =
+    bind(classOf[AppConfig]).asEagerSingleton()
+    bind(classOf[ApplicationReadyToSubmitEmailSchedulerInitializer]).asEagerSingleton()
 
   @Provides
   @Singleton

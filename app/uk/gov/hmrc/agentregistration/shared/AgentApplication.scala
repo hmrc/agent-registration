@@ -45,6 +45,7 @@ sealed trait AgentApplication:
   def createdAt: Instant
   def applicationExpiresAt: Option[Instant] // set at creation time as createdAt + days-to-submit-application; cleared when the application is sent to Risking
   def submittedAt: Option[Instant] // only populated when the application is submitted, not during the registration journey
+  def isApplicationReadyToSubmitEmailSent: Option[Boolean]
   def applicationState: ApplicationState
   def businessType: BusinessType
   def userRole: Option[UserRole]
@@ -158,6 +159,7 @@ final case class AgentApplicationSoleTrader(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsSoleTrader],
@@ -196,6 +198,7 @@ final case class AgentApplicationLlp(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsLlp],
@@ -230,6 +233,7 @@ final case class AgentApplicationLimitedCompany(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsLimitedCompany],
@@ -264,6 +268,7 @@ final case class AgentApplicationGeneralPartnership(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsGeneralPartnership],
@@ -297,6 +302,7 @@ final case class AgentApplicationLimitedPartnership(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsPartnership],
@@ -329,6 +335,7 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsPartnership],
@@ -361,6 +368,7 @@ final case class AgentApplicationScottishPartnership(
   override val createdAt: Instant,
   override val applicationExpiresAt: Option[Instant],
   override val submittedAt: Option[Instant],
+  override val isApplicationReadyToSubmitEmailSent: Option[Boolean],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsScottishPartnership],

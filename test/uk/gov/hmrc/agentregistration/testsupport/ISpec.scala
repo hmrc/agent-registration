@@ -68,6 +68,7 @@ extends AnyFreeSpecLike,
       "auditing.traceRequests" -> false,
       "microservice.services.auth.port" -> WireMockSupport.port,
       "microservice.services.des.port" -> WireMockSupport.port,
+      "microservice.services.email.port" -> WireMockSupport.port,
       "microservice.services.hip.port" -> WireMockSupport.port,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
       "mongodb.uri" -> mongoUri
