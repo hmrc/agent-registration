@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.amls
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 
 final case class AmlsDetails(
-  supervisoryBody: AmlsCode,
+  supervisoryBody: AmlsSupervisoryBodyCode,
   amlsRegistrationNumber: Option[AmlsRegistrationNumber],
   amlsEvidence: Option[AmlsEvidence]
 ):
@@ -30,12 +29,7 @@ final case class AmlsDetails(
   val isHmrc: Boolean = supervisoryBody.value.contains("HMRC")
   val isComplete: Boolean =
     this match
-      case AmlsDetails(
-            _,
-            Some(_),
-            _
-          ) if isHmrc =>
-        true
+      case AmlsDetails(_, Some(_), _) if isHmrc => true
       case AmlsDetails(
             _,
             Some(_),

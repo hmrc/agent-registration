@@ -18,11 +18,11 @@ package uk.gov.hmrc.agentregistration.shared.risking.submitforrisking
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.AmlsCode
-import uk.gov.hmrc.agentregistration.shared.AmlsRegistrationNumber
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsRegistrationNumber
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsSupervisoryBodyCode
 
 final case class AmlsDetailsData(
-  supervisoryBody: AmlsCode,
+  supervisoryBody: AmlsSupervisoryBodyCode,
   amlsRegistrationNumber: AmlsRegistrationNumber,
   amlsEvidence: Option[AmlsEvidenceData]
 )

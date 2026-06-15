@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.amls
 
-final case class AmlsName(value: String)
+import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
+
+final case class AmlsSupervisoryBodyCode(value: String)
+
+object AmlsSupervisoryBodyCode:
+  given format: Format[AmlsSupervisoryBodyCode] = JsonFormatsFactory.makeValueClassFormat
