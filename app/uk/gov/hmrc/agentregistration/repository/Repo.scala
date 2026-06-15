@@ -122,3 +122,11 @@ object Repo:
   ): Bson = Filters.nor(
     Filters.elemMatch(fieldName, Filters.nor(filter))
   )
+
+  def forallNonEmpty(
+    fieldName: String,
+    filter: Bson
+  ): Bson = Filters.and(
+    Filters.exists(s"$fieldName.0"),
+    forall(fieldName, filter)
+  )

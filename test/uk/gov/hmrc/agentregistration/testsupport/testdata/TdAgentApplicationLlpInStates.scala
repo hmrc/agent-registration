@@ -16,106 +16,114 @@
 
 package uk.gov.hmrc.agentregistration.testsupport.testdata
 
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.model.ApplicationScheduler
+import uk.gov.hmrc.agentregistration.model.EmailStatus
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
-import uk.gov.hmrc.agentregistration.shared.ApplicationReference
-import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.InternalUserId
-import uk.gov.hmrc.agentregistration.shared.LinkId
-import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
-import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState
 
-trait TdLlpScenario:
-
-  protected val tdAll: TdAll = TdAll.tdAll
+trait TdScenario:
 
   def seed: String
-  def applicationState: ApplicationState
-  def isApplicationReadyToSubmitEmailSent: Option[Boolean]
+
+  protected lazy val td: TdAll = TdAll.make(seed)
+
+  def agentApplication: AgentApplication
+  def applicationScheduler: Option[ApplicationScheduler]
   def individuals: Seq[IndividualProvidedDetails]
 
-  def agentApplicationLlp: AgentApplicationLlp =
-    val agentApplicationLlpBase: AgentApplicationLlp = tdAll.agentApplicationLlp.afterContactDetailsComplete
-    agentApplicationLlpBase.copy(
-      _id = AgentApplicationId(s"${agentApplicationLlpBase._id.value}-$seed"),
-      internalUserId = InternalUserId(s"${agentApplicationLlpBase.internalUserId.value}-$seed"),
-      linkId = LinkId(s"${agentApplicationLlpBase.linkId.value}-$seed"),
-      applicationReference = ApplicationReference(s"${agentApplicationLlpBase.applicationReference.value}-$seed"),
-      applicationState = applicationState,
-      isApplicationReadyToSubmitEmailSent = isApplicationReadyToSubmitEmailSent
-    )
+  protected def schedulerWith(emailStatus: EmailStatus): ApplicationScheduler = td.applicationScheduler.notProcessed.copy(applicationReadyToSubmitEmailStatus =
+    emailStatus
+  )
 
-  protected def finishedIndividual(suffix: String): IndividualProvidedDetails =
-    val individualProvidedDetailsBase: IndividualProvidedDetails = tdAll.providedDetails.precreated
-    individualProvidedDetailsBase.copy(
-      _id = IndividualProvidedDetailsId(s"${individualProvidedDetailsBase._id.value}-$seed-$suffix"),
-      personReference = PersonReference(s"${individualProvidedDetailsBase.personReference.value}-$seed-$suffix"),
-      agentApplicationId = agentApplicationLlp._id,
-      providedDetailsState = ProvidedDetailsState.Finished
-    )
+  protected def finishedIndividual(individualSeed: String): IndividualProvidedDetails =
+    TdAll.makeForIndividual(seed, individualSeed).providedDetails.afterFinished
 
-  protected def startedIndividual(suffix: String): IndividualProvidedDetails =
-    finishedIndividual(suffix).copy(providedDetailsState = ProvidedDetailsState.Started)
+  protected def startedIndividual(individualSeed: String): IndividualProvidedDetails =
+    TdAll.makeForIndividual(seed, individualSeed).providedDetails.afterStarted
+
+trait TdLlpScenario
+extends TdScenario:
+
+  def agentApplicationLlp: AgentApplicationLlp
+  override def agentApplication: AgentApplication = agentApplicationLlp
 
 object TdAgentApplicationLlpInStates:
 
   case object readyForEmail
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.GrsDataReceived
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = None
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = None
     val individualA: IndividualProvidedDetails = finishedIndividual("a")
     val individualB: IndividualProvidedDetails = finishedIndividual("b")
     override val individuals: Seq[IndividualProvidedDetails] = Seq(individualA, individualB)
 
+  /** Eligible AND already has a scheduler record left at `NotProcessed` (e.g. from a partial-write or crash). The finder must still return this because
+    * `NotProcessed` is not in the "skip" set — only `Sent` / `Suppressed` are.
+    */
+  case object readyForEmailWithNotProcessedScheduler
+  extends TdLlpScenario:
+
+    override val seed: String = this.toString
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = Some(schedulerWith(EmailStatus.NotProcessed))
+    override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
+
   case object emailAlreadySent
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.GrsDataReceived
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = Some(true)
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = Some(schedulerWith(EmailStatus.Sent))
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
   case object emailAlreadySuppressed
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.GrsDataReceived
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = Some(false)
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = Some(schedulerWith(EmailStatus.Suppressed))
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
   case object notYetGrs
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.Started
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = None
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterStarted
+    override val applicationScheduler: Option[ApplicationScheduler] = None
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
   case object alreadySentForRisking
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.SentForRisking
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = None
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterDeclarationSubmitted
+    override val applicationScheduler: Option[ApplicationScheduler] = None
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
   case object noIndividuals
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.GrsDataReceived
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = None
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = None
     override val individuals: Seq[IndividualProvidedDetails] = Seq.empty
 
   case object oneIndividualNotFinished
   extends TdLlpScenario:
+
     override val seed: String = this.toString
-    override val applicationState: ApplicationState = ApplicationState.GrsDataReceived
-    override val isApplicationReadyToSubmitEmailSent: Option[Boolean] = None
+    override val agentApplicationLlp: AgentApplicationLlp = td.agentApplicationLlp.afterContactDetailsComplete
+    override val applicationScheduler: Option[ApplicationScheduler] = None
     val individualFinished: IndividualProvidedDetails = finishedIndividual("a")
     val individualStarted: IndividualProvidedDetails = startedIndividual("b")
     override val individuals: Seq[IndividualProvidedDetails] = Seq(individualFinished, individualStarted)
 
   val all: Seq[TdLlpScenario] = Seq(
     readyForEmail,
+    readyForEmailWithNotProcessedScheduler,
     emailAlreadySent,
     emailAlreadySuppressed,
     notYetGrs,

@@ -16,22 +16,26 @@
 
 package uk.gov.hmrc.agentregistration.services
 
-import com.softwaremill.quicklens.*
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.connectors.EmailConnector
+import uk.gov.hmrc.agentregistration.model.ApplicationScheduler
+import uk.gov.hmrc.agentregistration.model.EmailStatus
 import uk.gov.hmrc.agentregistration.model.EmailTemplateId
 import uk.gov.hmrc.agentregistration.model.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.repository.ApplicationSchedulerRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.UserRole
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
-import uk.gov.hmrc.agentregistration.util.EmptyRequest
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import java.time.format.DateTimeFormatter
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -40,7 +44,8 @@ import scala.concurrent.Future
 @Singleton
 class EmailServiceForApplicationsReadyToSubmit @Inject() (
   emailConnector: EmailConnector,
-  agentApplicationRepo: AgentApplicationRepo
+  agentApplicationRepo: AgentApplicationRepo,
+  applicationSchedulerRepo: ApplicationSchedulerRepo
 )(using ExecutionContext)
 extends RequestAwareLogging:
 
@@ -63,11 +68,26 @@ extends RequestAwareLogging:
         logger.info(s"Sending $templateId email for ${agentApplication.applicationReference.value}")
         for
           _ <- emailConnector.sendEmail(sendEmailRequest)
-          _ <- agentApplicationRepo.upsert(agentApplication.modify(_.isApplicationReadyToSubmitEmailSent).setTo(Some(true)))
+          _ <- recordReadyToSubmitEmailStatus(agentApplication.applicationReference, EmailStatus.Sent)
         yield logger.info(s"Sent $templateId email for ${agentApplication.applicationReference.value}")
       case None =>
         logger.info(s"Skipping email for ${agentApplication.applicationReference.value} (sole trader who is the business owner)")
-        agentApplicationRepo.upsert(agentApplication.modify(_.isApplicationReadyToSubmitEmailSent).setTo(Some(false)))
+        recordReadyToSubmitEmailStatus(agentApplication.applicationReference, EmailStatus.Suppressed)
+
+  private def recordReadyToSubmitEmailStatus(
+    applicationReference: ApplicationReference,
+    emailStatus: EmailStatus
+  ): Future[Unit] = applicationSchedulerRepo
+    .findById(applicationReference)
+    .flatMap: maybeApplicationScheduler =>
+      applicationSchedulerRepo.upsert(
+        maybeApplicationScheduler
+          .getOrElse(ApplicationScheduler.makeNew(applicationReference))
+          .copy(
+            applicationReadyToSubmitEmailStatus = emailStatus,
+            lastUpdated = Instant.now(Clock.systemUTC())
+          )
+      )
 
   private def selectTemplate(agentApplication: AgentApplication): Option[EmailTemplateId] =
     agentApplication match
@@ -84,16 +104,16 @@ extends RequestAwareLogging:
     parameters = Map(
       "agentName" -> agentApplication.getApplicantContactDetails.applicantName.value,
       "applicationRef" -> agentApplication.applicationReference.value,
-      "applicationExpiryDate" -> formatApplicationExpiryDate(agentApplication)
+      "applicationExpiryDate" -> LocalDate
+        .ofInstant(agentApplication.getApplicationExpiresAt, EmailServiceForApplicationsReadyToSubmit.displayZone)
+        .format(EmailServiceForApplicationsReadyToSubmit.dateFormatter)
     )
   )
 
-  private def formatApplicationExpiryDate(agentApplication: AgentApplication): String = agentApplication
-    .applicationExpiresAt
-    .map(instant => LocalDate.ofInstant(instant, AppConfig.zoneId).format(EmailServiceForApplicationsReadyToSubmit.dateFormatter))
-    .getOrElse("")
-
 object EmailServiceForApplicationsReadyToSubmit:
+
+  // dates shown to the applicant in the email body — UK-local zone, not UTC, to avoid late-evening-BST rollover surprises
+  private val displayZone: ZoneId = ZoneId.of("Europe/London")
   private val dateFormatter: DateTimeFormatter = DateTimeFormatter
     .ofPattern("d MMMM yyyy")
     .withLocale(java.util.Locale.UK)

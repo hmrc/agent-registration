@@ -28,17 +28,20 @@ extends ISpec:
     "field-level-encryption.enabled" -> false
   )
 
-  private lazy val applicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-  private lazy val individualRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+  private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+  private lazy val applicationSchedulerRepo: ApplicationSchedulerRepo = app.injector.instanceOf[ApplicationSchedulerRepo]
+  private lazy val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
   override def beforeEach(): Unit =
     super.beforeEach()
     TdAgentApplicationLlpInStates.all.foreach: scenario =>
-      applicationRepo.upsert(scenario.agentApplicationLlp).futureValue
-      scenario.individuals.foreach(individualRepo.upsert(_).futureValue)
+      agentApplicationRepo.upsert(scenario.agentApplicationLlp).futureValue
+      scenario.applicationScheduler.foreach(applicationSchedulerRepo.upsert(_).futureValue)
+      scenario.individuals.foreach(individualProvidedDetailsRepo.upsert(_).futureValue)
 
-  "findReadyForReadyToSubmitEmail returns only applications in GrsDataReceived with no decision yet AND all individuals Finished" in:
-    val agentApplications: Seq[AgentApplication] = applicationRepo.findReadyForReadyToSubmitEmail().futureValue
-    agentApplications.map(_.agentApplicationId).toSet shouldBe Set(
-      TdAgentApplicationLlpInStates.readyForEmail.agentApplicationLlp.agentApplicationId
-    )
+  "findReadyForReadyToSubmitEmail" in:
+    val agentApplications: Seq[AgentApplication] = agentApplicationRepo.findReadyForReadyToSubmitEmail().futureValue
+    agentApplications.toSet shouldBe Set(
+      TdAgentApplicationLlpInStates.readyForEmail.agentApplicationLlp,
+      TdAgentApplicationLlpInStates.readyForEmailWithNotProcessedScheduler.agentApplicationLlp
+    ) withClue agentApplications.toSet.map(_.applicationReference.value).mkString(",\n ")

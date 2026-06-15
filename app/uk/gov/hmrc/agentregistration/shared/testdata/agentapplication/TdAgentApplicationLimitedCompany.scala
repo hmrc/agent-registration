@@ -38,7 +38,6 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       createdAt = dependencies.nowAsInstant,
       applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
-      isApplicationReadyToSubmitEmailSent = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
       businessDetails = None,
@@ -145,7 +144,6 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
     val afterDeclarationSubmitted: AgentApplicationLimitedCompany = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
-      isApplicationReadyToSubmitEmailSent = None,
       applicationExpiresAt = None
     )
 

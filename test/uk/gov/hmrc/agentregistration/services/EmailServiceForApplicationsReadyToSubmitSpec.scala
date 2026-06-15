@@ -17,22 +17,22 @@
 package uk.gov.hmrc.agentregistration.services
 
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.model.EmailStatus
 import uk.gov.hmrc.agentregistration.model.EmailTemplateId
 import uk.gov.hmrc.agentregistration.model.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.repository.ApplicationSchedulerRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.PersonReference
-import uk.gov.hmrc.agentregistration.shared.UserRole
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
-import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAgentApplicationLlpInStates
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAgentApplicationSoleTraderInStates
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdScenario
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 import uk.gov.hmrc.agentregistration.util.EmptyRequest
 
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class EmailServiceForApplicationsReadyToSubmitSpec
@@ -40,9 +40,12 @@ extends ISpec:
 
   private given RequestHeader = EmptyRequest.emptyRequestHeader
 
-  private lazy val service: EmailServiceForApplicationsReadyToSubmit = app.injector.instanceOf[EmailServiceForApplicationsReadyToSubmit]
-  private lazy val applicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-  private lazy val individualRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+  private lazy val emailServiceForApplicationsReadyToSubmit: EmailServiceForApplicationsReadyToSubmit = app.injector.instanceOf[
+    EmailServiceForApplicationsReadyToSubmit
+  ]
+  private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+  private lazy val applicationSchedulerRepo: ApplicationSchedulerRepo = app.injector.instanceOf[ApplicationSchedulerRepo]
+  private lazy val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
   private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy").withLocale(java.util.Locale.UK)
 
@@ -55,113 +58,91 @@ extends ISpec:
     parameters = Map(
       "agentName" -> agentApplication.getApplicantContactDetails.applicantName.value,
       "applicationRef" -> agentApplication.applicationReference.value,
-      "applicationExpiryDate" -> agentApplication
-        .applicationExpiresAt
-        .map(LocalDate.ofInstant(_, AppConfig.zoneId).format(dateFormatter))
-        .getOrElse(fail("fixture must have applicationExpiresAt set"))
+      "applicationExpiryDate" -> LocalDate.ofInstant(agentApplication.applicationExpiresAt.value, ZoneId.of("Europe/London")).format(dateFormatter)
     )
   )
-
-  private def finishedIndividualFor(suffix: String): IndividualProvidedDetails =
-    val base = tdAll.providedDetails.precreated
-    base.copy(
-      _id = IndividualProvidedDetailsId(s"${base._id.value}-$suffix"),
-      personReference = PersonReference(s"${base.personReference.value}-$suffix"),
-      providedDetailsState = ProvidedDetailsState.Finished
-    )
-
-  private def startedIndividualFor(suffix: String): IndividualProvidedDetails = finishedIndividualFor(suffix).copy(providedDetailsState =
-    ProvidedDetailsState.Started
-  )
-
-  private val llpReady = tdAll.agentApplicationLlp.afterContactDetailsComplete
-  private val llpAlreadyFlagged = llpReady.copy(isApplicationReadyToSubmitEmailSent = Some(true))
-  private val llpNotYetGrs = tdAll.agentApplicationLlp.afterStarted
-  private val soleTraderOwner = tdAll.agentApplicationSoleTrader.afterContactDetailsComplete // default userRole = Owner
-  private val soleTraderNonOwner = soleTraderOwner.copy(userRole = Some(UserRole.Authorised))
 
   private case class TestCase(
     description: String,
-    application: AgentApplication,
-    individuals: Seq[IndividualProvidedDetails],
+    scenario: TdScenario,
     expectedEmails: Seq[SendEmailRequest],
-    expectedFlagAfter: Option[Boolean]
+    expectedEmailStatusAfter: Option[EmailStatus]
   )
 
   "processEmails" - {
 
     List(
       TestCase(
-        description = "sends the default template + flips flag when all individuals are Finished (LLP)",
-        application = llpReady,
-        individuals = Seq(finishedIndividualFor("a"), finishedIndividualFor("b")),
-        expectedEmails = Seq(expectedEmail(llpReady, EmailTemplateId.ApplicationReadyToSubmit)),
-        expectedFlagAfter = Some(true)
+        description = "sends the default template + records Sent when all individuals are Finished (LLP)",
+        scenario = TdAgentApplicationLlpInStates.readyForEmail,
+        expectedEmails = Seq(expectedEmail(TdAgentApplicationLlpInStates.readyForEmail.agentApplication, EmailTemplateId.ApplicationReadyToSubmit)),
+        expectedEmailStatusAfter = Some(EmailStatus.Sent)
       ),
       TestCase(
-        description = "sends the sole-trader-not-owner template for sole trader where the applicant is NOT the business owner",
-        application = soleTraderNonOwner,
-        individuals = Seq(finishedIndividualFor("a")),
-        expectedEmails = Seq(expectedEmail(soleTraderNonOwner, EmailTemplateId.ApplicationReadyToSubmitSoleTraderNotBusinessOwner)),
-        expectedFlagAfter = Some(true)
+        description = "sends the sole-trader-not-owner template + records Sent for sole trader where applicant is NOT the business owner",
+        scenario = TdAgentApplicationSoleTraderInStates.readyForEmailAsNonOwner,
+        expectedEmails = Seq(
+          expectedEmail(
+            TdAgentApplicationSoleTraderInStates.readyForEmailAsNonOwner.agentApplication,
+            EmailTemplateId.ApplicationReadyToSubmitSoleTraderNotBusinessOwner
+          )
+        ),
+        expectedEmailStatusAfter = Some(EmailStatus.Sent)
       ),
       TestCase(
-        description = "marks Some(false) and does not send email for sole trader who is the business owner",
-        application = soleTraderOwner,
-        individuals = Seq(finishedIndividualFor("a")),
+        description = "records Suppressed and does not send email for sole trader who IS the business owner",
+        scenario = TdAgentApplicationSoleTraderInStates.readyForEmailAsOwner,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = Some(false)
+        expectedEmailStatusAfter = Some(EmailStatus.Suppressed)
       ),
       TestCase(
-        description = "skips applications already decided as sent (Some(true))",
-        application = llpAlreadyFlagged,
-        individuals = Seq(finishedIndividualFor("a")),
+        description = "skips applications already recorded as Sent",
+        scenario = TdAgentApplicationLlpInStates.emailAlreadySent,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = Some(true)
+        expectedEmailStatusAfter = Some(EmailStatus.Sent)
       ),
       TestCase(
-        description = "skips applications already decided as suppressed (Some(false))",
-        application = llpReady.copy(isApplicationReadyToSubmitEmailSent = Some(false)),
-        individuals = Seq(finishedIndividualFor("a")),
+        description = "skips applications already recorded as Suppressed",
+        scenario = TdAgentApplicationLlpInStates.emailAlreadySuppressed,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = Some(false)
+        expectedEmailStatusAfter = Some(EmailStatus.Suppressed)
       ),
       TestCase(
         description = "skips applications where not every individual is Finished",
-        application = llpReady,
-        individuals = Seq(finishedIndividualFor("a"), startedIndividualFor("b")),
+        scenario = TdAgentApplicationLlpInStates.oneIndividualNotFinished,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = None
+        expectedEmailStatusAfter = None
       ),
       TestCase(
         description = "skips applications not in GrsDataReceived state",
-        application = llpNotYetGrs,
-        individuals = Seq(finishedIndividualFor("a")),
+        scenario = TdAgentApplicationLlpInStates.notYetGrs,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = None
+        expectedEmailStatusAfter = None
       ),
       TestCase(
         description = "skips applications already sent for risking",
-        application = tdAll.agentApplicationLlp.afterDeclarationSubmitted,
-        individuals = Seq(finishedIndividualFor("a")),
+        scenario = TdAgentApplicationLlpInStates.alreadySentForRisking,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = None
+        expectedEmailStatusAfter = None
       ),
       TestCase(
         description = "skips applications with no linked individuals",
-        application = llpReady,
-        individuals = Seq.empty,
+        scenario = TdAgentApplicationLlpInStates.noIndividuals,
         expectedEmails = Seq.empty,
-        expectedFlagAfter = None
+        expectedEmailStatusAfter = None
       )
-    ).foreach: tc =>
-      tc.description in:
-        tc.expectedEmails.foreach(EmailStubs.stubSendEmail(_))
-        applicationRepo.upsert(tc.application).futureValue
-        tc.individuals.foreach(individualRepo.upsert(_).futureValue)
+    ).foreach: testCase =>
+      testCase.description in:
+        testCase.expectedEmails.foreach(EmailStubs.stubSendEmail(_))
+        agentApplicationRepo.upsert(testCase.scenario.agentApplication).futureValue
+        testCase.scenario.individuals.foreach(individualProvidedDetailsRepo.upsert(_).futureValue)
+        testCase.scenario.applicationScheduler.foreach(applicationSchedulerRepo.upsert(_).futureValue)
 
-        service.processEmails().futureValue
+        emailServiceForApplicationsReadyToSubmit.processEmails().futureValue
 
-        EmailStubs.verifySendEmail(count = tc.expectedEmails.size)
-        applicationRepo.findById(tc.application.agentApplicationId).futureValue.value.isApplicationReadyToSubmitEmailSent shouldBe tc.expectedFlagAfter
+        EmailStubs.verifySendEmail(count = testCase.expectedEmails.size)
+        applicationSchedulerRepo
+          .findById(testCase.scenario.agentApplication.applicationReference)
+          .futureValue
+          .map(_.applicationReadyToSubmitEmailStatus) shouldBe testCase.expectedEmailStatusAfter
   }

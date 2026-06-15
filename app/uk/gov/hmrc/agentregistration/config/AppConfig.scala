@@ -53,6 +53,9 @@ class AppConfig @Inject() (
   object ProvideDetailsRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.providedetails-repo-ttl", servicesConfig)
 
+  object ApplicationSchedulerRepo:
+    val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-scheduler-repo-ttl", servicesConfig)
+
   object FieldLevelEncryption:
 
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")

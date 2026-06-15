@@ -47,6 +47,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 import org.mongodb.scala.Document
+import uk.gov.hmrc.agentregistration.model.EmailStatus
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -82,23 +83,35 @@ extends Repo[AgentApplicationId, AgentApplication](
 
   def findReadyForReadyToSubmitEmail(): Future[Seq[AgentApplication]] = collection
     .aggregate[AgentApplication](Seq(
+      // only consider applications waiting for individuals to finish providing details
       Aggregates.filter(
-        Filters.and(
-          Filters.eq(FieldNames.applicationState, ApplicationState.GrsDataReceived.toString),
-          Filters.exists(FieldNames.isApplicationReadyToSubmitEmailSent, false)
-        )
+        Filters.eq(FieldNames.applicationState, ApplicationState.GrsDataReceived.toString)
       ),
+      // join the scheduler record (zero or one)
+      Aggregates.lookup(
+        from = ApplicationSchedulerRepo.collectionName,
+        localField = FieldNames.applicationReference,
+        foreignField = FieldNames._id,
+        as = FieldNames.applicationSchedulerLookup
+      ),
+      // skip applications the scheduler has already send emails
+      Aggregates.filter(
+        Filters.not(Filters.in(
+          FieldNames.applicationSchedulerLookupReadyToSubmitEmailStatus,
+          EmailStatus.Sent.toString,
+          EmailStatus.Suppressed.toString
+        ))
+      ),
+      // join the linked individuals so we can check their providedDetailsState
       Aggregates.lookup(
         from = IndividualProvidedDetailsRepo.collectionName,
         localField = FieldNames._id,
         foreignField = FieldNames.agentApplicationId,
         as = FieldNames.individuals
       ),
+      // keep only applications with at least one linked individual where every individual has Finished providing details
       Aggregates.filter(
-        Filters.and(
-          Filters.exists(FieldNames.individualsFirstElement),
-          Repo.forall(FieldNames.individuals, Filters.eq(FieldNames.providedDetailsState, ProvidedDetailsState.Finished.toString))
-        )
+        Repo.forallNonEmpty(FieldNames.individuals, Filters.eq(FieldNames.providedDetailsState, ProvidedDetailsState.Finished.toString))
       )
     ))
     .toFuture()

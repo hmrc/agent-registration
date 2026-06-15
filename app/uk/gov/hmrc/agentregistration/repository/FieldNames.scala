@@ -23,7 +23,6 @@ object FieldNames:
 
   // agent-application collection
   val applicationState: String = "applicationState"
-  val isApplicationReadyToSubmitEmailSent: String = "isApplicationReadyToSubmitEmailSent"
   val internalUserId: String = "internalUserId"
   val linkId: String = "linkId"
   val applicationReference: String = "applicationReference"
@@ -34,4 +33,10 @@ object FieldNames:
   val personReference: String = "personReference"
 
   val individuals: String = "individuals"
-  val individualsFirstElement: String = individuals + ".0"
+
+  // application-scheduler collection
+  val applicationReadyToSubmitEmailStatus: String = "applicationReadyToSubmitEmailStatus"
+
+  // aliases for $lookup result arrays from agent-application aggregations
+  val applicationSchedulerLookup: String = "applicationSchedulerLookup"
+  val applicationSchedulerLookupReadyToSubmitEmailStatus: String = s"$applicationSchedulerLookup.0.$applicationReadyToSubmitEmailStatus"
