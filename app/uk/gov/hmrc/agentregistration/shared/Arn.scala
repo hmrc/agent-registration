@@ -22,4 +22,12 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 final case class Arn(value: String)
 
 object Arn:
+
   given Format[Arn] = JsonFormatsFactory.makeValueClassFormat
+
+  private val arnPattern = "^[A-Z]ARN[0-9]{7}$".r
+
+  def isValid(arn: String): Boolean =
+    arn match
+      case arnPattern(_*) => true
+      case _ => false

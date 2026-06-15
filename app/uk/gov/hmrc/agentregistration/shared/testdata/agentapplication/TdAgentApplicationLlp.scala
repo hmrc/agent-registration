@@ -193,7 +193,8 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
         payeRefs = List(dependencies.payeRef),
         crn = Some(dependencies.crn),
         utr = a.getUtr,
-        safeId = a.getSafeId
+        safeId = a.getSafeId,
+        arn = None
       )
 
     val afterSentForRisking: AgentApplicationLlp = afterDeclarationSubmitted.copy(
