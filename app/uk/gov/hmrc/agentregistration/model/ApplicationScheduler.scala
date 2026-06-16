@@ -24,8 +24,8 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits.given
 import java.time.Clock
 import java.time.Instant
 
-/** Tracks scheduler-driven decisions about an application's emails. One record per application; each scheduler job owns its own [[EmailStatus]] field
-  * and writes only that field (field-level upsert) — see the carve-out in `feedback_be_patterns` memory for the rationale.
+/** Tracks scheduler-driven decisions about an application's emails. One record per application; each scheduler job owns its own [[EmailStatus]] field and
+  * writes only that field (field-level upsert) — see the carve-out in `feedback_be_patterns` memory for the rationale.
   *
   * Stored separately from `AgentApplication` so scheduler writes don't race concurrent FE writes of the application document (APB-11490). Keyed by
   * `ApplicationReference` (matching Risking) — human-meaningful in logs and audit trails.
@@ -37,15 +37,15 @@ final case class ApplicationScheduler(
 )
 
 object ApplicationScheduler:
+
   given OFormat[ApplicationScheduler] = Json.format[ApplicationScheduler]
 
   /** Create a fresh record for an application no scheduler has decided about yet. */
   def makeNew(
     applicationReference: ApplicationReference,
     clock: Clock = Clock.systemUTC()
-  ): ApplicationScheduler =
-    ApplicationScheduler(
-      _id = applicationReference,
-      applicationReadyToSubmitEmailStatus = EmailStatus.NotProcessed,
-      lastUpdated = Instant.now(clock)
-    )
+  ): ApplicationScheduler = ApplicationScheduler(
+    _id = applicationReference,
+    applicationReadyToSubmitEmailStatus = EmailStatus.NotProcessed,
+    lastUpdated = Instant.now(clock)
+  )

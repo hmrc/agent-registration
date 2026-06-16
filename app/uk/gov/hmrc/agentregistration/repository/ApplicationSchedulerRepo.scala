@@ -33,9 +33,9 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
-/** Holds one record per `ApplicationReference` tracking what each scheduler job has decided about its per-application emails. Writes go through
-  * [[Repo.upsert]] (whole-document upsert) — the service constructs the new state via [[ApplicationScheduler.makeNew]] + `.copy(...)` and upserts it.
-  * Stored separately from `AgentApplication` so scheduler writes don't race concurrent FE writes of the application document (APB-11490).
+/** Holds one record per `ApplicationReference` tracking what each scheduler job has decided about its per-application emails. Writes go through [[Repo.upsert]]
+  * (whole-document upsert) — the service constructs the new state via [[ApplicationScheduler.makeNew]] + `.copy(...)` and upserts it. Stored separately from
+  * `AgentApplication` so scheduler writes don't race concurrent FE writes of the application document (APB-11490).
   */
 @Singleton
 final class ApplicationSchedulerRepo @Inject() (

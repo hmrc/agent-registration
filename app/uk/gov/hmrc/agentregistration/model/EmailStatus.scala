@@ -20,6 +20,7 @@ import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 enum EmailStatus:
+
   case NotProcessed
   case Sent
   case Suppressed

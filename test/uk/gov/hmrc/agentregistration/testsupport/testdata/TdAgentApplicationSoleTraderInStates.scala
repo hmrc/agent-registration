@@ -34,8 +34,7 @@ object TdAgentApplicationSoleTraderInStates:
   extends TdSoleTraderScenario:
 
     override val seed: String = this.toString
-    override val agentApplicationSoleTrader: AgentApplicationSoleTrader =
-      td.agentApplicationSoleTrader.afterContactDetailsComplete // default userRole = Owner
+    override val agentApplicationSoleTrader: AgentApplicationSoleTrader = td.agentApplicationSoleTrader.afterContactDetailsComplete // default userRole = Owner
     override val applicationScheduler: Option[ApplicationScheduler] = None
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
@@ -43,8 +42,9 @@ object TdAgentApplicationSoleTraderInStates:
   extends TdSoleTraderScenario:
 
     override val seed: String = this.toString
-    override val agentApplicationSoleTrader: AgentApplicationSoleTrader =
-      td.agentApplicationSoleTrader.afterContactDetailsComplete.copy(userRole = Some(UserRole.Authorised))
+    override val agentApplicationSoleTrader: AgentApplicationSoleTrader = td.agentApplicationSoleTrader.afterContactDetailsComplete.copy(userRole =
+      Some(UserRole.Authorised)
+    )
     override val applicationScheduler: Option[ApplicationScheduler] = None
     override val individuals: Seq[IndividualProvidedDetails] = Seq(finishedIndividual("a"))
 
