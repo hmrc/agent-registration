@@ -51,7 +51,9 @@ trait TdAgentApplicationScottishLimitedPartnership {
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
       vrns = None,
-      payeRefs = None
+      payeRefs = None,
+      riskingOutcomeApplication = None,
+      riskingOutcomeEntity = None
     )
 
     val afterGrsDataReceived: AgentApplicationScottishLimitedPartnership = afterStarted.copy(

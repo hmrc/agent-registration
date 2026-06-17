@@ -187,7 +187,9 @@ extends BackendController(cc):
     refusalToDealWithCheckResult = Some(Pass),
     globalAsaEnrolmentCheckResult = Some(Pass),
     vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
+    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765"))),
+    riskingOutcomeApplication = None,
+    riskingOutcomeEntity = None
   )
   // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
   private def makeIndividualProvidedDetailsFor(agentApplicationId: AgentApplicationId): IndividualProvidedDetails = IndividualProvidedDetails(

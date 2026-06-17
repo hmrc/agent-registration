@@ -25,6 +25,8 @@ import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfCompaniesHouseOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -57,29 +59,35 @@ sealed trait AgentApplication:
   def hmrcStandardForAgentsAgreed: StateOfAgreement
   def numberOfIndividuals: Option[NumberOfIndividuals] // all applications require this, sole traders will have a list of one
   def hasOtherRelevantIndividuals: Option[Boolean]
+
   /* vrns and payeRefs can have three states: None (we haven't called the API yet), Some(List.empty) (we called the API but there were no vrns/ payeRefs)
    and Some(List(...)) (we called the api and got back a list of vrns/ payeRefs)
    */
   def vrns: Option[List[Vrn]]
   def payeRefs: Option[List[PayeRef]]
 
+  def riskingOutcomeApplication: Option[RiskingOutcomeApplication]
+  def riskingOutcomeEntity: Option[RiskingOutcomeEntity]
+
   /* derived stuff: */
   val agentApplicationId: AgentApplicationId = _id
   val lastUpdated: Instant = Instant.now(Clock.systemUTC())
 
-  val hasFinished: Boolean =
+  val isAfterSentForRisking: Boolean =
     applicationState match
-      case ApplicationState.SentForRisking => true
       case ApplicationState.Started => false
       case ApplicationState.GrsDataReceived => false
+      case ApplicationState.SentForRisking => true
+      case ApplicationState.RiskingCompleted => true
 
-  val isInProgress: Boolean = !hasFinished
+  val isBeforeSentForRisking: Boolean = !isAfterSentForRisking
 
   def isGrsDataReceived: Boolean =
     applicationState match
       case ApplicationState.Started => false
       case ApplicationState.GrsDataReceived => true
       case ApplicationState.SentForRisking => true
+      case ApplicationState.RiskingCompleted => true
 
   def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
 
@@ -171,7 +179,9 @@ final case class AgentApplicationSoleTrader(
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -209,7 +219,9 @@ final case class AgentApplicationLlp(
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -243,7 +255,9 @@ final case class AgentApplicationLimitedCompany(
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -277,7 +291,9 @@ final case class AgentApplicationGeneralPartnership(
   override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -310,7 +326,9 @@ final case class AgentApplicationLimitedPartnership(
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -342,7 +360,9 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val numberOfIndividuals: Option[NumberOfCompaniesHouseOfficers],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
@@ -374,7 +394,9 @@ final case class AgentApplicationScottishPartnership(
   override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
-  override val payeRefs: Option[List[PayeRef]]
+  override val payeRefs: Option[List[PayeRef]],
+  override val riskingOutcomeApplication: Option[RiskingOutcomeApplication],
+  override val riskingOutcomeEntity: Option[RiskingOutcomeEntity]
 )
 extends AgentApplication:
 
