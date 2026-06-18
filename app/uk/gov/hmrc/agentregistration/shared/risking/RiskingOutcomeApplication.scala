@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared
+package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.Format
+import play.api.libs.json.OFormat
+import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
-enum ApplicationState:
+import java.time.LocalDate
 
-  case Started
-  case GrsDataReceived
-  case SentForRisking
-  case RiskingCompleted // outcomes are populated now
+final case class RiskingOutcomeApplication(
+  riskingCompletedDate: LocalDate,
+  outcome: RiskingOutcomeApplication.Outcome,
+  correctiveActionExpiryDate: Option[LocalDate]
+)
 
-object ApplicationState:
+object RiskingOutcomeApplication:
 
-  given Format[ApplicationState] = JsonFormatsFactory.makeEnumFormat[ApplicationState]
+  enum Outcome:
 
-  extension (as: ApplicationState)
-    def sentForRisking: Boolean = as === ApplicationState.SentForRisking
+    case Approved
+    case FailedFixable
+    case FailedNonFixable
+
+  object Outcome:
+    given Format[Outcome] = JsonFormatsFactory.makeEnumFormat[Outcome]
+
+  given OFormat[RiskingOutcomeApplication] = Json.format[RiskingOutcomeApplication]

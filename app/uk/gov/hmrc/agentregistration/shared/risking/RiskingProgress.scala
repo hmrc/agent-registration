@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentregistration.shared.risking
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingProgress.ReceivedRiskingResults
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import scala.annotation.nowarn

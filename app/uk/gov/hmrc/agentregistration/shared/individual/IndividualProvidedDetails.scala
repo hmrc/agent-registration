@@ -27,6 +27,7 @@ import uk.gov.hmrc.agentregistration.shared.Vrn
 import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Finished
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
@@ -53,7 +54,8 @@ final case class IndividualProvidedDetails(
   vrns: Option[List[Vrn]] = None,
   payeRefs: Option[List[PayeRef]] = None,
   passedIv: Option[Boolean] = None,
-  providedByApplicant: Option[Boolean] = None
+  providedByApplicant: Option[Boolean] = None,
+  riskingOutcomeIndividual: Option[RiskingOutcomeIndividual] = None
 ):
 
   val individualProvidedDetailsId: IndividualProvidedDetailsId = _id

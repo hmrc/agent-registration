@@ -50,7 +50,9 @@ trait TdAgentApplicationLimitedCompany { dependencies: (TdBase & TdGrsBusinessDe
       numberOfIndividuals = None,
       hasOtherRelevantIndividuals = None,
       vrns = None,
-      payeRefs = None
+      payeRefs = None,
+      riskingOutcomeApplication = None,
+      riskingOutcomeEntity = None
     )
 
     val afterGrsDataReceived: AgentApplicationLimitedCompany = afterStarted.copy(

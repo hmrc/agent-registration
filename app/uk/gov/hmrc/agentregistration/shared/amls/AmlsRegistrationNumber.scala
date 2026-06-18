@@ -29,6 +29,7 @@ object AmlsRegistrationNumber:
     * supervisory body does not have a specific pattern, the defaultRegex [A-Za-z0-9,.'\-/ ]{0,100} should be used.
     */
   private val defaultRegex: Regex = "^[A-Za-z0-9,.'\\-/ ]{0,100}$".r
+
   private val supervisoryBodyRegexes: Map[String, Regex] = Map(
     "HMRC" -> "^X[A-Z]ML00000[0-9]{6}$".r,
     "AAT" -> """^\d{2,9}$""".r,
@@ -45,7 +46,7 @@ object AmlsRegistrationNumber:
     "FRA" -> """^\d{5,6}$""".r
   )
 
-  def isValidForChosenSupervisor(
+  def isValidForChosenSupervisoryBody(
     value: String,
     supervisoryBody: AmlsSupervisoryBodyCode
   ): Boolean =
@@ -53,6 +54,7 @@ object AmlsRegistrationNumber:
       supervisoryBodyRegexes.get(supervisoryBody.value) match
         case Some(regex: Regex) => regex
         case None => defaultRegex
+
     value match
       case regexForAmlsCode(_*) => true
       case _ => false
