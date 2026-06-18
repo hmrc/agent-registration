@@ -81,7 +81,7 @@ extends RequestAwareLogging:
     applicationReference,
     EmailStatus.Suppressed
   )
-  
+
   private def upsertSchedulerWith(
     applicationReference: ApplicationReference,
     emailStatus: EmailStatus
