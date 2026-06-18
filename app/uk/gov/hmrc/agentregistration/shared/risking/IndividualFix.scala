@@ -25,30 +25,37 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import java.time.LocalDate
+import scala.annotation.nowarn
 
 sealed trait IndividualFix
 
 object IndividualFix:
 
+  @nowarn
   given OFormat[IndividualFix] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
 
-    implicit val `_4._1`: OFormat[_4._1] = Json.format[_4._1]
-    implicit val `_4._3`: OFormat[_4._3] = Json.format[_4._3]
-    implicit val `_4._4`: OFormat[_4._4] = Json.format[_4._4]
-    implicit val `_5._1`: OFormat[_5._1] = Json.format[_5._1]
-    implicit val `_5._3`: OFormat[_5._3] = Json.format[_5._3]
-    implicit val `_5._4`: OFormat[_5._4] = Json.format[_5._4]
-    implicit val `_5._5`: OFormat[_5._5] = Json.format[_5._5]
-    implicit val `_5._6`: OFormat[_5._6] = Json.format[_5._6]
-    implicit val `_5._7`: OFormat[_5._7] = Json.format[_5._7]
-    implicit val `_8._7`: OFormat[_8._7] = Json.format[_8._7]
+    given `_4._1`: OFormat[_4._1] = Json.format[_4._1]
+    given `_4._3`: OFormat[_4._3] = Json.format[_4._3]
+    given `_4._4`: OFormat[_4._4] = Json.format[_4._4]
+    given `_5._1`: OFormat[_5._1] = Json.format[_5._1]
+    given `_5._3`: OFormat[_5._3] = Json.format[_5._3]
+    given `_5._4`: OFormat[_5._4] = Json.format[_5._4]
+    given `_5._5`: OFormat[_5._5] = Json.format[_5._5]
+    given `_5._6`: OFormat[_5._6] = Json.format[_5._6]
+    given `_5._7`: OFormat[_5._7] = Json.format[_5._7]
+    given `_8._7`: OFormat[_8._7] = Json.format[_8._7]
 
-    implicit val `_10.IndividualDetailsFix`: OFormat[_10.IndividualDetailsFix] =
-      implicit val individualDateOfBirthFormat: OFormat[IndividualDateOfBirth.Provided] = Json.format[IndividualDateOfBirth.Provided]
-      implicit val individualSaUtrFormat: OFormat[IndividualSaUtr.Provided] = Json.format[IndividualSaUtr.Provided]
-      implicit val individualNinoFormat: OFormat[IndividualNino.Provided] = Json.format[IndividualNino.Provided]
+    given OFormat[_10.IndividualDetailsFix] =
+      given individualDateOfBirthProvided: OFormat[IndividualDateOfBirth.Provided] = Json.format[IndividualDateOfBirth.Provided]
+      given individualSaUtrProvided: OFormat[IndividualSaUtr.Provided] = Json.format[IndividualSaUtr.Provided]
+      given individualNinoProvided: OFormat[IndividualNino.Provided] = Json.format[IndividualNino.Provided]
       Json.format[_10.IndividualDetailsFix]
+
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emited by Play Json macro"""
 
     Json.format[IndividualFix]
 

@@ -21,6 +21,8 @@ import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
+import scala.annotation.nowarn
+
 sealed trait RiskingOutcomeIndividual
 
 object RiskingOutcomeIndividual:
@@ -38,9 +40,16 @@ object RiskingOutcomeIndividual:
   )
   extends RiskingOutcomeIndividual
 
+  @nowarn
   given format: OFormat[RiskingOutcomeIndividual] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
     given OFormat[Approved.type] = Json.format[Approved.type]
     given OFormat[FailedFixable] = Json.format[FailedFixable]
     given OFormat[FailedNonFixable] = Json.format[FailedNonFixable]
+
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emited by Play Json macro"""
+
     Json.format[RiskingOutcomeIndividual]

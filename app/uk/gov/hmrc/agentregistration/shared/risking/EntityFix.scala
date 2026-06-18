@@ -24,14 +24,17 @@ import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure.IsAmls
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure._3
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
+import scala.annotation.nowarn
+
 sealed trait EntityFix
 
 object EntityFix:
 
+  @nowarn
   given OFormat[EntityFix] =
     given JsonConfiguration = JsonConfig.jsonConfiguration
 
-    implicit val isAmlsFormat: OFormat[IsAmls] =
+    given isAmlsFormat: OFormat[IsAmls] =
       import play.api.libs.json.*
       val reads: Reads[EntityFailure.IsAmls] = EntityFailure.format.flatMap:
         case f: EntityFailure.IsAmls =>
@@ -49,20 +52,26 @@ object EntityFix:
         w = OWrites[IsAmls] { (f: EntityFailure.IsAmls) => EntityFailure.format.writes(f) }
       )
 
-    implicit val `_3.AmlsFix`: OFormat[_3.AmlsFix] = Json.format[_3.AmlsFix]
-    implicit val `_4._1`: OFormat[_4._1] = Json.format[_4._1]
-    implicit val `_4._2`: OFormat[_4._2] = Json.format[_4._2]
-    implicit val `_4._3`: OFormat[_4._3] = Json.format[_4._3]
-    implicit val `_4._4`: OFormat[_4._4] = Json.format[_4._4]
-    implicit val `_5._1`: OFormat[_5._1] = Json.format[_5._1]
-    implicit val `_5._2`: OFormat[_5._2] = Json.format[_5._2]
-    implicit val `_5._3`: OFormat[_5._3] = Json.format[_5._3]
-    implicit val `_5._4`: OFormat[_5._4] = Json.format[_5._4]
-    implicit val `_5._5`: OFormat[_5._5] = Json.format[_5._5]
-    implicit val `_5._6`: OFormat[_5._6] = Json.format[_5._6]
-    implicit val `_5._7`: OFormat[_5._7] = Json.format[_5._7]
-    implicit val `_8._5`: OFormat[_8._5] = Json.format[_8._5]
-    implicit val `_8._7`: OFormat[_8._7] = Json.format[_8._7]
+    given `_3.AmlsFix`: OFormat[_3.AmlsFix] = Json.format[_3.AmlsFix]
+    given `_4._1`: OFormat[_4._1] = Json.format[_4._1]
+    given `_4._2`: OFormat[_4._2] = Json.format[_4._2]
+    given `_4._3`: OFormat[_4._3] = Json.format[_4._3]
+    given `_4._4`: OFormat[_4._4] = Json.format[_4._4]
+    given `_5._1`: OFormat[_5._1] = Json.format[_5._1]
+    given `_5._2`: OFormat[_5._2] = Json.format[_5._2]
+    given `_5._3`: OFormat[_5._3] = Json.format[_5._3]
+    given `_5._4`: OFormat[_5._4] = Json.format[_5._4]
+    given `_5._5`: OFormat[_5._5] = Json.format[_5._5]
+    given `_5._6`: OFormat[_5._6] = Json.format[_5._6]
+    given `_5._7`: OFormat[_5._7] = Json.format[_5._7]
+    given `_8._5`: OFormat[_8._5] = Json.format[_8._5]
+    given `_8._7`: OFormat[_8._7] = Json.format[_8._7]
+
+    val dontDeleteMe = """
+                         |Don't delete me.
+                         |I will emit a warning so `@nowarn` can be applied to address below
+                         |`Unreachable case except for null` problem emited by Play Json macro"""
+
     Json.format[EntityFix]
 
 //  def forFix(f: EntityFailure.Fixable): EntityFix =
