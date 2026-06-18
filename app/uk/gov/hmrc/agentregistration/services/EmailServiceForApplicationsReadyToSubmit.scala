@@ -45,7 +45,8 @@ import scala.concurrent.Future
 class EmailServiceForApplicationsReadyToSubmit @Inject() (
   emailConnector: EmailConnector,
   agentApplicationRepo: AgentApplicationRepo,
-  applicationSchedulerRepo: ApplicationSchedulerRepo
+  applicationSchedulerRepo: ApplicationSchedulerRepo,
+  clock: Clock
 )(using ExecutionContext)
 extends RequestAwareLogging:
 
@@ -68,26 +69,36 @@ extends RequestAwareLogging:
         logger.info(s"Sending $templateId email for ${agentApplication.applicationReference.value}")
         for
           _ <- emailConnector.sendEmail(sendEmailRequest)
-          _ <- recordReadyToSubmitEmailStatus(agentApplication.applicationReference, EmailStatus.Sent)
+          _ <- markReadyToSubmitEmailSent(agentApplication.applicationReference)
         yield logger.info(s"Sent $templateId email for ${agentApplication.applicationReference.value}")
       case None =>
         logger.info(s"Skipping email for ${agentApplication.applicationReference.value} (sole trader who is the business owner)")
-        recordReadyToSubmitEmailStatus(agentApplication.applicationReference, EmailStatus.Suppressed)
+        markReadyToSubmitEmailSuppressed(agentApplication.applicationReference)
 
-  private def recordReadyToSubmitEmailStatus(
+  private def markReadyToSubmitEmailSent(applicationReference: ApplicationReference): Future[Unit] = upsertSchedulerWith(applicationReference, EmailStatus.Sent)
+
+  private def markReadyToSubmitEmailSuppressed(applicationReference: ApplicationReference): Future[Unit] = upsertSchedulerWith(
+    applicationReference,
+    EmailStatus.Suppressed
+  )
+  
+  private def upsertSchedulerWith(
     applicationReference: ApplicationReference,
     emailStatus: EmailStatus
   ): Future[Unit] = applicationSchedulerRepo
     .findById(applicationReference)
     .flatMap: maybeApplicationScheduler =>
-      applicationSchedulerRepo.upsert(
-        maybeApplicationScheduler
-          .getOrElse(ApplicationScheduler.makeNew(applicationReference))
-          .copy(
-            applicationReadyToSubmitEmailStatus = emailStatus,
-            lastUpdated = Instant.now(Clock.systemUTC())
-          )
-      )
+      val now: Instant = Instant.now(clock)
+      val applicationScheduler: ApplicationScheduler =
+        maybeApplicationScheduler match
+          case Some(existing) => existing.copy(applicationReadyToSubmitEmailStatus = emailStatus, lastUpdated = now)
+          case None =>
+            ApplicationScheduler(
+              _id = applicationReference,
+              applicationReadyToSubmitEmailStatus = emailStatus,
+              lastUpdated = now
+            )
+      applicationSchedulerRepo.upsert(applicationScheduler)
 
   private def selectTemplate(agentApplication: AgentApplication): Option[EmailTemplateId] =
     agentApplication match

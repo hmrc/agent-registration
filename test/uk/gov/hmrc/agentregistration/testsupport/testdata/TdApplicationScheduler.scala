@@ -25,7 +25,11 @@ trait TdApplicationScheduler:
 
   object applicationScheduler:
 
-    val notProcessed: ApplicationScheduler = ApplicationScheduler.makeNew(dependencies.applicationReference, dependencies.clock)
+    val notProcessed: ApplicationScheduler = ApplicationScheduler(
+      _id = dependencies.applicationReference,
+      applicationReadyToSubmitEmailStatus = EmailStatus.NotProcessed,
+      lastUpdated = dependencies.nowAsInstant
+    )
 
     val readyToSubmitEmailSent: ApplicationScheduler = notProcessed.copy(applicationReadyToSubmitEmailStatus = EmailStatus.Sent)
 
