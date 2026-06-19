@@ -37,6 +37,10 @@ extends UnitSpec:
         val json: JsValue = Json.parse(""""SentForRisking"""")
         Json.toJson[ApplicationState](ApplicationState.SentForRisking) shouldBe json
         json.as[ApplicationState] shouldBe ApplicationState.SentForRisking
+      case ApplicationState.SentToMinerva =>
+        val json: JsValue = Json.parse(""""SentToMinerva"""")
+        Json.toJson[ApplicationState](ApplicationState.SentToMinerva) shouldBe json
+        json.as[ApplicationState] shouldBe ApplicationState.SentToMinerva
       case ApplicationState.RiskingCompleted =>
         val json: JsValue = Json.parse(""""RiskingCompleted"""")
         Json.toJson[ApplicationState](ApplicationState.RiskingCompleted) shouldBe json
