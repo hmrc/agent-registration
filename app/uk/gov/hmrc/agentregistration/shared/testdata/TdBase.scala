@@ -39,6 +39,10 @@ import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficerRole.LlpMember
+import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
+import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 
 import java.time.*
@@ -114,6 +118,8 @@ trait TdBase:
   def trn: String = "ST-TRN-987654321"
   def individualDateOfBirth: LocalDate = LocalDate.of(1980, 1, 1)
   def agentTelephoneNumber = AgentTelephoneNumber(agentTelephoneNumber = telephoneNumber.value, otherAgentTelephoneNumber = None)
+  def riskingCompletedDate: LocalDate = LocalDate.now().minusDays(1)
+  def correctiveActionExpiryDate: LocalDate = LocalDate.now().plusDays(45)
 
   def companyProfile: CompanyProfile = CompanyProfile(
     companyNumber = crn,
@@ -272,3 +278,30 @@ trait TdBase:
   )
 
   def arn: Arn = Arn("TARN0000001")
+
+  def riskingOutcomeApplication(outcome: RiskingOutcomeApplication.Outcome) = RiskingOutcomeApplication(
+    riskingCompletedDate = riskingCompletedDate,
+    outcome = outcome,
+    correctiveActionExpiryDate =
+      outcome match
+        case RiskingOutcomeApplication.Outcome.Approved => None
+        case _ => Some(correctiveActionExpiryDate)
+  )
+
+  def riskingOutcomeEntityFailedFixable = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._3.AmlsFix(
+        failure = EntityFailure._3._5,
+        isConfirmed = None,
+        amlsDetails = Some(completeAmlsDetails)
+      ),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None)
+    )
+  )
+
+  def riskingOutcomeEntityFailedNonFixable = RiskingOutcomeEntity.FailedNonFixable(
+    failures = Seq(
+      EntityFailure._7
+    )
+  )

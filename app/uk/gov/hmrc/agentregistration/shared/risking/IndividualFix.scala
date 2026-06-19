@@ -27,13 +27,14 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import java.time.LocalDate
 import scala.annotation.nowarn
 
-sealed trait IndividualFix
+sealed trait IndividualFix:
+  def isConfirmed: Option[Boolean]
 
 object IndividualFix:
 
   @nowarn
   given OFormat[IndividualFix] =
-    given JsonConfiguration = JsonConfig.jsonConfiguration
+    given JsonConfiguration = JsonConfig.jsonConfigurationForFixes
 
     given `_4._1`: OFormat[_4._1] = Json.format[_4._1]
     given `_4._3`: OFormat[_4._3] = Json.format[_4._3]
@@ -63,50 +64,60 @@ object IndividualFix:
   object _4:
 
     /** A fix corresponding to the [[IndividualFailure._4._1]] individual failure. */
-    final case class _1(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _1(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.4.1"
 
     /** A fix corresponding to the [[IndividualFailure._4._3]] individual failure. */
-    final case class _3(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _3(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.4.3"
 
     /** A fix corresponding to the [[IndividualFailure._4._4]] individual failure. */
-    final case class _4(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _4(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.4.4"
 
   /** @see [[IndividualFailure._5]] */
   object _5:
 
     /** A fix corresponding to the [[IndividualFailure._5._1]] individual failure. */
-    final case class _1(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _1(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.1"
 
     /** A fix corresponding to the [[IndividualFailure._5._3]] individual failure. */
-    final case class _3(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _3(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.3"
 
     /** A fix corresponding to the [[IndividualFailure._5._4]] individual failure. */
-    final case class _4(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _4(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.4"
 
     /** A fix corresponding to the [[IndividualFailure._5._5]] individual failure. */
-    final case class _5(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _5(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.5"
 
     /** A fix corresponding to the [[IndividualFailure._5._6]] individual failure. */
-    final case class _6(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _6(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.6"
 
     /** A fix corresponding to the [[IndividualFailure._5._7]] individual failure. */
-    final case class _7(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _7(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.5.7"
 
   /** @see [[IndividualFailure._8]] */
   object _8:
 
     /** A fix corresponding to the [[IndividualFailure._8._7]] individual failure. */
-    final case class _7(isConfirmed: Option[Boolean])
-    extends IndividualFix
+    final case class _7(override val isConfirmed: Option[Boolean])
+    extends IndividualFix:
+      override def toString: String = "IndividualFix.8.7"
 
   /** @see [[IndividualFailure._10]] */
   object _10:
@@ -117,4 +128,5 @@ object IndividualFix:
       nino: Option[IndividualNino.Provided],
       isConfirmed: Option[Boolean]
     )
-    extends IndividualFix
+    extends IndividualFix:
+      override def toString: String = "IndividualDetailsFix"

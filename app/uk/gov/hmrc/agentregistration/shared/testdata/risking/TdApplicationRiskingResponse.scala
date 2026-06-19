@@ -27,12 +27,25 @@ trait TdApplicationRiskingResponse:
   dependencies: (TdBase & TdRiskedEntity & TdRiskedIndividual) =>
 
   val riskingCompletedDateString: String = "2059-12-21"
-  val riskingCompletedDate: LocalDate = LocalDate.parse(riskingCompletedDateString, DateTimeFormatter.ISO_DATE)
+  val riskingCompletedDateFromRiskingService: LocalDate = LocalDate.parse(riskingCompletedDateString, DateTimeFormatter.ISO_DATE)
 
   object applicationRiskingResponse:
 
     val failedFixable: RiskingProgress.FailedFixable = RiskingProgress.FailedFixable(
       riskedEntity = dependencies.riskedEntityApproved,
+      riskedIndividuals = List(
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF0"),
+          individualName = dependencies.getIndividualName(0)
+        ),
+        dependencies.riskedIndividualFixable(individualName = dependencies.getIndividualName(1))
+      ),
+      riskingCompletedDate = riskingCompletedDate,
+      correctiveActionExpiryDate = None
+    )
+
+    val failedFixableWithAmls: RiskingProgress.FailedFixable = RiskingProgress.FailedFixable(
+      riskedEntity = dependencies.riskedEntityFailedFixableWithAmls,
       riskedIndividuals = List(
         dependencies.riskedIndividualApproved(
           personReference = PersonReference("PREF0"),

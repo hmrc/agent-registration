@@ -26,13 +26,14 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import scala.annotation.nowarn
 
-sealed trait EntityFix
+sealed trait EntityFix:
+  def isConfirmed: Option[Boolean]
 
 object EntityFix:
 
   @nowarn
   given OFormat[EntityFix] =
-    given JsonConfiguration = JsonConfig.jsonConfiguration
+    given JsonConfiguration = JsonConfig.jsonConfigurationForFixes
 
     given isAmlsFormat: OFormat[IsAmls] =
       import play.api.libs.json.*
@@ -102,7 +103,7 @@ object EntityFix:
       */
     final case class AmlsFix(
       failure: EntityFailure.IsAmls,
-      isConfirmed: Option[Boolean],
+      override val isConfirmed: Option[Boolean],
       amlsDetails: Option[AmlsDetails]
     )
     extends EntityFix:
@@ -112,59 +113,72 @@ object EntityFix:
   object _4:
 
     /** A fix corresponding to the [[EntityFailure._4._1]] entity failure. */
-    final case class _1(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _1(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.4.1"
 
     /** A fix corresponding to the [[EntityFailure._4._2]] entity failure. */
-    final case class _2(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _2(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.4.2"
 
     /** A fix corresponding to the [[EntityFailure._4._3]] entity failure. */
-    final case class _3(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _3(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.4.3"
 
     /** A fix corresponding to the [[EntityFailure._4._4]] entity failure. */
-    final case class _4(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _4(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.4.4"
 
   /** @see [[EntityFailure._5]] */
   object _5:
 
     /** A fix corresponding to the [[EntityFailure._5._1]] entity failure. */
-    final case class _1(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _1(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.1"
 
     /** A fix corresponding to the [[EntityFailure._5._2]] entity failure. */
-    final case class _2(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _2(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.2"
 
     /** A fix corresponding to the [[EntityFailure._5._3]] entity failure. */
-    final case class _3(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _3(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.3"
 
     /** A fix corresponding to the [[EntityFailure._5._4]] entity failure. */
-    final case class _4(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _4(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.4"
 
     /** A fix corresponding to the [[EntityFailure._5._5]] entity failure. */
-    final case class _5(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _5(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.5"
 
     /** A fix corresponding to the [[EntityFailure._5._6]] entity failure. */
-    final case class _6(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _6(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.6"
 
     /** A fix corresponding to the [[EntityFailure._5._7]] entity failure. */
-    final case class _7(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _7(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.5.7"
 
   /** @see [[EntityFailure._8]] */
   object _8:
 
     /** A fix corresponding to the [[EntityFailure._8._5]] entity failure. */
-    final case class _5(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _5(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.8.5"
 
     /** A fix corresponding to the [[EntityFailure._8._7]] entity failure. */
-    final case class _7(isConfirmed: Option[Boolean])
-    extends EntityFix
+    final case class _7(override val isConfirmed: Option[Boolean])
+    extends EntityFix:
+      override def toString: String = "EntityFix.8.7"

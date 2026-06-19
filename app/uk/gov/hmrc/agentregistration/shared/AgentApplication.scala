@@ -78,6 +78,7 @@ sealed trait AgentApplication:
       case ApplicationState.Started => false
       case ApplicationState.GrsDataReceived => false
       case ApplicationState.SentForRisking => true
+      case ApplicationState.SentToMinerva => true
       case ApplicationState.RiskingCompleted => true
 
   val isBeforeSentForRisking: Boolean = !isAfterSentForRisking
@@ -87,6 +88,7 @@ sealed trait AgentApplication:
       case ApplicationState.Started => false
       case ApplicationState.GrsDataReceived => true
       case ApplicationState.SentForRisking => true
+      case ApplicationState.SentToMinerva => true
       case ApplicationState.RiskingCompleted => true
 
   def getUserRole: UserRole = userRole.getOrElse(expectedDataNotDefinedError("userRole"))
@@ -136,6 +138,8 @@ sealed trait AgentApplication:
   def getVrns: List[Vrn] = vrns.getOrThrowExpectedDataMissing("vrns")
 
   def getPayeRefs: List[PayeRef] = payeRefs.getOrThrowExpectedDataMissing("payeRefs")
+
+  def getRiskingOutcomeEntity = riskingOutcomeEntity.getOrThrowExpectedDataMissing("riskingOutcomeEntity")
 
   private def as[T <: AgentApplication](using ct: reflect.ClassTag[T]): Option[T] =
     this match
