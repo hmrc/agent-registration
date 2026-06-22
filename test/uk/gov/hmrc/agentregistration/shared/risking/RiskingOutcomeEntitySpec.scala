@@ -42,7 +42,7 @@ extends UnitSpec:
       """{
         |"type":"FailedFixable",
         |"fixes":[{
-        |  "type":"AmlsFix",
+        |  "type":"EntityFix._3.AmlsFix",
         |  "failure":{"type":"_3._1"}
         |}]
         |}""".stripMargin

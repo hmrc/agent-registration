@@ -36,6 +36,16 @@ trait TdRiskedEntity:
     )
   )
 
+  val riskedEntityFailedFixableWithAmls: RiskedEntity = RiskedEntity(
+    applicationReference = dependencies.applicationReference,
+    failures = List(
+      EntityFailure._3._1, // fixable AMLS
+      EntityFailure._4._1, // fixable
+      EntityFailure._4._3, // fixable
+      EntityFailure._4._4 // fixable
+    )
+  )
+
   val riskedEntityFailedNonFixable: RiskedEntity = RiskedEntity(
     applicationReference = dependencies.applicationReference,
     failures = List(

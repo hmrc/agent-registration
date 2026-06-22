@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.util
 
 import play.api.libs.json.*
 
-object JsonConfig {
+object JsonConfig:
 
   val jsonConfiguration: JsonConfiguration = JsonConfiguration(
     discriminator = "type",
@@ -26,4 +26,10 @@ object JsonConfig {
       fullName.split('.').last // Extract just the class name
     }
   )
-}
+
+  val jsonConfigurationForFixes: JsonConfiguration = JsonConfiguration(
+    discriminator = "type",
+    typeNaming = JsonNaming { fullName =>
+      fullName.split('.').takeRight(3).mkString(".")
+    }
+  )
