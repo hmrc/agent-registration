@@ -166,6 +166,16 @@ trait TdBase:
     amlsEvidence = None
   )
 
+  def completeAmlsDetailsAtt: AmlsDetails = AmlsDetails(
+    supervisoryBody = AmlsSupervisoryBodyCode("ATT"),
+    amlsRegistrationNumber = Some(AmlsRegistrationNumber("ATT AML-1-123456")),
+    amlsEvidence = Some(uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence(
+      uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("evidence-reference-123-att"),
+      "certificate.pdf",
+      uk.gov.hmrc.objectstore.client.Path.File("/certificate.pdf")
+    ))
+  )
+
   def agentApplicationId: AgentApplicationId = AgentApplicationId("agent-application-id-12345")
 
   def individualProvidedDetailsId: IndividualProvidedDetailsId = IndividualProvidedDetailsId("individual-provided-details-id-12345")

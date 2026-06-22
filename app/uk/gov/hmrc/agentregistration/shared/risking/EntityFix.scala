@@ -107,7 +107,7 @@ object EntityFix:
       amlsDetails: Option[AmlsDetails]
     )
     extends EntityFix:
-      override def toString = "AmlsFix"
+      override def toString = "EntityFix.3.AmlsFix"
 
   /** @see [[EntityFailure._4]] */
   object _4:
