@@ -126,7 +126,7 @@ object IndividualFix:
       dateOfBirth: Option[IndividualDateOfBirth.Provided],
       saUtr: Option[IndividualSaUtr.Provided],
       nino: Option[IndividualNino.Provided],
-      isConfirmed: Option[Boolean]
+      override val isConfirmed: Option[Boolean]
     )
     extends IndividualFix:
-      override def toString: String = "IndividualDetailsFix"
+      override def toString: String = "IndividualFix.10.IndividualDetailsFix"
