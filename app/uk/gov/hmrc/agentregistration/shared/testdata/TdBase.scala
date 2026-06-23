@@ -330,7 +330,7 @@ trait TdBase:
         failure = EntityFailure._3._5,
         isConfirmed = None,
         amlsDetails = Some(completeAmlsDetails.copy(
-          supervisoryBody = AmlsSupervisoryBodyCode("HMRC"),
+          supervisoryBody = AmlsSupervisoryBodyCode("ATT"),
           amlsRegistrationNumber = None
         ))
       ),
