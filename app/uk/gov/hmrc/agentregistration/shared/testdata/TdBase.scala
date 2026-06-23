@@ -41,8 +41,10 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficerRole.LlpMember
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
+import uk.gov.hmrc.agentregistration.shared.risking.IndividualFix
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 
 import java.time.*
@@ -328,7 +330,7 @@ trait TdBase:
         failure = EntityFailure._3._5,
         isConfirmed = None,
         amlsDetails = Some(completeAmlsDetails.copy(
-          supervisoryBody = AmlsSupervisoryBodyCode("ATT"),
+          supervisoryBody = AmlsSupervisoryBodyCode("HMRC"),
           amlsRegistrationNumber = None
         ))
       ),
@@ -340,5 +342,11 @@ trait TdBase:
   def riskingOutcomeEntityFailedNonFixable = RiskingOutcomeEntity.FailedNonFixable(
     failures = Seq(
       EntityFailure._7
+    )
+  )
+
+  def riskingOutcomeIndividualFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._4._1(isConfirmed = None)
     )
   )
