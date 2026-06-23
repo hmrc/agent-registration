@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfCompaniesHouseOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
+import uk.gov.hmrc.agentregistration.shared.risking.EntityFix._3.AmlsFix
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.util.DisjointUnions
@@ -128,6 +129,13 @@ sealed trait AgentApplication:
       case BusinessType.Partnership.ScottishPartnership => this.asScottishPartnershipApplication.getBusinessDetails.safeId
 
   def getAmlsDetails: AmlsDetails = amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
+  def getFixableAmlsDetails: AmlsDetails =
+    getRiskingOutcomeEntity match
+      case outcome: RiskingOutcomeEntity.FailedFixable =>
+        outcome.fixes.collectFirst {
+          case a: AmlsFix => a
+        }.getOrElse(expectedDataNotDefinedError("AmlsFix")).amlsDetails.getOrElse(expectedDataNotDefinedError("amlsDetails"))
+      case _ => expectedDataNotDefinedError("FailedFixable")
 
   def getNumberOfIndividuals: NumberOfIndividuals = numberOfIndividuals.getOrElse(
     expectedDataNotDefinedError("numberOfIndividuals")

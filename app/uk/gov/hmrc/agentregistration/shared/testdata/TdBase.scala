@@ -298,12 +298,39 @@ trait TdBase:
         case _ => Some(correctiveActionExpiryDate)
   )
 
+  def riskingOutcomeEntityFixableAmls(failure: EntityFailure.IsAmls) = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._3.AmlsFix(
+        failure = failure,
+        isConfirmed = None,
+        amlsDetails = Some(completeAmlsDetails)
+      ),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None)
+    )
+  )
+
   def riskingOutcomeEntityFailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = EntityFailure._3._5,
         isConfirmed = None,
         amlsDetails = Some(completeAmlsDetails)
+      ),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None)
+    )
+  )
+
+  def riskingOutcomeEntityNewAmlsSupervisor = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._3.AmlsFix(
+        failure = EntityFailure._3._5,
+        isConfirmed = None,
+        amlsDetails = Some(completeAmlsDetails.copy(
+          supervisoryBody = AmlsSupervisoryBodyCode("HMRC"),
+          amlsRegistrationNumber = None
+        ))
       ),
       EntityFix._4._4(isConfirmed = None),
       EntityFix._5._4(isConfirmed = None)
