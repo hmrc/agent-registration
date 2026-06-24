@@ -10,7 +10,7 @@ object AppDependencies {
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"  % bootstrapVersion,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-30"         % hmrcMongoVersion,
     "uk.gov.hmrc"             %% "crypto-json-play-30"        % "8.4.0",
-    "uk.gov.hmrc.objectstore" %% "object-store-client-common" % "2.5.0",
+    "uk.gov.hmrc.objectstore" %% "object-store-client-common" % "2.6.0",
     "com.softwaremill.quicklens" %% "quicklens" % "1.9.12", // Updated for Scala 3 compatibility
 
   )
