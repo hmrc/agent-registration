@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
-import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.http.InternalServerException
 
 import javax.inject.Inject
@@ -45,21 +45,22 @@ class RiskingUpdatesController @Inject() (
 )(using ExecutionContext)
 extends BackendController(cc):
 
-  def receiveRiskingOutcome(applicationReference: ApplicationReference): Action[RiskingOutcomeRequest] = actions
-    .default
-    .async(parse.json[RiskingOutcomeRequest]):
-      implicit request =>
-        logger.info(s"Received risking outcome for applicationReference [${applicationReference.value}]")
-        agentApplicationRepo
-          .findByApplicationReference(applicationReference)
-          .flatMap:
-            case None =>
-              val message = s"Agent application not found for applicationReference [${applicationReference.value}]"
-              logger.warn(message)
-              Future.successful(NotFound(message))
-            case Some(agentApplication) =>
-              markRiskingCompleted(agentApplication, request.body)
-                .map(_ => Ok(""))
+  def receiveRiskingOutcome(applicationReference: ApplicationReference): Action[RiskingOutcomeRequest] =
+    actions
+      .default
+      .async(parse.json[RiskingOutcomeRequest]):
+        implicit request =>
+          logger.info(s"Received risking outcome for applicationReference [${applicationReference.value}]")
+          agentApplicationRepo
+            .findByApplicationReference(applicationReference)
+            .flatMap:
+              case None =>
+                val message = s"Agent application not found for applicationReference [${applicationReference.value}]"
+                logger.warn(message)
+                Future.successful(NotFound(message))
+              case Some(agentApplication) =>
+                markRiskingCompleted(agentApplication, request.body)
+                  .map(_ => Ok(""))
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
@@ -75,17 +76,16 @@ extends BackendController(cc):
       _ <- ProcessInSequence.processInSequence(riskingOutcomeRequest.individualOutcomes)(applyIndividualOutcome)
     yield ()
 
-  private def applyIndividualOutcome(individualOutcome: IndividualOutcome)(using RequestHeader): Future[Unit] =
-    individualProvidedDetailsRepo
-      .findByPersonReference(individualOutcome.personReference)
-      .flatMap:
-        case None =>
-          val message = s"IndividualProvidedDetails not found for personReference [${individualOutcome.personReference.value}]"
-          logger.warn(message)
-          //TODO - confirm is OK - should recover to previous state?
-          Future.failed(InternalServerException(message))
-        case Some(individualProvidedDetails) =>
-          individualProvidedDetailsRepo.upsert(
-            individualProvidedDetails
-              .modify(_.riskingOutcomeIndividual).setTo(Some(individualOutcome.riskingOutcomeIndividual))
-          )
+  private def applyIndividualOutcome(individualOutcome: IndividualOutcome)(using RequestHeader): Future[Unit] = individualProvidedDetailsRepo
+    .findByPersonReference(individualOutcome.personReference)
+    .flatMap:
+      case None =>
+        val message = s"IndividualProvidedDetails not found for personReference [${individualOutcome.personReference.value}]"
+        logger.warn(message)
+        // TODO - confirm is OK - should recover to previous state?
+        Future.failed(InternalServerException(message))
+      case Some(individualProvidedDetails) =>
+        individualProvidedDetailsRepo.upsert(
+          individualProvidedDetails
+            .modify(_.riskingOutcomeIndividual).setTo(Some(individualOutcome.riskingOutcomeIndividual))
+        )

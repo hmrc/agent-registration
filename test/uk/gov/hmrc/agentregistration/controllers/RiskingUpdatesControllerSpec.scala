@@ -59,7 +59,9 @@ extends ControllerSpec:
     val individualProvidedDetails = tdAll.providedDetails.afterFinished
     agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe agentApplicationSentForRisking withClue "application exists"
+    agentApplicationRepo.findByApplicationReference(
+      applicationReference
+    ).futureValue.value shouldBe agentApplicationSentForRisking withClue "application exists"
     individualProvidedDetailsRepo.findByPersonReference(tdAll.personReference).futureValue.value shouldBe individualProvidedDetails withClue "individual exists"
 
     val response =
@@ -96,7 +98,9 @@ extends ControllerSpec:
   "receiveRiskingOutcome fails when an individual referenced by personReference does not exist" in:
     given Request[?] = tdAll.backendRequest
     agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
-    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe agentApplicationSentForRisking withClue "application exists"
+    agentApplicationRepo.findByApplicationReference(
+      applicationReference
+    ).futureValue.value shouldBe agentApplicationSentForRisking withClue "application exists"
 
     val requestWithMissingIndividual = riskingOutcomeRequest.copy(
       individualOutcomes = Seq(
@@ -114,5 +118,5 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
 
-    //TODO - confirm is OK
+    // TODO - confirm is OK
     response.status shouldBe Status.INTERNAL_SERVER_ERROR
