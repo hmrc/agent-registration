@@ -339,6 +339,41 @@ trait TdBase:
     )
   )
 
+  val riskingOutcomeEntityFailedFixableAllCodes: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._4._1(isConfirmed = None),
+      EntityFix._4._2(isConfirmed = None),
+      EntityFix._4._3(isConfirmed = None),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._1(isConfirmed = None),
+      EntityFix._5._2(isConfirmed = None),
+      EntityFix._5._3(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None),
+      EntityFix._5._5(isConfirmed = None),
+      EntityFix._5._6(isConfirmed = None),
+      EntityFix._5._7(isConfirmed = None),
+      EntityFix._8._5(isConfirmed = None),
+      EntityFix._8._7(isConfirmed = None)
+    )
+  )
+
+  // sole traders will never have 4.2 or 5.2 failures, so we don't include them in the list of fixes for sole traders
+  val riskingOutcomeEntityFailedFixableAllSoleTraderCodes: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._4._1(isConfirmed = None),
+      EntityFix._4._3(isConfirmed = None),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._1(isConfirmed = None),
+      EntityFix._5._3(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None),
+      EntityFix._5._5(isConfirmed = None),
+      EntityFix._5._6(isConfirmed = None),
+      EntityFix._5._7(isConfirmed = None),
+      EntityFix._8._5(isConfirmed = None),
+      EntityFix._8._7(isConfirmed = None)
+    )
+  )
+
   def riskingOutcomeEntityFailedNonFixable = RiskingOutcomeEntity.FailedNonFixable(
     failures = Seq(
       EntityFailure._7
