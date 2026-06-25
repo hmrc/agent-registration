@@ -42,7 +42,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 
-
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
@@ -80,8 +79,8 @@ extends Repo[AgentApplicationId, AgentApplication](
     applicationState: ApplicationState
   ): Future[Unit] = collection
     .updateMany(
-      filter = Filters.in("applicationReference", applicationReferences.map(_.value)),
-      update = Updates.set("applicationState", applicationState)
+      filter = Filters.in("applicationReference", applicationReferences.map(_.value)*),
+      update = Updates.set("applicationState", applicationState.toString)
     )
     .toFuture()
     .map(_ => ())
