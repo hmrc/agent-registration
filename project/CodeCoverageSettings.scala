@@ -10,7 +10,8 @@ object CodeCoverageSettings {
     "app.*",
     "prod.*",
     ".*Routes.*",
-    "testOnly.*"
+    "uk.gov.hmrc.agentregistration.shared.*",
+    ".*testOnly.*",
   )
 
   val settings: Seq[Setting[_]] = Seq(
