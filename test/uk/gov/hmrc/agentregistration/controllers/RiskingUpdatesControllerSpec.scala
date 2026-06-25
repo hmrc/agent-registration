@@ -37,12 +37,18 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 
 import java.time.LocalDate
+import play.api.libs.ws.JsonBodyWritables.given
+import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 
 class RiskingUpdatesControllerSpec
 extends ControllerSpec:
@@ -345,3 +351,25 @@ extends ControllerSpec:
       "individual1 (referenced before the missing one) must not be updated"
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
+
+
+    "updateSentToMinervaApplications returns OK and updates application state" in:
+      given Request[?] = tdAll.backendRequest
+
+      val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+      agentApplicationRepo.upsert(exampleAgentApplication).futureValue
+      agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
+
+      val applicationReferenceList: ApplicationReferenceList = ApplicationReferenceList(applicationReferences = List(tdAll.applicationReference))
+
+      val response =
+        httpClient
+          .post(url"$baseUrl/agent-registration/risking-updates/sent-to-minerva")
+          .withBody(Json.toJson(applicationReferenceList))
+          .execute[HttpResponse]
+          .futureValue
+
+      response.status shouldBe Status.OK
+      agentApplicationRepo.findByApplicationReference(
+        tdAll.applicationReference
+      ).futureValue.value.applicationState shouldBe SentToMinerva withClue "application state should be updated"
