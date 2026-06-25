@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
@@ -114,6 +115,16 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
 
     val soleTraderWithTrn: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
       businessDetails = afterDeclarationSubmitted.businessDetails.map(_.copy(trn = Some(dependencies.trn)))
+    )
+
+    val afterSentToMinerva: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
+      applicationState = ApplicationState.SentToMinerva
+    )
+
+    val riskingOutcomeEntityFailedFixableAllSoleTraderCodes: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllSoleTraderCodes)
     )
 
 }

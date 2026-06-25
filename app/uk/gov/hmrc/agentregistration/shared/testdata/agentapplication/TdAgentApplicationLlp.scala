@@ -188,6 +188,12 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable)
     )
 
+    val afterRiskingCompletedFixableAllCodes: AgentApplicationLlp = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllCodes)
+    )
+
     val afterRiskingCompletedNonFixable: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
       riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedNonFixable)),
