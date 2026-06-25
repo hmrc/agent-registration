@@ -41,9 +41,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
-import org.mongodb.scala.result.UpdateResult
-import org.mongodb.scala.Document
-import org.mongodb.scala.SingleObservable
+
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -82,7 +80,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     applicationState: ApplicationState
   ): Future[Unit] = collection
     .updateMany(
-      filter = Filters.in[List[String]]("applicationReference", applicationReferences.map(_.value)),
+      filter = Filters.in("applicationReference", applicationReferences.map(_.value)),
       update = Updates.set("applicationState", applicationState)
     )
     .toFuture()
