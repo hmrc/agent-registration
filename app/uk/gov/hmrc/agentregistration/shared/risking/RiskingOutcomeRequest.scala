@@ -20,19 +20,22 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 
+import java.time.LocalDate
+
 final case class RiskingOutcomeRequest(
-  riskingOutcomeApplication: RiskingOutcomeApplication,
-  riskingOutcomeEntity: RiskingOutcomeEntity,
-  individualOutcomes: Seq[IndividualOutcome]
+  riskingCompletedDate: LocalDate,
+  correctiveActionExpiryDate: Option[LocalDate],
+  entityFailures: Seq[EntityFailure],
+  individualFailures: Seq[IndividualFailures]
 )
 
 object RiskingOutcomeRequest:
   given OFormat[RiskingOutcomeRequest] = Json.format[RiskingOutcomeRequest]
 
-final case class IndividualOutcome(
+final case class IndividualFailures(
   personReference: PersonReference,
-  riskingOutcomeIndividual: RiskingOutcomeIndividual
+  failures: Seq[IndividualFailure]
 )
 
-object IndividualOutcome:
-  given OFormat[IndividualOutcome] = Json.format[IndividualOutcome]
+object IndividualFailures:
+  given OFormat[IndividualFailures] = Json.format[IndividualFailures]

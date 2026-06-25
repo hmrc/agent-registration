@@ -23,10 +23,16 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeApplicationHelper
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper.*
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.risking.IndividualOutcome
+import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.http.InternalServerException
@@ -66,26 +72,37 @@ extends BackendController(cc):
     agentApplication: AgentApplication,
     riskingOutcomeRequest: RiskingOutcomeRequest
   )(using RequestHeader): Future[Unit] =
+    val riskingOutcomeEntity: RiskingOutcomeEntity = riskingOutcomeRequest.entityFailures.riskingOutcomeEntity
+    val individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)] = riskingOutcomeRequest.individualFailures
+      .map(individualFailures => individualFailures.personReference -> individualFailures.failures.riskingOutcomeIndividual)
+    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
+      riskingCompletedDate = riskingOutcomeRequest.riskingCompletedDate,
+      outcome = RiskingOutcomeApplicationHelper.riskingOutcomeApplicationOutcome(riskingOutcomeEntity, individualOutcomes.map(_._2)),
+      correctiveActionExpiryDate = riskingOutcomeRequest.correctiveActionExpiryDate
+    )
     for
       _ <- agentApplicationRepo.upsert(
         agentApplication
-          .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeRequest.riskingOutcomeApplication))
-          .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeRequest.riskingOutcomeEntity))
+          .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeApplication))
+          .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeEntity))
           .modify(_.applicationState).setTo(ApplicationState.RiskingCompleted)
       )
-      _ <- ProcessInSequence.processInSequence(riskingOutcomeRequest.individualOutcomes)(applyIndividualOutcome)
+      _ <- ProcessInSequence.processInSequence(individualOutcomes)(applyIndividualOutcome)
     yield ()
 
-  private def applyIndividualOutcome(individualOutcome: IndividualOutcome)(using RequestHeader): Future[Unit] = individualProvidedDetailsRepo
-    .findByPersonReference(individualOutcome.personReference)
-    .flatMap:
-      case None =>
-        val message = s"IndividualProvidedDetails not found for personReference [${individualOutcome.personReference.value}]"
-        logger.warn(message)
-        // TODO - confirm is OK - should recover to previous state?
-        Future.failed(InternalServerException(message))
-      case Some(individualProvidedDetails) =>
-        individualProvidedDetailsRepo.upsert(
-          individualProvidedDetails
-            .modify(_.riskingOutcomeIndividual).setTo(Some(individualOutcome.riskingOutcomeIndividual))
-        )
+  private def applyIndividualOutcome(
+    personReferenceAndOutcome: (PersonReference, RiskingOutcomeIndividual)
+  )(using RequestHeader): Future[Unit] =
+    val (personReference, riskingOutcomeIndividual) = personReferenceAndOutcome
+    individualProvidedDetailsRepo
+      .findByPersonReference(personReference)
+      .flatMap:
+        case None =>
+          val message = s"IndividualProvidedDetails not found for personReference [${personReference.value}]"
+          logger.warn(message)
+          Future.failed(InternalServerException(message))
+        case Some(individualProvidedDetails) =>
+          individualProvidedDetailsRepo.upsert(
+            individualProvidedDetails
+              .modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
+          )
