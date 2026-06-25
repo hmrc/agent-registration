@@ -23,7 +23,6 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeApplicationHelper
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper.*
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -77,7 +76,7 @@ extends BackendController(cc):
       .map(individualFailures => individualFailures.personReference -> individualFailures.failures.riskingOutcomeIndividual)
     val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
       riskingCompletedDate = riskingOutcomeRequest.riskingCompletedDate,
-      outcome = RiskingOutcomeApplicationHelper.riskingOutcomeApplicationOutcome(riskingOutcomeEntity, individualOutcomes.map(_._2)),
+      outcome = riskingOutcomeRequest.applicationOutcome,
       correctiveActionExpiryDate = riskingOutcomeRequest.correctiveActionExpiryDate
     )
     for

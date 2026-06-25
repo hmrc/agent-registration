@@ -52,29 +52,13 @@ object RiskingOutcomeEntityHelper:
         case EntityFailure._8._5 => EntityFix._8._5(isConfirmed = None)
         case EntityFailure._8._7 => EntityFix._8._7(isConfirmed = None)
 
-  extension (failure: EntityFailure)
-    def asRiskingOutcomeEntity: RiskingOutcomeEntity =
-      failure match
-        case f: EntityFailure.Fixable => RiskingOutcomeEntity.FailedFixable(fixes = Seq(f.asEntityFix))
-        case _: EntityFailure.NonFixable => RiskingOutcomeEntity.FailedNonFixable(failures = Seq(failure))
-
   extension (failures: Seq[EntityFailure])
     def riskingOutcomeEntity: RiskingOutcomeEntity =
-      failures
-        .map(_.asRiskingOutcomeEntity)
-        .foldLeft[RiskingOutcomeEntity](RiskingOutcomeEntity.Approved)(foldRiskingOutcomeEntity) match
-        case f: RiskingOutcomeEntity.FailedFixable => f.copy(fixes = f.fixes.distinct)
-        case other => other
-
-  def foldRiskingOutcomeEntity(
-    o1: RiskingOutcomeEntity,
-    o2: RiskingOutcomeEntity
-  ): RiskingOutcomeEntity =
-    import RiskingOutcomeEntity.*
-    (o1, o2) match
-      case (Approved, x) => x
-      case (x, Approved) => x
-      case (FailedFixable(f1), FailedFixable(f2)) => FailedFixable(fixes = f1 ++ f2)
-      case (_: FailedFixable, nf: FailedNonFixable) => nf
-      case (nf: FailedNonFixable, _: FailedFixable) => nf
-      case (FailedNonFixable(f1), FailedNonFixable(f2)) => FailedNonFixable(failures = f1 ++ f2)
+      if failures.isEmpty then
+        RiskingOutcomeEntity.Approved
+      else if failures.exists { case _: EntityFailure.NonFixable => true; case _ => false } then
+        RiskingOutcomeEntity.FailedNonFixable(failures = failures)
+      else
+        RiskingOutcomeEntity.FailedFixable(
+          fixes = failures.collect { case f: EntityFailure.Fixable => f.asEntityFix }.distinct
+        )

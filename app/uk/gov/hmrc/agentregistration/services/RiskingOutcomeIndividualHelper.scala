@@ -50,29 +50,13 @@ object RiskingOutcomeIndividualHelper:
             isConfirmed = None
           )
 
-  extension (failure: IndividualFailure)
-    def asRiskingOutcomeIndividual: RiskingOutcomeIndividual =
-      failure match
-        case f: IndividualFailure.Fixable => RiskingOutcomeIndividual.FailedFixable(fixes = Seq(f.asIndividualFix))
-        case _: IndividualFailure.NonFixable => RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(failure))
-
   extension (failures: Seq[IndividualFailure])
     def riskingOutcomeIndividual: RiskingOutcomeIndividual =
-      failures
-        .map(_.asRiskingOutcomeIndividual)
-        .foldLeft[RiskingOutcomeIndividual](RiskingOutcomeIndividual.Approved)(foldRiskingOutcomeIndividual) match
-        case f: RiskingOutcomeIndividual.FailedFixable => f.copy(fixes = f.fixes.distinct)
-        case other => other
-
-  def foldRiskingOutcomeIndividual(
-    o1: RiskingOutcomeIndividual,
-    o2: RiskingOutcomeIndividual
-  ): RiskingOutcomeIndividual =
-    import RiskingOutcomeIndividual.*
-    (o1, o2) match
-      case (Approved, x) => x
-      case (x, Approved) => x
-      case (FailedFixable(f1), FailedFixable(f2)) => FailedFixable(fixes = f1 ++ f2)
-      case (_: FailedFixable, nf: FailedNonFixable) => nf
-      case (nf: FailedNonFixable, _: FailedFixable) => nf
-      case (FailedNonFixable(f1), FailedNonFixable(f2)) => FailedNonFixable(failures = f1 ++ f2)
+      if failures.isEmpty then
+        RiskingOutcomeIndividual.Approved
+      else if failures.exists { case _: IndividualFailure.NonFixable => true; case _ => false } then
+        RiskingOutcomeIndividual.FailedNonFixable(failures = failures)
+      else
+        RiskingOutcomeIndividual.FailedFixable(
+          fixes = failures.collect { case f: IndividualFailure.Fixable => f.asIndividualFix }.distinct
+        )

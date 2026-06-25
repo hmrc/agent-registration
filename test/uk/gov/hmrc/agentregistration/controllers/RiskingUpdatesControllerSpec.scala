@@ -56,6 +56,7 @@ extends ControllerSpec:
   private val emptyFailuresRequest: RiskingOutcomeRequest = RiskingOutcomeRequest(
     riskingCompletedDate = riskingCompletedDate,
     correctiveActionExpiryDate = None,
+    applicationOutcome = RiskingOutcomeApplication.Outcome.Approved,
     entityFailures = Seq.empty,
     individualFailures = Seq(
       IndividualFailures(
@@ -139,6 +140,7 @@ extends ControllerSpec:
         val request = RiskingOutcomeRequest(
           riskingCompletedDate = riskingCompletedDate,
           correctiveActionExpiryDate = tc.correctiveActionExpiryDate,
+          applicationOutcome = tc.expectedApplicationOutcome,
           entityFailures = tc.entityFailures,
           individualFailures = Seq(
             IndividualFailures(
@@ -186,6 +188,7 @@ extends ControllerSpec:
     val request = RiskingOutcomeRequest(
       riskingCompletedDate = riskingCompletedDate,
       correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
+      applicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
       entityFailures = Seq.empty,
       individualFailures = Seq(
         IndividualFailures(personReference = tdAll.personReference, failures = Seq.empty),

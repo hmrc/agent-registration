@@ -93,9 +93,9 @@ extends UnitSpec:
         expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7, EntityFailure._8._1))
       ),
       TestCase(
-        description = "mix of fixable and non-fixable absorbs into FailedNonFixable carrying only the non-fixable failures",
+        description = "mix of fixable and non-fixable yields FailedNonFixable carrying ALL failures in original order",
         failures = Seq(EntityFailure._4._1, EntityFailure._7),
-        expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7))
+        expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._4._1, EntityFailure._7))
       )
     ).foreach: tc =>
       tc.description in:
