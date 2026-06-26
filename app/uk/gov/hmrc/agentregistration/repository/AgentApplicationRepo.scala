@@ -75,7 +75,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     .headOption()
 
   def updateManyApplicationStateByReference(
-    applicationReferences: List[ApplicationReference],
+    applicationReferences: Seq[ApplicationReference],
     applicationState: ApplicationState
   ): Future[Unit] = collection
     .updateMany(

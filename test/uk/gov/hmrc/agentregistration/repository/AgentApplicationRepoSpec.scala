@@ -50,7 +50,7 @@ extends ISpec:
 
     repo.findById(record.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
 
-    repo.updateManyApplicationStateByReference(List(record.applicationReference, record2.applicationReference), SentToMinerva).futureValue
+    repo.updateManyApplicationStateByReference(Seq(record.applicationReference, record2.applicationReference), SentToMinerva).futureValue
 
     val updatedRecord = repo.findByApplicationReference(record.applicationReference).futureValue.value
     updatedRecord.applicationState shouldBe SentToMinerva withClue "application state for record 1 should be updated"
