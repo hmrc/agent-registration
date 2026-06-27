@@ -1,0 +1,104 @@
+{
+  "apiId": "AR04",
+  "apiTitle": "Create or Update Agent Application",
+  "description": "Creates or updates (upserts) an agent application for the authenticated user. The internalUserId in the request body must match the internalUserId from the auth session.",
+  "method": "POST",
+  "path": "/application",
+  "pathParameters": [],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Application successfully created or updated"
+    },
+    {
+      "status": 400,
+      "description": "Bad request \u2013 invalid JSON body"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 internalUserId mismatch, unsupported credential role, or HMRC-AS-AGENT enrolment active"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Agent",
+    "credentialRoles": [
+      "User",
+      "Admin"
+    ],
+    "notes": "HMRC-AS-AGENT enrolment must NOT be active. InternalUserId in body must match auth session."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.ApplicationController",
+  "controllerMethod": "upsertApplication",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "POST /application with AgentApplication JSON body",
+      "target": "ApplicationController"
+    },
+    {
+      "step": 2,
+      "actor": "ApplicationController",
+      "action": "authorised() \u2013 validate Agent affinity, credential role, enrolments",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "ApplicationController",
+      "action": "Parse AgentApplication from request body"
+    },
+    {
+      "step": 4,
+      "actor": "ApplicationController",
+      "action": "ensureInternalUserId() \u2013 validate body internalUserId matches auth internalUserId"
+    },
+    {
+      "step": 5,
+      "actor": "ApplicationController",
+      "action": "agentApplicationRepo.upsert(agentApplication)",
+      "target": "MongoDB (agent-application)"
+    },
+    {
+      "step": 6,
+      "actor": "ApplicationController",
+      "action": "Return 200 Ok",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller and retrieve internalId"
+    }
+  ],
+  "databaseCollections": [
+    {
+      "name": "agent-application",
+      "operation": "upsert",
+      "filter": "_id == agentApplicationId"
+    }
+  ],
+  "specialCases": [
+    "Throws AuthorisationException if internalUserId in body does not match auth session",
+    "Rejects if HMRC-AS-AGENT enrolment is already activated",
+    "Rejects Assistant credential role",
+    "MongoDB has TTL index on lastUpdated and unique indexes on internalUserId and linkId"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}

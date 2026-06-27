@@ -1,0 +1,95 @@
+{
+  "apiId": "AR08",
+  "apiTitle": "Get Individual Provided Details for Application",
+  "description": "Retrieves all individual provided details records for a given agent application ID. Returns a list. Requires Agent affinity group.",
+  "method": "GET",
+  "path": "/individual-provided-details/for-application/{agentApplicationId}",
+  "pathParameters": [
+    {
+      "name": "agentApplicationId",
+      "type": "string",
+      "required": true,
+      "description": "The unique identifier of the agent application"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "List of individual provided details (may be empty)",
+      "body": "Array of IndividualProvidedDetails JSON"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 unsupported credential role or HMRC-AS-AGENT active"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Agent",
+    "credentialRoles": [
+      "User",
+      "Admin"
+    ]
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController",
+  "controllerMethod": "findForApplication",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "GET /individual-provided-details/for-application/{agentApplicationId}",
+      "target": "IndividualProvidedDetailsController"
+    },
+    {
+      "step": 2,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "authorised() \u2013 validate Agent affinity",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "individualProvidedDetailsRepo.findForApplication(agentApplicationId)",
+      "target": "MongoDB (individual)"
+    },
+    {
+      "step": 4,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "Return 200 Ok(Json.toJson(list))",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller (Agent)"
+    }
+  ],
+  "databaseCollections": [
+    {
+      "name": "individual",
+      "operation": "find",
+      "filter": "agentApplicationId == agentApplicationId"
+    }
+  ],
+  "specialCases": [
+    "Always returns 200 with array (empty if no records)",
+    "Index on agentApplicationId for efficient lookup"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}

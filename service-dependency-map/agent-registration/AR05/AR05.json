@@ -1,0 +1,129 @@
+{
+  "apiId": "AR05",
+  "apiTitle": "Get Business Partner Record by UTR",
+  "description": "Retrieves a business partner record from DES for a given UTR. Requires Agent affinity group authentication.",
+  "method": "GET",
+  "path": "/business-partner-record/utr/{utr}",
+  "pathParameters": [
+    {
+      "name": "utr",
+      "type": "string",
+      "required": true,
+      "description": "Unique Taxpayer Reference"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Business partner record found",
+      "body": "BusinessPartnerRecordResponse JSON object"
+    },
+    {
+      "status": 204,
+      "description": "No business partner record found for the UTR"
+    },
+    {
+      "status": 400,
+      "description": "Bad request \u2013 DES returned 400"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 unsupported credential role or HMRC-AS-AGENT enrolment active"
+    },
+    {
+      "status": 500,
+      "description": "Unexpected DES error"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Agent",
+    "credentialRoles": [
+      "User",
+      "Admin"
+    ],
+    "notes": "HMRC-AS-AGENT enrolment must NOT be active."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.BusinessPartnerRecordController",
+  "controllerMethod": "getBusinessPartnerRecord",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "GET /business-partner-record/utr/{utr}",
+      "target": "BusinessPartnerRecordController"
+    },
+    {
+      "step": 2,
+      "actor": "BusinessPartnerRecordController",
+      "action": "authorised() \u2013 validate Agent affinity",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "BusinessPartnerRecordController",
+      "action": "businessPartnerRecordConnector.getBusinessPartnerRecord(utr)",
+      "target": "BusinessPartnerRecordConnector"
+    },
+    {
+      "step": 4,
+      "actor": "BusinessPartnerRecordConnector",
+      "action": "POST /registration/individual/utr/{utr} (isAnAgent=false, regime=ITSA, CorrelationId header)",
+      "target": "DES"
+    },
+    {
+      "step": 5,
+      "actor": "BusinessPartnerRecordConnector",
+      "action": "Parse DES JSON into BusinessPartnerRecordResponse (organisationName, individualName, address, emailAddress, primaryPhoneNumber)"
+    },
+    {
+      "step": 6,
+      "actor": "BusinessPartnerRecordController",
+      "action": "Return 200 Ok(bpr) or 204 NoContent",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller"
+    },
+    {
+      "service": "DES",
+      "type": "HTTP/POST",
+      "endpoint": "/registration/individual/utr/{utr}",
+      "purpose": "Fetch business partner record by UTR",
+      "authHeader": "Bearer {desAuthToken}",
+      "customHeaders": [
+        "Environment",
+        "CorrelationId"
+      ]
+    }
+  ],
+  "databaseCollections": [],
+  "specialCases": [
+    "DES is called with POST despite being a lookup (DES API design)",
+    "Request body sets isAnAgent=false and regime=ITSA",
+    "CorrelationId UUID generated per request",
+    "DES 404 \u2192 None (204 NoContent)",
+    "DES 400 \u2192 BadRequestException with UTR context",
+    "DES other errors \u2192 500 UpstreamErrorResponse",
+    "Address parse failure throws immediately"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}
