@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.util
+package uk.gov.hmrc.agentregistration.model
 
-import play.api.Logger
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.ApplicationReference
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits.given
 
-trait RequestAwareLogging:
-  implicit val logger: RequestAwareLogger =
-    new RequestAwareLogger(
-      delegateLogger = Logger(getClass)
-    )
+import java.time.Instant
+
+final case class ApplicationScheduler(
+  _id: ApplicationReference,
+  applicationReadyToSubmitEmailStatus: EmailStatus,
+  lastUpdated: Instant
+)
+
+object ApplicationScheduler:
+  given OFormat[ApplicationScheduler] = Json.format[ApplicationScheduler]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.util
+package uk.gov.hmrc.agentregistration.model
 
-import play.api.Logger
+import play.api.libs.json.Json
+import play.api.libs.json.OWrites
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
-trait RequestAwareLogging:
-  implicit val logger: RequestAwareLogger =
-    new RequestAwareLogger(
-      delegateLogger = Logger(getClass)
-    )
+final case class SendEmailRequest(
+  to: Seq[EmailAddress],
+  templateId: EmailTemplateId,
+  parameters: Map[String, String]
+)
+
+object SendEmailRequest:
+  given OWrites[SendEmailRequest] = Json.writes[SendEmailRequest]

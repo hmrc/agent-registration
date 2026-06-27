@@ -143,6 +143,8 @@ sealed trait AgentApplication:
 
   def getSubmittedAt: Instant = submittedAt.getOrElse(expectedDataNotDefinedError("submittedAt"))
 
+  def getApplicationExpiresAt: Instant = applicationExpiresAt.getOrElse(expectedDataNotDefinedError("applicationExpiresAt"))
+
   def getVrns: List[Vrn] = vrns.getOrThrowExpectedDataMissing("vrns")
 
   def getPayeRefs: List[PayeRef] = payeRefs.getOrThrowExpectedDataMissing("payeRefs")
