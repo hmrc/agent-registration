@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.services
 
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 
 object RiskingOutcomeIndividualHelper:
@@ -50,13 +51,14 @@ object RiskingOutcomeIndividualHelper:
             isConfirmed = None
           )
 
-  extension (failures: Seq[IndividualFailure])
-    def riskingOutcomeIndividual: RiskingOutcomeIndividual =
-      if failures.isEmpty then
-        RiskingOutcomeIndividual.Approved
-      else if failures.exists { case _: IndividualFailure.NonFixable => true; case _ => false } then
-        RiskingOutcomeIndividual.FailedNonFixable(failures = failures)
-      else
+  def riskingOutcomeIndividual(
+    riskingOutcome: RiskingOutcome,
+    individualFailures: Seq[IndividualFailure]
+  ): RiskingOutcomeIndividual =
+    riskingOutcome match
+      case RiskingOutcome.Approved => RiskingOutcomeIndividual.Approved
+      case RiskingOutcome.FailedFixable =>
         RiskingOutcomeIndividual.FailedFixable(
-          fixes = failures.collect { case f: IndividualFailure.Fixable => f.asIndividualFix }.distinct
+          fixes = individualFailures.collect { case f: IndividualFailure.Fixable => f.asIndividualFix }.distinct
         )
+      case RiskingOutcome.FailedNonFixable => RiskingOutcomeIndividual.FailedNonFixable(failures = individualFailures)

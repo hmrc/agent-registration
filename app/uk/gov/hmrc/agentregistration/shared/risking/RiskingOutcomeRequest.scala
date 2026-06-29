@@ -24,9 +24,9 @@ import java.time.LocalDate
 
 final case class RiskingOutcomeRequest(
   riskingCompletedDate: LocalDate,
-  correctiveActionExpiryDate: Option[LocalDate],
-  applicationOutcome: RiskingOutcomeApplication.Outcome,
+  applicationOutcome: RiskingOutcome,
   entityFailures: Seq[EntityFailure],
+  entityOutcome: RiskingOutcome,
   individualFailures: Seq[IndividualFailures]
 )
 
@@ -35,7 +35,8 @@ object RiskingOutcomeRequest:
 
 final case class IndividualFailures(
   personReference: PersonReference,
-  failures: Seq[IndividualFailure]
+  failures: Seq[IndividualFailure],
+  riskingOutcome: RiskingOutcome
 )
 
 object IndividualFailures:

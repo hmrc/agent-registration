@@ -30,6 +30,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailures
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
@@ -51,76 +52,96 @@ extends ControllerSpec:
   private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterSentForRisking
   private val applicationReference = agentApplicationSentForRisking.applicationReference
   private val riskingCompletedDate: LocalDate = LocalDate.of(2026, 6, 24)
-  private val correctiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(45)
+  private val expectedCorrectiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(45)
 
   private val emptyFailuresRequest: RiskingOutcomeRequest = RiskingOutcomeRequest(
     riskingCompletedDate = riskingCompletedDate,
-    correctiveActionExpiryDate = None,
-    applicationOutcome = RiskingOutcomeApplication.Outcome.Approved,
+    applicationOutcome = RiskingOutcome.Approved,
     entityFailures = Seq.empty,
+    entityOutcome = RiskingOutcome.Approved,
     individualFailures = Seq(
       IndividualFailures(
         personReference = tdAll.personReference,
-        failures = Seq.empty
+        failures = Seq.empty,
+        riskingOutcome = RiskingOutcome.Approved
       )
     )
   )
 
   private case class OutcomeTestCase(
     description: String,
+    applicationOutcome: RiskingOutcome,
+    entityOutcome: RiskingOutcome,
     entityFailures: Seq[EntityFailure],
+    individualOutcome: RiskingOutcome,
     individualFailures: Seq[IndividualFailure],
-    correctiveActionExpiryDate: Option[LocalDate],
-    expectedApplicationOutcome: RiskingOutcomeApplication.Outcome,
+    expectedRiskingOutcomeApplicationOutcome: RiskingOutcomeApplication.Outcome,
+    expectedCorrectiveActionExpiryDate: Option[LocalDate],
     expectedRiskingOutcomeEntity: RiskingOutcomeEntity,
     expectedRiskingOutcomeIndividual: RiskingOutcomeIndividual
   )
 
-  "receiveRiskingOutcome derives outcomes from failures, persists them, flips state to RiskingCompleted, and updates each individual" - {
+  "receiveRiskingOutcome consumes the wire outcomes + failures, persists, flips state to RiskingCompleted, computes correctiveActionExpiryDate, and updates each individual" - {
 
     List(
       OutcomeTestCase(
-        description = "empty failures yield Approved end-to-end",
+        description = "empty failures + Approved outcomes yield Approved end-to-end with no corrective action expiry",
+        applicationOutcome = RiskingOutcome.Approved,
+        entityOutcome = RiskingOutcome.Approved,
         entityFailures = Seq.empty,
+        individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        correctiveActionExpiryDate = None,
-        expectedApplicationOutcome = RiskingOutcomeApplication.Outcome.Approved,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.Approved,
+        expectedCorrectiveActionExpiryDate = None,
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
       OutcomeTestCase(
-        description = "a fixable entity failure yields FailedFixable end-to-end with the corresponding fix and corrective action expiry preserved",
+        description =
+          "a fixable entity failure yields FailedFixable end-to-end with the corresponding fix and corrective action expiry set 45 days after completion",
+        applicationOutcome = RiskingOutcome.FailedFixable,
+        entityOutcome = RiskingOutcome.FailedFixable,
         entityFailures = Seq(EntityFailure._4._1),
+        individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
-        expectedApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
+        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedFixable(fixes = Seq(EntityFix._4._1(isConfirmed = None))),
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
       OutcomeTestCase(
-        description = "a non-fixable entity failure yields FailedNonFixable end-to-end",
+        description = "a non-fixable entity failure yields FailedNonFixable end-to-end with corrective action expiry set",
+        applicationOutcome = RiskingOutcome.FailedNonFixable,
+        entityOutcome = RiskingOutcome.FailedNonFixable,
         entityFailures = Seq(EntityFailure._7),
+        individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
-        expectedApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
+        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7)),
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
       OutcomeTestCase(
         description = "entity Approved but a fixable individual failure yields FailedFixable application outcome",
+        applicationOutcome = RiskingOutcome.FailedFixable,
+        entityOutcome = RiskingOutcome.Approved,
         entityFailures = Seq.empty,
+        individualOutcome = RiskingOutcome.FailedFixable,
         individualFailures = Seq(IndividualFailure._4._1),
-        correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
-        expectedApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
+        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
       ),
       OutcomeTestCase(
         description = "entity Approved but a non-fixable individual failure yields FailedNonFixable application outcome",
+        applicationOutcome = RiskingOutcome.FailedNonFixable,
+        entityOutcome = RiskingOutcome.Approved,
         entityFailures = Seq.empty,
+        individualOutcome = RiskingOutcome.FailedNonFixable,
         individualFailures = Seq(IndividualFailure._6),
-        correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
-        expectedApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
+        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._6))
       )
@@ -139,13 +160,14 @@ extends ControllerSpec:
 
         val request = RiskingOutcomeRequest(
           riskingCompletedDate = riskingCompletedDate,
-          correctiveActionExpiryDate = tc.correctiveActionExpiryDate,
-          applicationOutcome = tc.expectedApplicationOutcome,
+          applicationOutcome = tc.applicationOutcome,
           entityFailures = tc.entityFailures,
+          entityOutcome = tc.entityOutcome,
           individualFailures = Seq(
             IndividualFailures(
               personReference = tdAll.personReference,
-              failures = tc.individualFailures
+              failures = tc.individualFailures,
+              riskingOutcome = tc.individualOutcome
             )
           )
         )
@@ -164,8 +186,8 @@ extends ControllerSpec:
         updatedApplication.applicationState shouldBe ApplicationState.RiskingCompleted
         updatedApplication.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication(
           riskingCompletedDate = riskingCompletedDate,
-          outcome = tc.expectedApplicationOutcome,
-          correctiveActionExpiryDate = tc.correctiveActionExpiryDate
+          outcome = tc.expectedRiskingOutcomeApplicationOutcome,
+          correctiveActionExpiryDate = tc.expectedCorrectiveActionExpiryDate
         ))
         updatedApplication.riskingOutcomeEntity shouldBe Some(tc.expectedRiskingOutcomeEntity)
 
@@ -187,12 +209,20 @@ extends ControllerSpec:
 
     val request = RiskingOutcomeRequest(
       riskingCompletedDate = riskingCompletedDate,
-      correctiveActionExpiryDate = Some(correctiveActionExpiryDate),
-      applicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
+      applicationOutcome = RiskingOutcome.FailedFixable,
       entityFailures = Seq.empty,
+      entityOutcome = RiskingOutcome.Approved,
       individualFailures = Seq(
-        IndividualFailures(personReference = tdAll.personReference, failures = Seq.empty),
-        IndividualFailures(personReference = individual2PersonReference, failures = Seq(IndividualFailure._4._1))
+        IndividualFailures(
+          personReference = tdAll.personReference,
+          failures = Seq.empty,
+          riskingOutcome = RiskingOutcome.Approved
+        ),
+        IndividualFailures(
+          personReference = individual2PersonReference,
+          failures = Seq(IndividualFailure._4._1),
+          riskingOutcome = RiskingOutcome.FailedFixable
+        )
       )
     )
 
@@ -237,7 +267,8 @@ extends ControllerSpec:
       individualFailures = Seq(
         IndividualFailures(
           personReference = PersonReference("PREF_MISSING"),
-          failures = Seq.empty
+          failures = Seq.empty,
+          riskingOutcome = RiskingOutcome.Approved
         )
       )
     )

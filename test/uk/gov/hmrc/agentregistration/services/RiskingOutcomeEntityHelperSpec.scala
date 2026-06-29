@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentregistration.services
 
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper.*
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 
@@ -27,26 +27,30 @@ extends UnitSpec:
 
   private case class TestCase(
     description: String,
-    failures: Seq[EntityFailure],
+    riskingOutcome: RiskingOutcome,
+    entityFailures: Seq[EntityFailure],
     expected: RiskingOutcomeEntity
   )
 
-  "Seq[EntityFailure].riskingOutcomeEntity" - {
+  "RiskingOutcomeEntityHelper.riskingOutcomeEntity(riskingOutcome, entityFailures)" - {
 
     List(
       TestCase(
-        description = "empty failures yield Approved",
-        failures = Seq.empty,
+        description = "Approved riskingOutcome with empty entity failures yields RiskingOutcomeEntity.Approved",
+        riskingOutcome = RiskingOutcome.Approved,
+        entityFailures = Seq.empty,
         expected = RiskingOutcomeEntity.Approved
       ),
       TestCase(
-        description = "a single fixable failure yields FailedFixable with the corresponding fix",
-        failures = Seq(EntityFailure._4._1),
+        description = "FailedFixable riskingOutcome with a single fixable entity failure yields FailedFixable with the corresponding fix",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        entityFailures = Seq(EntityFailure._4._1),
         expected = RiskingOutcomeEntity.FailedFixable(fixes = Seq(EntityFix._4._1(isConfirmed = None)))
       ),
       TestCase(
-        description = "multiple non-AMLS fixable failures yield FailedFixable with one fix per failure",
-        failures = Seq(
+        description = "FailedFixable riskingOutcome with multiple non-AMLS fixable entity failures yields FailedFixable with one fix per failure",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        entityFailures = Seq(
           EntityFailure._4._1,
           EntityFailure._5._3,
           EntityFailure._8._7
@@ -60,8 +64,9 @@ extends UnitSpec:
         )
       ),
       TestCase(
-        description = "multiple AMLS failures yield FailedFixable with one AmlsFix per distinct failure",
-        failures = Seq(EntityFailure._3._1, EntityFailure._3._2),
+        description = "FailedFixable riskingOutcome with multiple AMLS entity failures yields FailedFixable with one AmlsFix per distinct failure",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        entityFailures = Seq(EntityFailure._3._1, EntityFailure._3._2),
         expected = RiskingOutcomeEntity.FailedFixable(
           fixes = Seq(
             EntityFix._3.AmlsFix(
@@ -78,26 +83,31 @@ extends UnitSpec:
         )
       ),
       TestCase(
-        description = "duplicate fixable failures yield a single fix after distinct",
-        failures = Seq(EntityFailure._4._1, EntityFailure._4._1),
+        description = "FailedFixable riskingOutcome with duplicate fixable entity failures yields a single fix after distinct",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        entityFailures = Seq(EntityFailure._4._1, EntityFailure._4._1),
         expected = RiskingOutcomeEntity.FailedFixable(fixes = Seq(EntityFix._4._1(isConfirmed = None)))
       ),
       TestCase(
-        description = "a single non-fixable failure yields FailedNonFixable with the failure",
-        failures = Seq(EntityFailure._7),
+        description = "FailedNonFixable riskingOutcome with a single non-fixable entity failure yields FailedNonFixable with the failure",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        entityFailures = Seq(EntityFailure._7),
         expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7))
       ),
       TestCase(
-        description = "multiple non-fixable failures yield FailedNonFixable with all failures",
-        failures = Seq(EntityFailure._7, EntityFailure._8._1),
+        description = "FailedNonFixable riskingOutcome with multiple non-fixable entity failures yields FailedNonFixable with all failures",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        entityFailures = Seq(EntityFailure._7, EntityFailure._8._1),
         expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7, EntityFailure._8._1))
       ),
       TestCase(
-        description = "mix of fixable and non-fixable yields FailedNonFixable carrying ALL failures in original order",
-        failures = Seq(EntityFailure._4._1, EntityFailure._7),
+        description =
+          "FailedNonFixable riskingOutcome with a mix of fixable and non-fixable entity failures yields FailedNonFixable carrying ALL failures in original order",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        entityFailures = Seq(EntityFailure._4._1, EntityFailure._7),
         expected = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._4._1, EntityFailure._7))
       )
     ).foreach: tc =>
       tc.description in:
-        tc.failures.riskingOutcomeEntity shouldBe tc.expected
+        RiskingOutcomeEntityHelper.riskingOutcomeEntity(tc.riskingOutcome, tc.entityFailures) shouldBe tc.expected
   }

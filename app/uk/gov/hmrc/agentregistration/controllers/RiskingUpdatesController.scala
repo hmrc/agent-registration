@@ -21,10 +21,12 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper.*
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper.*
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeApplicationHelper
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper
+import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
@@ -36,6 +38,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.http.InternalServerException
 
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -45,6 +48,7 @@ import scala.concurrent.Future
 class RiskingUpdatesController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
+  appConfig: AppConfig,
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
 )(using ExecutionContext)
@@ -71,13 +75,22 @@ extends BackendController(cc):
     agentApplication: AgentApplication,
     riskingOutcomeRequest: RiskingOutcomeRequest
   )(using RequestHeader): Future[Unit] =
-    val riskingOutcomeEntity: RiskingOutcomeEntity = riskingOutcomeRequest.entityFailures.riskingOutcomeEntity
+    val riskingOutcomeEntity: RiskingOutcomeEntity = RiskingOutcomeEntityHelper.riskingOutcomeEntity(
+      riskingOutcomeRequest.entityOutcome,
+      riskingOutcomeRequest.entityFailures
+    )
     val individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)] = riskingOutcomeRequest.individualFailures
-      .map(individualFailures => individualFailures.personReference -> individualFailures.failures.riskingOutcomeIndividual)
+      .map(individualFailures =>
+        individualFailures.personReference -> RiskingOutcomeIndividualHelper.riskingOutcomeIndividual(
+          individualFailures.riskingOutcome,
+          individualFailures.failures
+        )
+      )
+    val outcome: RiskingOutcomeApplication.Outcome = RiskingOutcomeApplicationHelper.riskingOutcomeApplicationOutcome(riskingOutcomeRequest.applicationOutcome)
     val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
       riskingCompletedDate = riskingOutcomeRequest.riskingCompletedDate,
-      outcome = riskingOutcomeRequest.applicationOutcome,
-      correctiveActionExpiryDate = riskingOutcomeRequest.correctiveActionExpiryDate
+      outcome = outcome,
+      correctiveActionExpiryDate = correctiveActionExpiryDateFor(outcome, riskingOutcomeRequest.riskingCompletedDate)
     )
     for
       _ <- agentApplicationRepo.upsert(
@@ -88,6 +101,15 @@ extends BackendController(cc):
       )
       _ <- ProcessInSequence.processInSequence(individualOutcomes)(applyIndividualOutcome)
     yield ()
+
+  private def correctiveActionExpiryDateFor(
+    outcome: RiskingOutcomeApplication.Outcome,
+    riskingCompletedDate: LocalDate
+  ): Option[LocalDate] =
+    outcome match
+      case RiskingOutcomeApplication.Outcome.Approved => None
+      case RiskingOutcomeApplication.Outcome.FailedFixable | RiskingOutcomeApplication.Outcome.FailedNonFixable =>
+        Some(riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong))
 
   private def applyIndividualOutcome(
     personReferenceAndOutcome: (PersonReference, RiskingOutcomeIndividual)

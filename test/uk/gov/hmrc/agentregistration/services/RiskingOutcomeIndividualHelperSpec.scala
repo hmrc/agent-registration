@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentregistration.services
 
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper.*
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 
@@ -27,26 +27,30 @@ extends UnitSpec:
 
   private case class TestCase(
     description: String,
-    failures: Seq[IndividualFailure],
+    riskingOutcome: RiskingOutcome,
+    individualFailures: Seq[IndividualFailure],
     expected: RiskingOutcomeIndividual
   )
 
-  "Seq[IndividualFailure].riskingOutcomeIndividual" - {
+  "RiskingOutcomeIndividualHelper.riskingOutcomeIndividual(riskingOutcome, individualFailures)" - {
 
     List(
       TestCase(
-        description = "empty failures yield Approved",
-        failures = Seq.empty,
+        description = "Approved riskingOutcome with empty individual failures yields RiskingOutcomeIndividual.Approved",
+        riskingOutcome = RiskingOutcome.Approved,
+        individualFailures = Seq.empty,
         expected = RiskingOutcomeIndividual.Approved
       ),
       TestCase(
-        description = "a single fixable failure yields FailedFixable with the corresponding fix",
-        failures = Seq(IndividualFailure._4._1),
+        description = "FailedFixable riskingOutcome with a single fixable individual failure yields FailedFixable with the corresponding fix",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        individualFailures = Seq(IndividualFailure._4._1),
         expected = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
       ),
       TestCase(
-        description = "multiple non-_10 fixable failures yield FailedFixable with one fix per failure",
-        failures = Seq(
+        description = "FailedFixable riskingOutcome with multiple non-_10 fixable individual failures yields FailedFixable with one fix per failure",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        individualFailures = Seq(
           IndividualFailure._4._1,
           IndividualFailure._5._3,
           IndividualFailure._8._7
@@ -60,8 +64,9 @@ extends UnitSpec:
         )
       ),
       TestCase(
-        description = "both _10 failures collapse to a single IndividualDetailsFix after distinct",
-        failures = Seq(IndividualFailure._10._1, IndividualFailure._10._2),
+        description = "FailedFixable riskingOutcome with both _10 individual failures collapses to a single IndividualDetailsFix after distinct",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        individualFailures = Seq(IndividualFailure._10._1, IndividualFailure._10._2),
         expected = RiskingOutcomeIndividual.FailedFixable(
           fixes = Seq(
             IndividualFix._10.IndividualDetailsFix(
@@ -74,26 +79,31 @@ extends UnitSpec:
         )
       ),
       TestCase(
-        description = "duplicate fixable failures yield a single fix after distinct",
-        failures = Seq(IndividualFailure._5._1, IndividualFailure._5._1),
+        description = "FailedFixable riskingOutcome with duplicate fixable individual failures yields a single fix after distinct",
+        riskingOutcome = RiskingOutcome.FailedFixable,
+        individualFailures = Seq(IndividualFailure._5._1, IndividualFailure._5._1),
         expected = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._5._1(isConfirmed = None)))
       ),
       TestCase(
-        description = "a single non-fixable failure yields FailedNonFixable with the failure",
-        failures = Seq(IndividualFailure._6),
+        description = "FailedNonFixable riskingOutcome with a single non-fixable individual failure yields FailedNonFixable with the failure",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        individualFailures = Seq(IndividualFailure._6),
         expected = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._6))
       ),
       TestCase(
-        description = "multiple non-fixable failures yield FailedNonFixable with all failures",
-        failures = Seq(IndividualFailure._6, IndividualFailure._9),
+        description = "FailedNonFixable riskingOutcome with multiple non-fixable individual failures yields FailedNonFixable with all failures",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        individualFailures = Seq(IndividualFailure._6, IndividualFailure._9),
         expected = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._6, IndividualFailure._9))
       ),
       TestCase(
-        description = "mix of fixable and non-fixable yields FailedNonFixable carrying ALL failures in original order",
-        failures = Seq(IndividualFailure._4._1, IndividualFailure._6),
+        description =
+          "FailedNonFixable riskingOutcome with a mix of fixable and non-fixable individual failures yields FailedNonFixable carrying ALL failures in original order",
+        riskingOutcome = RiskingOutcome.FailedNonFixable,
+        individualFailures = Seq(IndividualFailure._4._1, IndividualFailure._6),
         expected = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._4._1, IndividualFailure._6))
       )
     ).foreach: tc =>
       tc.description in:
-        tc.failures.riskingOutcomeIndividual shouldBe tc.expected
+        RiskingOutcomeIndividualHelper.riskingOutcomeIndividual(tc.riskingOutcome, tc.individualFailures) shouldBe tc.expected
   }

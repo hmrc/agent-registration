@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.services
 
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 
 object RiskingOutcomeEntityHelper:
@@ -52,13 +53,14 @@ object RiskingOutcomeEntityHelper:
         case EntityFailure._8._5 => EntityFix._8._5(isConfirmed = None)
         case EntityFailure._8._7 => EntityFix._8._7(isConfirmed = None)
 
-  extension (failures: Seq[EntityFailure])
-    def riskingOutcomeEntity: RiskingOutcomeEntity =
-      if failures.isEmpty then
-        RiskingOutcomeEntity.Approved
-      else if failures.exists { case _: EntityFailure.NonFixable => true; case _ => false } then
-        RiskingOutcomeEntity.FailedNonFixable(failures = failures)
-      else
+  def riskingOutcomeEntity(
+    riskingOutcome: RiskingOutcome,
+    entityFailures: Seq[EntityFailure]
+  ): RiskingOutcomeEntity =
+    riskingOutcome match
+      case RiskingOutcome.Approved => RiskingOutcomeEntity.Approved
+      case RiskingOutcome.FailedFixable =>
         RiskingOutcomeEntity.FailedFixable(
-          fixes = failures.collect { case f: EntityFailure.Fixable => f.asEntityFix }.distinct
+          fixes = entityFailures.collect { case f: EntityFailure.Fixable => f.asEntityFix }.distinct
         )
+      case RiskingOutcome.FailedNonFixable => RiskingOutcomeEntity.FailedNonFixable(failures = entityFailures)

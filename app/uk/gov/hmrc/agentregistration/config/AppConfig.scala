@@ -46,6 +46,9 @@ class AppConfig @Inject() (
   object ProvideDetailsRepo:
     val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.providedetails-repo-ttl", servicesConfig)
 
+  object CorrectiveAction:
+    val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
+
   object FieldLevelEncryption:
 
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
