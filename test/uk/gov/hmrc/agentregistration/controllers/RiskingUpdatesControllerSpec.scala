@@ -20,6 +20,7 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.given
 import play.api.mvc.Request
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
@@ -48,11 +49,16 @@ extends ControllerSpec:
 
   val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+  private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+
+  override def afterAll(): Unit =
+    dropDatabase()
+    super.afterAll()
 
   private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterSentForRisking
   private val applicationReference = agentApplicationSentForRisking.applicationReference
   private val riskingCompletedDate: LocalDate = LocalDate.of(2026, 6, 24)
-  private val expectedCorrectiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(45)
+  private val expectedCorrectiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
 
   private val emptyFailuresRequest: RiskingOutcomeRequest = RiskingOutcomeRequest(
     riskingCompletedDate = riskingCompletedDate,
@@ -256,17 +262,18 @@ extends ControllerSpec:
 
     response.status shouldBe Status.NOT_FOUND
 
-  "receiveRiskingOutcome fails when an individual referenced by personReference does not exist" in:
+  "receiveRiskingOutcome fails when validation finds an individual referenced by personReference does not exist, and leaves the application unchanged" in:
     given Request[?] = tdAll.backendRequest
     agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
     agentApplicationRepo.findByApplicationReference(
       applicationReference
     ).futureValue.value shouldBe agentApplicationSentForRisking withClue "application exists"
 
+    val missingPersonReference: PersonReference = PersonReference("PREF_MISSING")
     val requestWithMissingIndividual = emptyFailuresRequest.copy(
       individualFailures = Seq(
         IndividualFailures(
-          personReference = PersonReference("PREF_MISSING"),
+          personReference = missingPersonReference,
           failures = Seq.empty,
           riskingOutcome = RiskingOutcome.Approved
         )
@@ -281,3 +288,60 @@ extends ControllerSpec:
         .futureValue
 
     response.status shouldBe Status.INTERNAL_SERVER_ERROR
+
+    val applicationAfterFailure = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
+    applicationAfterFailure shouldBe agentApplicationSentForRisking withClue
+      "application should remain unchanged — state, riskingOutcomeApplication, riskingOutcomeEntity all untouched"
+
+  "receiveRiskingOutcome fails when validation finds one of several referenced individuals does not exist, and leaves every other individual AND the application unchanged" in:
+    given Request[?] = tdAll.backendRequest
+    val individual1 = tdAll.providedDetails.afterFinished
+    val individual3PersonReference: PersonReference = PersonReference("PREF3")
+    val individual3 = tdAll.providedDetails.afterFinished.copy(
+      _id = IndividualProvidedDetailsId("individual-provided-details-id-3"),
+      personReference = individual3PersonReference
+    )
+    val missingPersonReference: PersonReference = PersonReference("PREF_MISSING")
+    agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
+    individualProvidedDetailsRepo.upsert(individual1).futureValue
+    individualProvidedDetailsRepo.upsert(individual3).futureValue
+
+    val requestWithOneMissingIndividual = RiskingOutcomeRequest(
+      riskingCompletedDate = riskingCompletedDate,
+      applicationOutcome = RiskingOutcome.FailedFixable,
+      entityFailures = Seq.empty,
+      entityOutcome = RiskingOutcome.Approved,
+      individualFailures = Seq(
+        IndividualFailures(
+          personReference = tdAll.personReference,
+          failures = Seq.empty,
+          riskingOutcome = RiskingOutcome.Approved
+        ),
+        IndividualFailures(
+          personReference = missingPersonReference,
+          failures = Seq.empty,
+          riskingOutcome = RiskingOutcome.Approved
+        ),
+        IndividualFailures(
+          personReference = individual3PersonReference,
+          failures = Seq(IndividualFailure._4._1),
+          riskingOutcome = RiskingOutcome.FailedFixable
+        )
+      )
+    )
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(requestWithOneMissingIndividual))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.INTERNAL_SERVER_ERROR
+
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe agentApplicationSentForRisking withClue
+      "application unchanged — validate-first must fail BEFORE upserting the application"
+    individualProvidedDetailsRepo.findByPersonReference(tdAll.personReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
+      "individual1 (referenced before the missing one) must not be updated"
+    individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
+      "individual3 (referenced after the missing one) must not be updated"

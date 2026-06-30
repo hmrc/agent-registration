@@ -31,12 +31,13 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
-import uk.gov.hmrc.http.InternalServerException
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -93,13 +94,15 @@ extends BackendController(cc):
       correctiveActionExpiryDate = correctiveActionExpiryDateFor(outcome, riskingOutcomeRequest.riskingCompletedDate)
     )
     for
+
+      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(individualOutcomes)
       _ <- agentApplicationRepo.upsert(
         agentApplication
           .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeApplication))
           .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeEntity))
           .modify(_.applicationState).setTo(ApplicationState.RiskingCompleted)
       )
-      _ <- ProcessInSequence.processInSequence(individualOutcomes)(applyIndividualOutcome)
+      _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
     yield ()
 
   private def correctiveActionExpiryDateFor(
@@ -111,19 +114,14 @@ extends BackendController(cc):
       case RiskingOutcomeApplication.Outcome.FailedFixable | RiskingOutcomeApplication.Outcome.FailedNonFixable =>
         Some(riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong))
 
-  private def applyIndividualOutcome(
-    personReferenceAndOutcome: (PersonReference, RiskingOutcomeIndividual)
-  )(using RequestHeader): Future[Unit] =
-    val (personReference, riskingOutcomeIndividual) = personReferenceAndOutcome
-    individualProvidedDetailsRepo
-      .findByPersonReference(personReference)
-      .flatMap:
-        case None =>
-          val message = s"IndividualProvidedDetails not found for personReference [${personReference.value}]"
-          logger.warn(message)
-          Future.failed(InternalServerException(message))
-        case Some(individualProvidedDetails) =>
-          individualProvidedDetailsRepo.upsert(
-            individualProvidedDetails
-              .modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
-          )
+  private def resolveIndividualOutcomes(
+    individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)]
+  )(using RequestHeader): Future[Seq[IndividualProvidedDetails]] =
+    individualOutcomes.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
+      case (accumulator, (personReference, riskingOutcomeIndividual)) =>
+        for
+          individualProvidedDetailsList: Seq[IndividualProvidedDetails] <- accumulator
+          individualProvidedDetails: IndividualProvidedDetails <- individualProvidedDetailsRepo
+            .findByPersonReference(personReference)
+            .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${personReference.value}]"))
+        yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
