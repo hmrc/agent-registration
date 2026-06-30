@@ -22,6 +22,9 @@ import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualDateOfBirth
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
+import uk.gov.hmrc.agentregistration.shared.individual.UserProvidedDateOfBirth
+import uk.gov.hmrc.agentregistration.shared.individual.UserProvidedNino
+import uk.gov.hmrc.agentregistration.shared.individual.UserProvidedSaUtr
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
 import java.time.LocalDate
@@ -48,9 +51,17 @@ object IndividualFix:
     given `_8._7`: OFormat[_8._7] = Json.format[_8._7]
 
     given OFormat[_10.IndividualDetailsFix] =
-      given individualDateOfBirthProvided: OFormat[IndividualDateOfBirth.Provided] = Json.format[IndividualDateOfBirth.Provided]
-      given individualSaUtrProvided: OFormat[IndividualSaUtr.Provided] = Json.format[IndividualSaUtr.Provided]
-      given individualNinoProvided: OFormat[IndividualNino.Provided] = Json.format[IndividualNino.Provided]
+      given individualNinoProvidedFormat: OFormat[IndividualNino.Provided] = Json.format[IndividualNino.Provided]
+      given individualNinoNotProvidedFormat: OFormat[IndividualNino.NotProvided.type] = Json.format[IndividualNino.NotProvided.type]
+      given individualSaUtrProvidedFormat: OFormat[IndividualSaUtr.Provided] = Json.format[IndividualSaUtr.Provided]
+      given individualSaUtrNotProvidedFormat: OFormat[IndividualSaUtr.NotProvided.type] = Json.format[IndividualSaUtr.NotProvided.type]
+      given individualDateOfBirthProvidedFormat: OFormat[IndividualDateOfBirth.Provided] = Json.format[IndividualDateOfBirth.Provided]
+      given individualDateOfBirthApplicantProvidedFormat: OFormat[
+        IndividualDateOfBirth.ApplicantProvided
+      ] = Json.format[IndividualDateOfBirth.ApplicantProvided] // This is an extension of UserProvidedDateOfBirth we need to support in the fix
+      given userProvidedDateOfBirth: OFormat[UserProvidedDateOfBirth] = Json.format[UserProvidedDateOfBirth]
+      given userProvidedSaUtrFormat: OFormat[UserProvidedSaUtr] = Json.format[UserProvidedSaUtr]
+      given userProvidedNinoFormat: OFormat[UserProvidedNino] = Json.format[UserProvidedNino]
       Json.format[_10.IndividualDetailsFix]
 
     val dontDeleteMe = """
@@ -123,9 +134,9 @@ object IndividualFix:
   object _10:
     /** A fix corresponding to the  [[IndividualFailure._10]] individual failures */
     final case class IndividualDetailsFix(
-      dateOfBirth: Option[IndividualDateOfBirth.Provided],
-      saUtr: Option[IndividualSaUtr.Provided],
-      nino: Option[IndividualNino.Provided],
+      dateOfBirth: Option[UserProvidedDateOfBirth],
+      saUtr: Option[UserProvidedSaUtr],
+      nino: Option[UserProvidedNino],
       override val isConfirmed: Option[Boolean]
     )
     extends IndividualFix:

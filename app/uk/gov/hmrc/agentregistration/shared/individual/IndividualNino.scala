@@ -53,3 +53,17 @@ object IndividualNino:
                          |`Unreachable case except for null` problem emited by Play Json macro"""
 
     Json.format[IndividualNino]
+
+  @nowarn()
+  given OFormat[UserProvidedNino] =
+    given JsonConfiguration = JsonConfig.jsonConfiguration
+
+    given OFormat[NotProvided.type] = Json.format[NotProvided.type]
+    given OFormat[Provided] = Json.format[Provided]
+
+    val dontDeleteMe = """
+        |Don't delete me.
+        |I will emit a warning so `@nowarn` can be applied to address below
+        |`Unreachable case except for null` problem emited by Play Json macro"""
+
+    Json.format[UserProvidedNino]
