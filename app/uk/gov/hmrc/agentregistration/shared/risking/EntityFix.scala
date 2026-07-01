@@ -75,25 +75,6 @@ object EntityFix:
 
     Json.format[EntityFix]
 
-//  def forFix(f: EntityFailure.Fixable): EntityFix =
-//    f match
-//      case f: EntityFailure.IsAmls => EntityFix.AmlsFix(f, None, None)
-//      case EntityFailure._4._1 => EntityFix._4._1(None)
-//      case EntityFailure._4._2 => EntityFix._4._2(None)
-//      case EntityFailure._4._3 => EntityFix._4._3(None)
-//      case EntityFailure._4._4 => EntityFix._4._4(None)
-//      case _: EntityFailure._5._1 => EntityFix._5._1(None)
-//      case _: EntityFailure._5._2 => EntityFix._5._2(None)
-//      case _: EntityFailure._5._3 => EntityFix._5._3(None)
-//      case _: EntityFailure._5._4 => EntityFix._5._4(None)
-//      case _: EntityFailure._5._5 => EntityFix._5._5(None)
-//      case _: EntityFailure._5._6 => EntityFix._5._6(None)
-//      case _: EntityFailure._5._7 => EntityFix._5._7(None)
-//      case EntityFailure._8._5 => EntityFix._8._5(None)
-//      case EntityFailure._8._7 => EntityFix._8._7(None)
-
-//  def initialFixes(failures: Seq[EntityFailure.Fixable]): Seq[EntityFix] = failures.map(forFix).distinct
-
   /** @see [[EntityFailure._3]] */
   object _3:
 
