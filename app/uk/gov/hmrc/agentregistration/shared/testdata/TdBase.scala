@@ -385,3 +385,18 @@ trait TdBase:
       IndividualFix._4._1(isConfirmed = None)
     )
   )
+
+  val riskingOutcomeIndividualFailedFixableAllCodes: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._4._1(isConfirmed = None),
+      IndividualFix._4._3(isConfirmed = None),
+      IndividualFix._4._4(isConfirmed = None),
+      IndividualFix._5._1(isConfirmed = None),
+      IndividualFix._5._3(isConfirmed = None),
+      IndividualFix._5._4(isConfirmed = None),
+      IndividualFix._5._5(isConfirmed = None),
+      IndividualFix._5._6(isConfirmed = None),
+      IndividualFix._5._7(isConfirmed = None),
+      IndividualFix._8._7(isConfirmed = None)
+    )
+  )
