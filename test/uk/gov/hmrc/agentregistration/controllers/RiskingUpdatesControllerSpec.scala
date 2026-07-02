@@ -58,7 +58,6 @@ extends ControllerSpec:
   val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
   private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-<<<<<<< HEAD
   override def afterAll(): Unit =
     dropDatabase()
     super.afterAll()
@@ -210,9 +209,6 @@ extends ControllerSpec:
   }
 
   "receiveRiskingOutcome applies the correct outcome per-individual when multiple individuals are in the request" in:
-=======
-  "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
->>>>>>> c850c0f (APB-11710 Move request to shared folder)
     given Request[?] = tdAll.backendRequest
     val individual1 = tdAll.providedDetails.afterFinished
     val individual2PersonReference = PersonReference("PREF2")
@@ -224,7 +220,6 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.upsert(individual1).futureValue
     individualProvidedDetailsRepo.upsert(individual2).futureValue
 
-<<<<<<< HEAD
     val request = RiskingOutcomeRequest(
       riskingCompletedDate = riskingCompletedDate,
       applicationOutcome = RiskingOutcome.FailedFixable,
@@ -242,25 +237,12 @@ extends ControllerSpec:
           riskingOutcome = RiskingOutcome.FailedFixable
         )
       )
-=======
-    val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
-    repo.upsert(exampleAgentApplication).futureValue
-    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
-
-    val updateApplicationStatusRequest: UpdateApplicationStateSentToMinervaRequest = UpdateApplicationStateSentToMinervaRequest(
-      applicationReferences = Seq(tdAll.applicationReference)
->>>>>>> c850c0f (APB-11710 Move request to shared folder)
     )
 
     val response =
       httpClient
-<<<<<<< HEAD
         .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
         .withBody(Json.toJson(request))
-=======
-        .post(url"$baseUrl/agent-registration/risking-updates/sent-to-minerva")
-        .withBody(Json.toJson(updateApplicationStatusRequest))
->>>>>>> c850c0f (APB-11710 Move request to shared folder)
         .execute[HttpResponse]
         .futureValue
 
@@ -372,21 +354,23 @@ extends ControllerSpec:
       "individual3 (referenced after the missing one) must not be updated"
 
 
-    "updateSentToMinervaApplications returns OK and updates application state" in:
-      given Request[?] = tdAll.backendRequest
+  "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
+    given Request[?] = tdAll.backendRequest
 
       val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
       agentApplicationRepo.upsert(exampleAgentApplication).futureValue
       agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
 
-      val applicationReferenceList: ApplicationReferenceList = ApplicationReferenceList(applicationReferences = List(tdAll.applicationReference))
+    val updateApplicationStatusRequest: UpdateApplicationStateSentToMinervaRequest = UpdateApplicationStateSentToMinervaRequest(
+      applicationReferences = Seq(tdAll.applicationReference)
+    )
 
-      val response =
-        httpClient
-          .post(url"$baseUrl/agent-registration/risking-updates/sent-to-minerva")
-          .withBody(Json.toJson(applicationReferenceList))
-          .execute[HttpResponse]
-          .futureValue
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/sent-to-minerva")
+        .withBody(Json.toJson(updateApplicationStatusRequest))
+        .execute[HttpResponse]
+        .futureValue
 
       response.status shouldBe Status.OK
       agentApplicationRepo.findByApplicationReference(
