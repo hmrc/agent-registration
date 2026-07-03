@@ -172,9 +172,9 @@ trait TdBase:
     supervisoryBody = AmlsSupervisoryBodyCode("ATT"),
     amlsRegistrationNumber = Some(AmlsRegistrationNumber("ATT AML-1-123456")),
     amlsEvidence = Some(uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence(
-      uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("evidence-reference-123-att"),
-      "certificate.pdf",
-      uk.gov.hmrc.objectstore.client.Path.File("/certificate.pdf")
+      uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("test-file-reference"),
+      "evidence.pdf",
+      uk.gov.hmrc.objectstore.client.Path.File("agent-registration-frontend/9d5ddeed-d26e-4005-97ca-e40f2466e0a3/evidence.pdf")
     ))
   )
 
@@ -309,6 +309,16 @@ trait TdBase:
       ),
       EntityFix._4._4(isConfirmed = None),
       EntityFix._5._4(isConfirmed = None)
+    )
+  )
+
+  def riskingOutcomeEntityFixableNonHmrcAmls = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._3.AmlsFix(
+        failure = EntityFailure._3._3,
+        isConfirmed = None,
+        amlsDetails = Some(completeAmlsDetailsAtt)
+      )
     )
   )
 
