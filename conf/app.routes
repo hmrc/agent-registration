@@ -23,5 +23,5 @@ GET         /unified-customer-registry/individual/utr/:utr                      
 GET         /unified-customer-registry/organisation/utr/:utr                                            uk.gov.hmrc.agentregistration.controllers.UcrController.searchOrganisationByUtr(utr: Utr)
 
 ## Updates from risking service
-POST        /risking-updates/sent-to-minerva                                                            uk.gov.hmrc.agentregistration.controllers.RiskingUpdatesController.updateSentToMinervaApplications
+POST        /risking-updates/sent-to-minerva                                                            uk.gov.hmrc.agentregistration.controllers.RiskingUpdatesController.updateApplicationStatusSentToMinerva
 POST        /risking-updates/risking-outcome/:applicationReference                                      uk.gov.hmrc.agentregistration.controllers.RiskingUpdatesController.receiveRiskingOutcome(applicationReference: ApplicationReference)

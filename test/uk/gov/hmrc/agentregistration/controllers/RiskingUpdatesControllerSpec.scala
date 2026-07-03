@@ -353,13 +353,12 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
 
-
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
     given Request[?] = tdAll.backendRequest
 
-      val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
-      agentApplicationRepo.upsert(exampleAgentApplication).futureValue
-      agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    agentApplicationRepo.upsert(exampleAgentApplication).futureValue
+    agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
 
     val updateApplicationStatusRequest: UpdateApplicationStateSentToMinervaRequest = UpdateApplicationStateSentToMinervaRequest(
       applicationReferences = Seq(tdAll.applicationReference)
@@ -372,7 +371,7 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
 
-      response.status shouldBe Status.OK
-      agentApplicationRepo.findByApplicationReference(
-        tdAll.applicationReference
-      ).futureValue.value.applicationState shouldBe SentToMinerva withClue "application state should be updated"
+    response.status shouldBe Status.OK
+    agentApplicationRepo.findByApplicationReference(
+      tdAll.applicationReference
+    ).futureValue.value.applicationState shouldBe SentToMinerva withClue "application state should be updated"
