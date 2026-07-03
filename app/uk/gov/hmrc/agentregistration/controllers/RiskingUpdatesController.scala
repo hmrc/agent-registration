@@ -17,7 +17,10 @@
 package uk.gov.hmrc.agentregistration.controllers
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
@@ -38,6 +41,8 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
+import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -125,3 +130,13 @@ extends BackendController(cc):
             .findByPersonReference(personReference)
             .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${personReference.value}]"))
         yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
+
+  def updateApplicationStatusSentToMinerva: Action[UpdateApplicationStateSentToMinervaRequest] =
+    actions
+      .default // TODO: Replace with auth action as part of https://jira.tools.tax.service.gov.uk/browse/APB-11711
+      .async(parse.json[UpdateApplicationStateSentToMinervaRequest]):
+        implicit request =>
+          val applicationReferences = request.body.applicationReferences
+          agentApplicationRepo
+            .updateManyApplicationStateByReference(applicationReferences = applicationReferences, applicationState = SentToMinerva)
+            .map(_ => Ok)

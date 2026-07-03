@@ -20,6 +20,7 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
+import org.mongodb.scala.model.Updates
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
@@ -27,6 +28,7 @@ import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
@@ -39,7 +41,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
-import org.mongodb.scala.Document
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -72,6 +73,17 @@ extends Repo[AgentApplicationId, AgentApplication](
       filter = Filters.eq("applicationReference", applicationReference.value)
     )
     .headOption()
+
+  def updateManyApplicationStateByReference(
+    applicationReferences: Seq[ApplicationReference],
+    applicationState: ApplicationState
+  ): Future[Unit] = collection
+    .updateMany(
+      filter = Filters.in("applicationReference", applicationReferences.map(_.value)*),
+      update = Updates.set("applicationState", applicationState.toString)
+    )
+    .toFuture()
+    .map(_ => ())
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"
