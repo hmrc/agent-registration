@@ -410,3 +410,14 @@ trait TdBase:
       IndividualFix._8._7(isConfirmed = None)
     )
   )
+
+  val riskingOutcomeIndividualDetailsFix: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.Provided(nino)),
+        saUtr = Some(IndividualSaUtr.Provided(saUtr)),
+        isConfirmed = None
+      )
+    )
+  )
