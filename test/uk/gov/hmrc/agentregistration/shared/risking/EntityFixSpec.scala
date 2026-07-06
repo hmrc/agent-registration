@@ -54,13 +54,13 @@ extends UnitSpec:
         |    "supervisoryBody": "ATT",
         |    "amlsRegistrationNumber": "ATT AML-1-123456",
         |    "amlsEvidence": {
-        |      "fileUploadReference": "evidence-reference-123-att",
-        |      "fileName": "certificate.pdf",
+        |      "fileUploadReference": "test-file-reference",
+        |      "fileName": "evidence.pdf",
         |      "objectStoreLocation": {
         |        "directory": {
-        |          "value": ""
+        |          "value": "agent-registration-frontend/9d5ddeed-d26e-4005-97ca-e40f2466e0a3"
         |        },
-        |        "fileName": "certificate.pdf"
+        |        "fileName": "evidence.pdf"
         |      }
         |    }
         |  },
