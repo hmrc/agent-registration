@@ -146,13 +146,43 @@ extends UnitSpec:
       """{
         |  "type": "IndividualFix._10.IndividualDetailsFix",
         |  "dateOfBirth": {
-        |    "dateOfBirth": "2000-01-01"
+        |    "dateOfBirth": "2000-01-01",
+        |    "type": "individual.IndividualDateOfBirth.Provided"
         |  },
         |  "saUtr": {
-        |    "saUtr": "1234567890"
+        |    "saUtr": "1234567890",
+        |    "type": "individual.IndividualSaUtr.Provided"
         |  },
         |  "nino": {
-        |    "nino": "AA123456A"
+        |    "nino": "AA123456A",
+        |    "type": "individual.IndividualNino.Provided"
+        |  },
+        |  "isConfirmed": true
+        |}""".stripMargin
+    )
+    Json.toJson[IndividualFix](fix) shouldBe json
+    json.as[IndividualFix] shouldBe fix
+
+  "serialize and deserialize _10.IndividualDetailsFix with NotProvided values" in:
+    val fix: IndividualFix = IndividualFix._10.IndividualDetailsFix(
+      dateOfBirth = Some(IndividualDateOfBirth.Provided(LocalDate.of(2000, 1, 1))),
+      saUtr = Some(IndividualSaUtr.NotProvided),
+      nino = Some(IndividualNino.NotProvided),
+      isConfirmed = Some(true)
+    )
+    val json: JsValue = Json.parse(
+      // language=JSON
+      """{
+        |  "type": "IndividualFix._10.IndividualDetailsFix",
+        |  "dateOfBirth": {
+        |    "dateOfBirth": "2000-01-01",
+        |    "type": "individual.IndividualDateOfBirth.Provided"
+        |  },
+        |  "saUtr": {
+        |    "type": "individual.IndividualSaUtr.NotProvided"
+        |  },
+        |  "nino": {
+        |    "type": "individual.IndividualNino.NotProvided"
         |  },
         |  "isConfirmed": true
         |}""".stripMargin

@@ -172,9 +172,9 @@ trait TdBase:
     supervisoryBody = AmlsSupervisoryBodyCode("ATT"),
     amlsRegistrationNumber = Some(AmlsRegistrationNumber("ATT AML-1-123456")),
     amlsEvidence = Some(uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence(
-      uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("evidence-reference-123-att"),
-      "certificate.pdf",
-      uk.gov.hmrc.objectstore.client.Path.File("/certificate.pdf")
+      uk.gov.hmrc.agentregistration.shared.upload.FileUploadReference("test-file-reference"),
+      "evidence.pdf",
+      uk.gov.hmrc.objectstore.client.Path.File("agent-registration-frontend/9d5ddeed-d26e-4005-97ca-e40f2466e0a3/evidence.pdf")
     ))
   )
 
@@ -312,6 +312,16 @@ trait TdBase:
     )
   )
 
+  def riskingOutcomeEntityFixableNonHmrcAmls = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._3.AmlsFix(
+        failure = EntityFailure._3._3,
+        isConfirmed = None,
+        amlsDetails = Some(completeAmlsDetailsAtt)
+      )
+    )
+  )
+
   def riskingOutcomeEntityFailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
@@ -383,5 +393,31 @@ trait TdBase:
   def riskingOutcomeIndividualFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._4._1(isConfirmed = None)
+    )
+  )
+
+  val riskingOutcomeIndividualFailedFixableAllCodes: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._4._1(isConfirmed = None),
+      IndividualFix._4._3(isConfirmed = None),
+      IndividualFix._4._4(isConfirmed = None),
+      IndividualFix._5._1(isConfirmed = None),
+      IndividualFix._5._3(isConfirmed = None),
+      IndividualFix._5._4(isConfirmed = None),
+      IndividualFix._5._5(isConfirmed = None),
+      IndividualFix._5._6(isConfirmed = None),
+      IndividualFix._5._7(isConfirmed = None),
+      IndividualFix._8._7(isConfirmed = None)
+    )
+  )
+
+  val riskingOutcomeIndividualDetailsFix: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.Provided(nino)),
+        saUtr = Some(IndividualSaUtr.Provided(saUtr)),
+        isConfirmed = None
+      )
     )
   )
