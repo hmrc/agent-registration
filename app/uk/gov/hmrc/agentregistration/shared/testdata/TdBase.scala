@@ -393,7 +393,8 @@ trait TdBase:
   def riskingOutcomeIndividualFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._4._1(isConfirmed = None)
-    )
+    ),
+    declarationAgreed = false
   )
 
   val riskingOutcomeIndividualFailedFixableAllCodes: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
@@ -408,7 +409,24 @@ trait TdBase:
       IndividualFix._5._6(isConfirmed = None),
       IndividualFix._5._7(isConfirmed = None),
       IndividualFix._8._7(isConfirmed = None)
-    )
+    ),
+    declarationAgreed = false
+  )
+
+  val beforeDeclaration: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._4._1(isConfirmed = Some(true)),
+      IndividualFix._4._3(isConfirmed = Some(true)),
+      IndividualFix._4._4(isConfirmed = Some(true)),
+      IndividualFix._5._1(isConfirmed = Some(true)),
+      IndividualFix._5._3(isConfirmed = Some(true)),
+      IndividualFix._5._4(isConfirmed = Some(true)),
+      IndividualFix._5._5(isConfirmed = Some(true)),
+      IndividualFix._5._6(isConfirmed = Some(true)),
+      IndividualFix._5._7(isConfirmed = Some(true)),
+      IndividualFix._8._7(isConfirmed = Some(true))
+    ),
+    declarationAgreed = false
   )
 
   val riskingOutcomeIndividualDetailsFix: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
@@ -419,5 +437,6 @@ trait TdBase:
         saUtr = Some(IndividualSaUtr.Provided(saUtr)),
         isConfirmed = None
       )
-    )
+    ),
+    declarationAgreed = false
   )

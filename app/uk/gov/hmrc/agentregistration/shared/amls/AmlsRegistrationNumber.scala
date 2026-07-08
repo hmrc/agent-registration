@@ -33,7 +33,7 @@ object AmlsRegistrationNumber:
   private val supervisoryBodyRegexes: Map[String, Regex] = Map(
     "HMRC" -> "^X[A-Z]ML00000[0-9]{6}$".r,
     "AAT" -> """^\d{2,9}$""".r,
-    "ACCA" -> """^\d{5,9}$""".r,
+    "ACCA" -> """^\d{5,10}$""".r,
     "AIA" -> """^\d{4,6}$""".r,
     "ATT" -> """^ATT AML-\d{1,4}-\d{6}$""".r,
     "CIMA" -> """^\d{7,9}$""".r,
