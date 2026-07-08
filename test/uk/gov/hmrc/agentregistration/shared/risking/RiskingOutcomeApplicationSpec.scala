@@ -55,3 +55,18 @@ extends UnitSpec:
         val json: JsValue = Json.parse(""""FailedNonFixable"""")
         Json.toJson[RiskingOutcomeApplication.Outcome](RiskingOutcomeApplication.Outcome.FailedNonFixable) shouldBe json
         json.as[RiskingOutcomeApplication.Outcome] shouldBe RiskingOutcomeApplication.Outcome.FailedNonFixable
+
+  "read legacy " in:
+    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
+      actualDecisionDate = LocalDate.of(2024, 1, 15),
+      outcome = RiskingOutcomeApplication.Outcome.Approved,
+      correctiveActionExpiryDate = None
+    )
+    val legacyJson: JsValue = Json.parse(
+      // language=JSON
+      """{
+        |"riskingCompletedDate":"2024-01-15",
+        |"outcome":"Approved"
+        |}""".stripMargin
+    )
+    legacyJson.as[RiskingOutcomeApplication] shouldBe riskingOutcomeApplication
