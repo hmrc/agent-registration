@@ -93,10 +93,17 @@ extends BackendController(cc):
         )
       )
     val outcome: RiskingOutcomeApplication.Outcome = RiskingOutcomeApplicationHelper.riskingOutcomeApplicationOutcome(riskingOutcomeRequest.applicationOutcome)
+
+    val riskingCompletedDate: LocalDate =
+      riskingOutcomeRequest
+        .emailsSentAt
+        .atZone(AppConfig.zoneId)
+        .toLocalDate
+
     val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
-      riskingCompletedDate = riskingOutcomeRequest.riskingCompletedDate,
+      actualDecisionDate = riskingCompletedDate,
       outcome = outcome,
-      correctiveActionExpiryDate = correctiveActionExpiryDateFor(outcome, riskingOutcomeRequest.riskingCompletedDate)
+      correctiveActionExpiryDate = correctiveActionExpiryDateFor(outcome, riskingCompletedDate)
     )
     for
 

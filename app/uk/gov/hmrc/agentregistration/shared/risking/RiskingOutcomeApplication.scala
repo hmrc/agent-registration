@@ -24,9 +24,9 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 import java.time.LocalDate
 
 final case class RiskingOutcomeApplication(
-  riskingCompletedDate: LocalDate,
+  actualDecisionDate: LocalDate,
   outcome: RiskingOutcomeApplication.Outcome,
-  correctiveActionExpiryDate: Option[LocalDate]
+  correctiveActionExpiryDate: Option[LocalDate] // this is populated only if the outcome is FailedFixable
 )
 
 object RiskingOutcomeApplication:

@@ -44,6 +44,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 
+import java.time.Instant
 import java.time.LocalDate
 import play.api.libs.ws.JsonBodyWritables.given
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
@@ -64,11 +65,13 @@ extends ControllerSpec:
 
   private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterSentForRisking
   private val applicationReference = agentApplicationSentForRisking.applicationReference
-  private val riskingCompletedDate: LocalDate = LocalDate.of(2026, 6, 24)
-  private val expectedCorrectiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
+  private val emailsSentAt: Instant = Instant.parse("2026-06-24T11:33:55Z")
+  private val emailsSentAtLocalDate = LocalDate.of(2026, 6, 24)
+  private val expectedCorrectiveActionExpiryDate: LocalDate = emailsSentAtLocalDate
+    .plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
 
   private val emptyFailuresRequest: RiskingOutcomeRequest = RiskingOutcomeRequest(
-    riskingCompletedDate = riskingCompletedDate,
+    emailsSentAt = emailsSentAt,
     applicationOutcome = RiskingOutcome.Approved,
     entityFailures = Seq.empty,
     entityOutcome = RiskingOutcome.Approved,
@@ -172,7 +175,7 @@ extends ControllerSpec:
         ).futureValue.value shouldBe individualProvidedDetails withClue "individual exists"
 
         val request = RiskingOutcomeRequest(
-          riskingCompletedDate = riskingCompletedDate,
+          emailsSentAt = emailsSentAt,
           applicationOutcome = tc.applicationOutcome,
           entityFailures = tc.entityFailures,
           entityOutcome = tc.entityOutcome,
@@ -198,7 +201,7 @@ extends ControllerSpec:
         val updatedApplication = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
         updatedApplication.applicationState shouldBe ApplicationState.RiskingCompleted
         updatedApplication.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication(
-          riskingCompletedDate = riskingCompletedDate,
+          actualDecisionDate = emailsSentAtLocalDate,
           outcome = tc.expectedRiskingOutcomeApplicationOutcome,
           correctiveActionExpiryDate = tc.expectedCorrectiveActionExpiryDate
         ))
@@ -221,7 +224,7 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.upsert(individual2).futureValue
 
     val request = RiskingOutcomeRequest(
-      riskingCompletedDate = riskingCompletedDate,
+      emailsSentAt = emailsSentAt,
       applicationOutcome = RiskingOutcome.FailedFixable,
       entityFailures = Seq.empty,
       entityOutcome = RiskingOutcome.Approved,
@@ -314,7 +317,7 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.upsert(individual3).futureValue
 
     val requestWithOneMissingIndividual = RiskingOutcomeRequest(
-      riskingCompletedDate = riskingCompletedDate,
+      emailsSentAt = emailsSentAt,
       applicationOutcome = RiskingOutcome.FailedFixable,
       entityFailures = Seq.empty,
       entityOutcome = RiskingOutcome.Approved,

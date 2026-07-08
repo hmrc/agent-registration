@@ -292,7 +292,7 @@ trait TdBase:
   def arn: Arn = Arn("TARN0000001")
 
   def riskingOutcomeApplication(outcome: RiskingOutcomeApplication.Outcome) = RiskingOutcomeApplication(
-    riskingCompletedDate = riskingCompletedDate,
+    actualDecisionDate = riskingCompletedDate,
     outcome = outcome,
     correctiveActionExpiryDate =
       outcome match

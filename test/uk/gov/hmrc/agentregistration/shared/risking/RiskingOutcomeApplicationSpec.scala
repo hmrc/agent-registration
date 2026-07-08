@@ -27,14 +27,14 @@ extends UnitSpec:
 
   "serialize and deserialize RiskingOutcomeApplication" in:
     val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
-      riskingCompletedDate = LocalDate.of(2024, 1, 15),
+      actualDecisionDate = LocalDate.of(2024, 1, 15),
       outcome = RiskingOutcomeApplication.Outcome.Approved,
       correctiveActionExpiryDate = None
     )
     val json: JsValue = Json.parse(
       // language=JSON
       """{
-        |"riskingCompletedDate":"2024-01-15",
+        |"actualDecisionDate":"2024-01-15",
         |"outcome":"Approved"
         |}""".stripMargin
     )
