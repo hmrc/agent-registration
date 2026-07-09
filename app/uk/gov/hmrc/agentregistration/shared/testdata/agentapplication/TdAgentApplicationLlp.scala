@@ -178,31 +178,31 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
     def afterRiskingCompletedWithFixableAmls(failure: EntityFailure.IsAmls): AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFixableAmls(failure))
     )
 
     val afterRiskingCompletedFixable: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable)
     )
 
     val afterRiskingCompletedFixableNonHmrcAmls: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFixableNonHmrcAmls)
     )
 
     val afterRiskingCompletedFixableAllCodes: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllCodes)
     )
 
     val afterRiskingCompletedNonFixable: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedNonFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedNonFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedNonFixable)
     )
 

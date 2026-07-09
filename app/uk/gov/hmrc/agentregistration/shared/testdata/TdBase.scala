@@ -291,14 +291,19 @@ trait TdBase:
 
   def arn: Arn = Arn("TARN0000001")
 
-  def riskingOutcomeApplication(outcome: RiskingOutcomeApplication.Outcome) = RiskingOutcomeApplication(
-    actualDecisionDate = riskingCompletedDate,
-    outcome = outcome,
-    correctiveActionExpiryDate =
-      outcome match
-        case RiskingOutcomeApplication.Outcome.Approved => None
-        case _ => Some(correctiveActionExpiryDate)
-  )
+  object riskingOutcomeApplication:
+
+    def approved = RiskingOutcomeApplication.Approved(
+      actualDecisionDate = riskingCompletedDate
+    )
+    def failedFixable = RiskingOutcomeApplication.FailedFixable(
+      actualDecisionDate = riskingCompletedDate,
+      correctiveActionExpiryDate = correctiveActionExpiryDate
+    )
+    def failedNonFixable = RiskingOutcomeApplication.FailedFixable(
+      actualDecisionDate = riskingCompletedDate,
+      correctiveActionExpiryDate = correctiveActionExpiryDate
+    )
 
   def riskingOutcomeEntityFixableAmls(failure: EntityFailure.IsAmls) = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(

@@ -22,30 +22,19 @@ import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.Approved
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedFixable
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import java.time.LocalDate
 
-sealed trait RiskingOutcomeApplication:
-  def actualDecisionDate: LocalDate
+object RiskingOutcomeApplicationFormats:
 
-object RiskingOutcomeApplication:
-
-  final case class Approved(
-    override val actualDecisionDate: LocalDate
-  )
-  extends RiskingOutcomeApplication
-
-  final case class FailedFixable(
-    override val actualDecisionDate: LocalDate,
-    correctiveActionExpiryDate: LocalDate
-  )
-  extends RiskingOutcomeApplication
-
-  final case class FailedNonFixable(
-    override val actualDecisionDate: LocalDate,
-    correctiveActionExpiryDate: LocalDate
-  )
-  extends RiskingOutcomeApplication
-
-  given OFormat[RiskingOutcomeApplication] = RiskingOutcomeApplicationFormats.format
+  val format: OFormat[RiskingOutcomeApplication] =
+    given jsonConfiguration: JsonConfiguration = JsonConfig.jsonConfiguration(discriminator = "outcome")
+    given OFormat[Approved] = Json.format[Approved]
+    given OFormat[FailedFixable] = Json.format[FailedFixable]
+    given OFormat[FailedNonFixable] = Json.format[FailedNonFixable]
+    Json.format[RiskingOutcomeApplication]

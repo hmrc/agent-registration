@@ -25,48 +25,48 @@ import java.time.LocalDate
 class RiskingOutcomeApplicationSpec
 extends UnitSpec:
 
-  "serialize and deserialize RiskingOutcomeApplication" in:
-    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
-      actualDecisionDate = LocalDate.of(2024, 1, 15),
-      outcome = RiskingOutcomeApplication.Outcome.Approved,
-      correctiveActionExpiryDate = None
+  "serialize and deserialize RiskingOutcomeApplication: Approved" in:
+    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication.Approved(
+      actualDecisionDate = LocalDate.of(2024, 1, 15)
     )
     val json: JsValue = Json.parse(
       // language=JSON
       """{
-        |"actualDecisionDate":"2024-01-15",
-        |"outcome":"Approved"
+        |"outcome":"Approved",
+        |"actualDecisionDate":"2024-01-15"
         |}""".stripMargin
     )
     Json.toJson(riskingOutcomeApplication) shouldBe json
     json.as[RiskingOutcomeApplication] shouldBe riskingOutcomeApplication
 
-  "serialize and deserialize RiskingOutcomeApplication.Outcome" in:
-    RiskingOutcomeApplication.Outcome.values.foreach:
-      case RiskingOutcomeApplication.Outcome.Approved =>
-        val json: JsValue = Json.parse(""""Approved"""")
-        Json.toJson[RiskingOutcomeApplication.Outcome](RiskingOutcomeApplication.Outcome.Approved) shouldBe json
-        json.as[RiskingOutcomeApplication.Outcome] shouldBe RiskingOutcomeApplication.Outcome.Approved
-      case RiskingOutcomeApplication.Outcome.FailedFixable =>
-        val json: JsValue = Json.parse(""""FailedFixable"""")
-        Json.toJson[RiskingOutcomeApplication.Outcome](RiskingOutcomeApplication.Outcome.FailedFixable) shouldBe json
-        json.as[RiskingOutcomeApplication.Outcome] shouldBe RiskingOutcomeApplication.Outcome.FailedFixable
-      case RiskingOutcomeApplication.Outcome.FailedNonFixable =>
-        val json: JsValue = Json.parse(""""FailedNonFixable"""")
-        Json.toJson[RiskingOutcomeApplication.Outcome](RiskingOutcomeApplication.Outcome.FailedNonFixable) shouldBe json
-        json.as[RiskingOutcomeApplication.Outcome] shouldBe RiskingOutcomeApplication.Outcome.FailedNonFixable
-
-  "read legacy " in:
-    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
+  "serialize and deserialize RiskingOutcomeApplication: FailedFixable" in:
+    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication.FailedFixable(
       actualDecisionDate = LocalDate.of(2024, 1, 15),
-      outcome = RiskingOutcomeApplication.Outcome.Approved,
-      correctiveActionExpiryDate = None
+      correctiveActionExpiryDate = LocalDate.of(2024, 2, 29)
     )
-    val legacyJson: JsValue = Json.parse(
+    val json: JsValue = Json.parse(
       // language=JSON
       """{
-        |"riskingCompletedDate":"2024-01-15",
-        |"outcome":"Approved"
+        |"outcome":"FailedFixable",
+        |"actualDecisionDate":"2024-01-15",
+        |"correctiveActionExpiryDate": "2024-02-29"
         |}""".stripMargin
     )
-    legacyJson.as[RiskingOutcomeApplication] shouldBe riskingOutcomeApplication
+    Json.toJson(riskingOutcomeApplication) shouldBe json
+    json.as[RiskingOutcomeApplication] shouldBe riskingOutcomeApplication
+
+  "serialize and deserialize RiskingOutcomeApplication: FailedNonFixable" in:
+    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication.FailedNonFixable(
+      actualDecisionDate = LocalDate.of(2024, 1, 15),
+      correctiveActionExpiryDate = LocalDate.of(2024, 2, 29)
+    )
+    val json: JsValue = Json.parse(
+      // language=JSON
+      """{
+        |"outcome":"FailedNonFixable",
+        |"actualDecisionDate":"2024-01-15",
+        |"correctiveActionExpiryDate": "2024-02-29"
+        |}""".stripMargin
+    )
+    Json.toJson(riskingOutcomeApplication) shouldBe json
+    json.as[RiskingOutcomeApplication] shouldBe riskingOutcomeApplication
