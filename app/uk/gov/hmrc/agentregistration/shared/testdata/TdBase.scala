@@ -440,3 +440,15 @@ trait TdBase:
     ),
     declarationAgreed = false
   )
+
+  val riskingOutcomeIndividualDetailsFixMissingSaUtr: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.Provided(nino)),
+        saUtr = None,
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
