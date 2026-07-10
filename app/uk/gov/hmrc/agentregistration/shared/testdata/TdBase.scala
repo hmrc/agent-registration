@@ -300,7 +300,7 @@ trait TdBase:
       actualDecisionDate = riskingCompletedDate,
       correctiveActionExpiryDate = correctiveActionExpiryDate
     )
-    def failedNonFixable = RiskingOutcomeApplication.FailedFixable(
+    def failedNonFixable = RiskingOutcomeApplication.FailedNonFixable(
       actualDecisionDate = riskingCompletedDate,
       correctiveActionExpiryDate = correctiveActionExpiryDate
     )
@@ -440,6 +440,18 @@ trait TdBase:
         dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
         nino = Some(IndividualNino.Provided(nino)),
         saUtr = Some(IndividualSaUtr.Provided(saUtr)),
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
+
+  val riskingOutcomeIndividualDetailsFixMissingSaUtr: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.Provided(nino)),
+        saUtr = None,
         isConfirmed = None
       )
     ),

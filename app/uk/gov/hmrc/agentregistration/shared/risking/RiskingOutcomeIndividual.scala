@@ -32,7 +32,7 @@ object RiskingOutcomeIndividual:
 
   final case class FailedFixable(
     fixes: Seq[IndividualFix],
-    declarationAgreed: Boolean = false
+    declarationAgreed: Boolean
   )
   extends RiskingOutcomeIndividual
 

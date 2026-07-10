@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
@@ -26,15 +25,22 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.Ap
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedFixable
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import java.time.LocalDate
+import scala.annotation.nowarn
 
 object RiskingOutcomeApplicationFormats:
 
+  @nowarn
   val format: OFormat[RiskingOutcomeApplication] =
     given jsonConfiguration: JsonConfiguration = JsonConfig.jsonConfiguration(discriminator = "outcome")
     given OFormat[Approved] = Json.format[Approved]
     given OFormat[FailedFixable] = Json.format[FailedFixable]
     given OFormat[FailedNonFixable] = Json.format[FailedNonFixable]
+
+    """
+    Don't delete me.
+    I will emit a warning so `@nowarn` can be applied to address below
+    `Unreachable case except for null` problem emited by Play Json macro"""
+
     Json.format[RiskingOutcomeApplication]
