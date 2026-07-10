@@ -358,6 +358,44 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
 
+  "receiveRiskingOutcome returns 200 without rework when the application is already RiskingCompleted with the SAME outcome (idempotent retry)" in:
+    given Request[?] = tdAll.backendRequest
+    val completedApp = agentApplicationSentForRisking.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(RiskingOutcomeApplication.Approved(emailsSentAtLocalDate)),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    )
+    agentApplicationRepo.upsert(completedApp).futureValue
+    individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.OK
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe completedApp withClue
+      "application must remain unchanged — idempotent retry must not rewrite state"
+
+  "receiveRiskingOutcome returns 200 without modifying the application when its state is anything other than SentForRisking or RiskingCompleted (e.g. Started) — the anomaly is logged as a warning; 200 is returned to prevent Risking from entering an infinite retry loop against a non-writable state" in:
+    given Request[?] = tdAll.backendRequest
+    val startedApp = agentApplicationSentForRisking.copy(applicationState = ApplicationState.Started)
+    agentApplicationRepo.upsert(startedApp).futureValue
+    individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.OK
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe startedApp withClue
+      "premature request against pre-SentForRisking state must not modify the application (state is untouched even though the caller sees 200)"
+
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
     given Request[?] = tdAll.backendRequest
 

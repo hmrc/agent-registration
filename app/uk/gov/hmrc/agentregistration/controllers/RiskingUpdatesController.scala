@@ -74,8 +74,12 @@ extends BackendController(cc):
                 logger.warn(message)
                 Future.successful(NotFound(message))
               case Some(agentApplication) =>
-                markRiskingCompleted(agentApplication, request.body)
-                  .map(_ => Ok(""))
+                agentApplication.applicationState match
+                  case ApplicationState.SentForRisking => markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
+                  case ApplicationState.RiskingCompleted => Future.successful(Ok(""))
+                  case other =>
+                    logger.warn(s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [$other] ")
+                    Future.successful(Ok(""))
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
