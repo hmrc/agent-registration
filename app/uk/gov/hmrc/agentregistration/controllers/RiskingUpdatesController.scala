@@ -96,17 +96,18 @@ extends BackendController(cc):
     val riskingOutcomeApplication: RiskingOutcomeApplication = makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest)
 
     for
-      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(individualOutcomes)
+      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(agentApplication, individualOutcomes)
+      _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
       _ <- agentApplicationRepo.upsert(
         agentApplication
           .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeApplication))
           .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeEntity))
           .modify(_.applicationState).setTo(ApplicationState.RiskingCompleted)
       )
-      _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
     yield ()
 
   private def resolveIndividualOutcomes(
+    agentApplication: AgentApplication,
     individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)]
   )(using RequestHeader): Future[Seq[IndividualProvidedDetails]] =
     individualOutcomes.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
@@ -114,7 +115,7 @@ extends BackendController(cc):
         for
           individualProvidedDetailsList: Seq[IndividualProvidedDetails] <- accumulator
           individualProvidedDetails: IndividualProvidedDetails <- individualProvidedDetailsRepo
-            .findByPersonReference(personReference)
+            .findByPersonReferenceAndAgentApplicationId(personReference, agentApplication._id)
             .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${personReference.value}]"))
         yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
 
