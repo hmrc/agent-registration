@@ -17,6 +17,8 @@
 package uk.gov.hmrc.agentregistration.shared.risking
 
 import play.api.libs.json.OFormat
+
+import java.time.Instant
 import java.time.LocalDate
 
 sealed trait RiskingOutcomeApplication:
@@ -31,7 +33,8 @@ object RiskingOutcomeApplication:
 
   final case class FailedFixable(
     override val actualDecisionDate: LocalDate,
-    correctiveActionExpiryDate: LocalDate
+    correctiveActionExpiryDate: LocalDate,
+    reSubmittedAt: Option[Instant]
   )
   extends RiskingOutcomeApplication
 

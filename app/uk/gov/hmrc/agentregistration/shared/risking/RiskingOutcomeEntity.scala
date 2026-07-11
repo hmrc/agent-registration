@@ -33,7 +33,10 @@ object RiskingOutcomeEntity:
   final case class FailedFixable(
     fixes: Seq[EntityFix]
   )
-  extends RiskingOutcomeEntity
+  extends RiskingOutcomeEntity:
+    def hasAmls: Boolean = fixes.exists:
+      case _: EntityFix._3.AmlsFix => true
+      case _ => false
 
   final case class FailedNonFixable(
     failures: Seq[EntityFailure]
