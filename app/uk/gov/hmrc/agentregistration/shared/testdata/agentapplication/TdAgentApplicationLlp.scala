@@ -179,7 +179,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
     val afterRiskingCompletedApprovedWithFixableIndividuals: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.failedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(Approved)
     )
 
