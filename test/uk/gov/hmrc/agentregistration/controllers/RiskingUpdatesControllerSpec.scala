@@ -120,7 +120,8 @@ extends ControllerSpec:
         individualFailures = Seq.empty,
         expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
           actualDecisionDate = emailsSentAtLocalDate,
-          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate,
+          reSubmittedAt = None
         ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedFixable(fixes = Seq(EntityFix._4._1(isConfirmed = None))),
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
@@ -148,7 +149,8 @@ extends ControllerSpec:
         individualFailures = Seq(IndividualFailure._4._1),
         expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
           actualDecisionDate = emailsSentAtLocalDate,
-          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate,
+          reSubmittedAt = None
         ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(

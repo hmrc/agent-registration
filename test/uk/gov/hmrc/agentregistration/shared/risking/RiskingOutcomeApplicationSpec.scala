@@ -20,6 +20,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 
+import java.time.Instant
 import java.time.LocalDate
 
 class RiskingOutcomeApplicationSpec
@@ -42,14 +43,16 @@ extends UnitSpec:
   "serialize and deserialize RiskingOutcomeApplication: FailedFixable" in:
     val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication.FailedFixable(
       actualDecisionDate = LocalDate.of(2024, 1, 15),
-      correctiveActionExpiryDate = LocalDate.of(2024, 2, 29)
+      correctiveActionExpiryDate = LocalDate.of(2024, 2, 29),
+      reSubmittedAt = Some(Instant.parse("2024-06-06T12:00:00Z"))
     )
     val json: JsValue = Json.parse(
       // language=JSON
       """{
         |"outcome":"FailedFixable",
         |"actualDecisionDate":"2024-01-15",
-        |"correctiveActionExpiryDate": "2024-02-29"
+        |"correctiveActionExpiryDate": "2024-02-29",
+        |"reSubmittedAt": "2024-06-06T12:00:00Z"
         |}""".stripMargin
     )
     Json.toJson(riskingOutcomeApplication) shouldBe json
