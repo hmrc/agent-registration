@@ -27,7 +27,6 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.services.RiskingOutcomeApplicationHelper
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -35,6 +34,7 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
@@ -92,14 +92,10 @@ extends BackendController(cc):
           individualFailures.failures
         )
       )
-    val outcome: RiskingOutcomeApplication.Outcome = RiskingOutcomeApplicationHelper.riskingOutcomeApplicationOutcome(riskingOutcomeRequest.applicationOutcome)
-    val riskingOutcomeApplication: RiskingOutcomeApplication = RiskingOutcomeApplication(
-      riskingCompletedDate = riskingOutcomeRequest.riskingCompletedDate,
-      outcome = outcome,
-      correctiveActionExpiryDate = correctiveActionExpiryDateFor(outcome, riskingOutcomeRequest.riskingCompletedDate)
-    )
-    for
 
+    val riskingOutcomeApplication: RiskingOutcomeApplication = makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest)
+
+    for
       updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(individualOutcomes)
       _ <- agentApplicationRepo.upsert(
         agentApplication
@@ -109,15 +105,6 @@ extends BackendController(cc):
       )
       _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
     yield ()
-
-  private def correctiveActionExpiryDateFor(
-    outcome: RiskingOutcomeApplication.Outcome,
-    riskingCompletedDate: LocalDate
-  ): Option[LocalDate] =
-    outcome match
-      case RiskingOutcomeApplication.Outcome.Approved => None
-      case RiskingOutcomeApplication.Outcome.FailedFixable | RiskingOutcomeApplication.Outcome.FailedNonFixable =>
-        Some(riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong))
 
   private def resolveIndividualOutcomes(
     individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)]
@@ -140,3 +127,23 @@ extends BackendController(cc):
           agentApplicationRepo
             .updateManyApplicationStateByReference(applicationReferences = applicationReferences, applicationState = SentToMinerva)
             .map(_ => Ok)
+
+  private def makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest: RiskingOutcomeRequest): RiskingOutcomeApplication =
+    val actualDecisionDate: LocalDate =
+      riskingOutcomeRequest
+        .emailsSentAt
+        .atZone(AppConfig.zoneId)
+        .toLocalDate
+
+    riskingOutcomeRequest.applicationOutcome match
+      case RiskingOutcome.Approved => RiskingOutcomeApplication.Approved(actualDecisionDate)
+      case RiskingOutcome.FailedFixable =>
+        RiskingOutcomeApplication.FailedFixable(
+          actualDecisionDate = actualDecisionDate,
+          correctiveActionExpiryDate = actualDecisionDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
+        )
+      case RiskingOutcome.FailedNonFixable =>
+        RiskingOutcomeApplication.FailedNonFixable(
+          actualDecisionDate = actualDecisionDate,
+          correctiveActionExpiryDate = actualDecisionDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
+        )

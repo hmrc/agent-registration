@@ -20,10 +20,10 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 
-import java.time.LocalDate
+import java.time.Instant
 
 final case class RiskingOutcomeRequest(
-  riskingCompletedDate: LocalDate,
+  emailsSentAt: Instant,
   applicationOutcome: RiskingOutcome,
   entityFailures: Seq[EntityFailure],
   entityOutcome: RiskingOutcome,

@@ -19,38 +19,28 @@ package uk.gov.hmrc.agentregistration.shared.risking
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.Approved
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedFixable
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 
+import java.time.LocalDate
 import scala.annotation.nowarn
 
-sealed trait RiskingOutcomeIndividual
-
-object RiskingOutcomeIndividual:
-
-  case object Approved
-  extends RiskingOutcomeIndividual
-
-  final case class FailedFixable(
-    fixes: Seq[IndividualFix],
-    declarationAgreed: Boolean
-  )
-  extends RiskingOutcomeIndividual
-
-  final case class FailedNonFixable(
-    failures: Seq[IndividualFailure]
-  )
-  extends RiskingOutcomeIndividual
+object RiskingOutcomeApplicationFormats:
 
   @nowarn
-  given format: OFormat[RiskingOutcomeIndividual] =
-    given JsonConfiguration = JsonConfig.jsonConfiguration
-    given OFormat[Approved.type] = Json.format[Approved.type]
+  val format: OFormat[RiskingOutcomeApplication] =
+    given jsonConfiguration: JsonConfiguration = JsonConfig.jsonConfiguration(discriminator = "outcome")
+    given OFormat[Approved] = Json.format[Approved]
     given OFormat[FailedFixable] = Json.format[FailedFixable]
     given OFormat[FailedNonFixable] = Json.format[FailedNonFixable]
 
-    val dontDeleteMe = """
-        |Don't delete me.
-        |I will emit a warning so `@nowarn` can be applied to address below
-        |`Unreachable case except for null` problem emited by Play Json macro"""
+    """
+    Don't delete me.
+    I will emit a warning so `@nowarn` can be applied to address below
+    `Unreachable case except for null` problem emited by Play Json macro"""
 
-    Json.format[RiskingOutcomeIndividual]
+    Json.format[RiskingOutcomeApplication]

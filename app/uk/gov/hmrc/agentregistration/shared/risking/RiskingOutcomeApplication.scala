@@ -16,28 +16,29 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import play.api.libs.json.Format
 import play.api.libs.json.OFormat
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
-
 import java.time.LocalDate
 
-final case class RiskingOutcomeApplication(
-  riskingCompletedDate: LocalDate,
-  outcome: RiskingOutcomeApplication.Outcome,
-  correctiveActionExpiryDate: Option[LocalDate]
-)
+sealed trait RiskingOutcomeApplication:
+  def actualDecisionDate: LocalDate
 
 object RiskingOutcomeApplication:
 
-  enum Outcome:
+  final case class Approved(
+    override val actualDecisionDate: LocalDate
+  )
+  extends RiskingOutcomeApplication
 
-    case Approved
-    case FailedFixable
-    case FailedNonFixable
+  final case class FailedFixable(
+    override val actualDecisionDate: LocalDate,
+    correctiveActionExpiryDate: LocalDate
+  )
+  extends RiskingOutcomeApplication
 
-  object Outcome:
-    given Format[Outcome] = JsonFormatsFactory.makeEnumFormat[Outcome]
+  final case class FailedNonFixable(
+    override val actualDecisionDate: LocalDate,
+    correctiveActionExpiryDate: LocalDate
+  )
+  extends RiskingOutcomeApplication
 
-  given OFormat[RiskingOutcomeApplication] = Json.format[RiskingOutcomeApplication]
+  given OFormat[RiskingOutcomeApplication] = RiskingOutcomeApplicationFormats.format

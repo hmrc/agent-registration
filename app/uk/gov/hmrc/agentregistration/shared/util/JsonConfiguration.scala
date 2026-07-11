@@ -20,16 +20,17 @@ import play.api.libs.json.*
 
 object JsonConfig:
 
-  val jsonConfiguration: JsonConfiguration = JsonConfiguration(
-    discriminator = "type",
-    typeNaming = JsonNaming { fullName =>
-      fullName.split('.').last // Extract just the class name
-    }
+  /** Default configuration for Play Json */
+  val jsonConfiguration: JsonConfiguration = jsonConfiguration()
+
+  val jsonConfigurationForFixes: JsonConfiguration = jsonConfiguration(
+    typeNamingF = _.split('.').takeRight(3).mkString(".")
   )
 
-  val jsonConfigurationForFixes: JsonConfiguration = JsonConfiguration(
-    discriminator = "type",
-    typeNaming = JsonNaming { fullName =>
-      fullName.split('.').takeRight(3).mkString(".")
-    }
+  def jsonConfiguration(
+    discriminator: String = "type",
+    typeNamingF: String => String = _.split('.').last // Extract just the class name (the argument is the class name)
+  ): JsonConfiguration = JsonConfiguration(
+    discriminator = discriminator,
+    typeNaming = JsonNaming.apply(typeNamingF)
   )

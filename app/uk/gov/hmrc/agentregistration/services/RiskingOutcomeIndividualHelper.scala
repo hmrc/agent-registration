@@ -59,6 +59,7 @@ object RiskingOutcomeIndividualHelper:
       case RiskingOutcome.Approved => RiskingOutcomeIndividual.Approved
       case RiskingOutcome.FailedFixable =>
         RiskingOutcomeIndividual.FailedFixable(
-          fixes = individualFailures.collect { case f: IndividualFailure.Fixable => f.asIndividualFix }.distinct
+          fixes = individualFailures.collect { case f: IndividualFailure.Fixable => f.asIndividualFix }.distinct,
+          declarationAgreed = false
         )
       case RiskingOutcome.FailedNonFixable => RiskingOutcomeIndividual.FailedNonFixable(failures = individualFailures)

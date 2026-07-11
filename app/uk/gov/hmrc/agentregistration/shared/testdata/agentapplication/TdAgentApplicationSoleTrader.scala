@@ -123,7 +123,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
 
     val riskingOutcomeEntityFailedFixableAllSoleTraderCodes: AgentApplicationSoleTrader = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication(outcome = RiskingOutcomeApplication.Outcome.FailedFixable)),
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllSoleTraderCodes)
     )
 

@@ -291,16 +291,21 @@ trait TdBase:
 
   def arn: Arn = Arn("TARN0000001")
 
-  def riskingOutcomeApplication(outcome: RiskingOutcomeApplication.Outcome) = RiskingOutcomeApplication(
-    riskingCompletedDate = riskingCompletedDate,
-    outcome = outcome,
-    correctiveActionExpiryDate =
-      outcome match
-        case RiskingOutcomeApplication.Outcome.Approved => None
-        case _ => Some(correctiveActionExpiryDate)
-  )
+  object riskingOutcomeApplication:
 
-  def riskingOutcomeEntityFixableAmls(failure: EntityFailure.IsAmls) = RiskingOutcomeEntity.FailedFixable(
+    def approved: RiskingOutcomeApplication.Approved = RiskingOutcomeApplication.Approved(
+      actualDecisionDate = riskingCompletedDate
+    )
+    def failedFixable: RiskingOutcomeApplication.FailedFixable = RiskingOutcomeApplication.FailedFixable(
+      actualDecisionDate = riskingCompletedDate,
+      correctiveActionExpiryDate = correctiveActionExpiryDate
+    )
+    def failedNonFixable: RiskingOutcomeApplication.FailedNonFixable = RiskingOutcomeApplication.FailedNonFixable(
+      actualDecisionDate = riskingCompletedDate,
+      correctiveActionExpiryDate = correctiveActionExpiryDate
+    )
+
+  def riskingOutcomeEntityFixableAmls(failure: EntityFailure.IsAmls): RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = failure,
@@ -312,7 +317,7 @@ trait TdBase:
     )
   )
 
-  def riskingOutcomeEntityFixableNonHmrcAmls = RiskingOutcomeEntity.FailedFixable(
+  def riskingOutcomeEntityFixableNonHmrcAmls: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = EntityFailure._3._3,
@@ -322,7 +327,7 @@ trait TdBase:
     )
   )
 
-  def riskingOutcomeEntityFailedFixable = RiskingOutcomeEntity.FailedFixable(
+  def riskingOutcomeEntityFailedFixable: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = EntityFailure._3._5,
@@ -334,7 +339,7 @@ trait TdBase:
     )
   )
 
-  def riskingOutcomeEntityNewAmlsSupervisor = RiskingOutcomeEntity.FailedFixable(
+  def riskingOutcomeEntityNewAmlsSupervisor: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = EntityFailure._3._5,
@@ -384,13 +389,13 @@ trait TdBase:
     )
   )
 
-  def riskingOutcomeEntityFailedNonFixable = RiskingOutcomeEntity.FailedNonFixable(
+  def riskingOutcomeEntityFailedNonFixable: RiskingOutcomeEntity.FailedNonFixable = RiskingOutcomeEntity.FailedNonFixable(
     failures = Seq(
       EntityFailure._7
     )
   )
 
-  def riskingOutcomeIndividualFixable = RiskingOutcomeIndividual.FailedFixable(
+  def riskingOutcomeIndividualFixable: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._4._1(isConfirmed = None)
     ),

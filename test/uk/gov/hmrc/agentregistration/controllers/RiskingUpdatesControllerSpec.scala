@@ -44,6 +44,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 
+import java.time.Instant
 import java.time.LocalDate
 import play.api.libs.ws.JsonBodyWritables.given
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
@@ -64,11 +65,13 @@ extends ControllerSpec:
 
   private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterSentForRisking
   private val applicationReference = agentApplicationSentForRisking.applicationReference
-  private val riskingCompletedDate: LocalDate = LocalDate.of(2026, 6, 24)
-  private val expectedCorrectiveActionExpiryDate: LocalDate = riskingCompletedDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
+  private val emailsSentAt: Instant = Instant.parse("2026-06-24T11:33:55Z")
+  private val emailsSentAtLocalDate = LocalDate.of(2026, 6, 24)
+  private val expectedCorrectiveActionExpiryDate: LocalDate = emailsSentAtLocalDate
+    .plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
 
   private val emptyFailuresRequest: RiskingOutcomeRequest = RiskingOutcomeRequest(
-    riskingCompletedDate = riskingCompletedDate,
+    emailsSentAt = emailsSentAt,
     applicationOutcome = RiskingOutcome.Approved,
     entityFailures = Seq.empty,
     entityOutcome = RiskingOutcome.Approved,
@@ -88,8 +91,7 @@ extends ControllerSpec:
     entityFailures: Seq[EntityFailure],
     individualOutcome: RiskingOutcome,
     individualFailures: Seq[IndividualFailure],
-    expectedRiskingOutcomeApplicationOutcome: RiskingOutcomeApplication.Outcome,
-    expectedCorrectiveActionExpiryDate: Option[LocalDate],
+    expectedRiskingOutcomeApplicationOutcome: RiskingOutcomeApplication,
     expectedRiskingOutcomeEntity: RiskingOutcomeEntity,
     expectedRiskingOutcomeIndividual: RiskingOutcomeIndividual
   )
@@ -104,8 +106,7 @@ extends ControllerSpec:
         entityFailures = Seq.empty,
         individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.Approved,
-        expectedCorrectiveActionExpiryDate = None,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
@@ -117,8 +118,10 @@ extends ControllerSpec:
         entityFailures = Seq(EntityFailure._4._1),
         individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
-        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+        ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedFixable(fixes = Seq(EntityFix._4._1(isConfirmed = None))),
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
@@ -129,8 +132,10 @@ extends ControllerSpec:
         entityFailures = Seq(EntityFailure._7),
         individualOutcome = RiskingOutcome.Approved,
         individualFailures = Seq.empty,
-        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
-        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedNonFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+        ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7)),
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
       ),
@@ -141,10 +146,15 @@ extends ControllerSpec:
         entityFailures = Seq.empty,
         individualOutcome = RiskingOutcome.FailedFixable,
         individualFailures = Seq(IndividualFailure._4._1),
-        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedFixable,
-        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+        ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
-        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
+        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(
+          fixes = Seq(IndividualFix._4._1(isConfirmed = None)),
+          declarationAgreed = false
+        )
       ),
       OutcomeTestCase(
         description = "entity Approved but a non-fixable individual failure yields FailedNonFixable application outcome",
@@ -153,8 +163,10 @@ extends ControllerSpec:
         entityFailures = Seq.empty,
         individualOutcome = RiskingOutcome.FailedNonFixable,
         individualFailures = Seq(IndividualFailure._6),
-        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.Outcome.FailedNonFixable,
-        expectedCorrectiveActionExpiryDate = Some(expectedCorrectiveActionExpiryDate),
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedNonFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+        ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._6))
       )
@@ -172,7 +184,7 @@ extends ControllerSpec:
         ).futureValue.value shouldBe individualProvidedDetails withClue "individual exists"
 
         val request = RiskingOutcomeRequest(
-          riskingCompletedDate = riskingCompletedDate,
+          emailsSentAt = emailsSentAt,
           applicationOutcome = tc.applicationOutcome,
           entityFailures = tc.entityFailures,
           entityOutcome = tc.entityOutcome,
@@ -197,11 +209,7 @@ extends ControllerSpec:
 
         val updatedApplication = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
         updatedApplication.applicationState shouldBe ApplicationState.RiskingCompleted
-        updatedApplication.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication(
-          riskingCompletedDate = riskingCompletedDate,
-          outcome = tc.expectedRiskingOutcomeApplicationOutcome,
-          correctiveActionExpiryDate = tc.expectedCorrectiveActionExpiryDate
-        ))
+        updatedApplication.riskingOutcomeApplication shouldBe Some(tc.expectedRiskingOutcomeApplicationOutcome)
         updatedApplication.riskingOutcomeEntity shouldBe Some(tc.expectedRiskingOutcomeEntity)
 
         val updatedIndividual = individualProvidedDetailsRepo.findByPersonReference(tdAll.personReference).futureValue.value
@@ -221,7 +229,7 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.upsert(individual2).futureValue
 
     val request = RiskingOutcomeRequest(
-      riskingCompletedDate = riskingCompletedDate,
+      emailsSentAt = emailsSentAt,
       applicationOutcome = RiskingOutcome.FailedFixable,
       entityFailures = Seq.empty,
       entityOutcome = RiskingOutcome.Approved,
@@ -253,7 +261,10 @@ extends ControllerSpec:
 
     val updatedIndividual2 = individualProvidedDetailsRepo.findByPersonReference(individual2PersonReference).futureValue.value
     updatedIndividual2.riskingOutcomeIndividual shouldBe Some(
-      RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
+      RiskingOutcomeIndividual.FailedFixable(
+        fixes = Seq(IndividualFix._4._1(isConfirmed = None)),
+        declarationAgreed = false
+      )
     )
 
   "receiveRiskingOutcome returns NOT_FOUND if no application exists for the given applicationReference" in:
@@ -314,7 +325,7 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.upsert(individual3).futureValue
 
     val requestWithOneMissingIndividual = RiskingOutcomeRequest(
-      riskingCompletedDate = riskingCompletedDate,
+      emailsSentAt = emailsSentAt,
       applicationOutcome = RiskingOutcome.FailedFixable,
       entityFailures = Seq.empty,
       entityOutcome = RiskingOutcome.Approved,
