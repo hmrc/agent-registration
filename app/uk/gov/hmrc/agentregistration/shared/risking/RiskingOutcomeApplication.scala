@@ -16,14 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
-import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
-
 import java.time.LocalDate
 
 sealed trait RiskingOutcomeApplication:

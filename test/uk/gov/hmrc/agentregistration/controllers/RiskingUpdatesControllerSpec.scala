@@ -151,7 +151,10 @@ extends ControllerSpec:
           correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
         ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
-        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
+        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(
+          fixes = Seq(IndividualFix._4._1(isConfirmed = None)),
+          declarationAgreed = false
+        )
       ),
       OutcomeTestCase(
         description = "entity Approved but a non-fixable individual failure yields FailedNonFixable application outcome",
@@ -258,7 +261,10 @@ extends ControllerSpec:
 
     val updatedIndividual2 = individualProvidedDetailsRepo.findByPersonReference(individual2PersonReference).futureValue.value
     updatedIndividual2.riskingOutcomeIndividual shouldBe Some(
-      RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
+      RiskingOutcomeIndividual.FailedFixable(
+        fixes = Seq(IndividualFix._4._1(isConfirmed = None)),
+        declarationAgreed = false
+      )
     )
 
   "receiveRiskingOutcome returns NOT_FOUND if no application exists for the given applicationReference" in:

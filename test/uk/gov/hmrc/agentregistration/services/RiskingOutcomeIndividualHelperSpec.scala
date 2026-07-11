@@ -45,7 +45,10 @@ extends UnitSpec:
         description = "FailedFixable riskingOutcome with a single fixable individual failure yields FailedFixable with the corresponding fix",
         riskingOutcome = RiskingOutcome.FailedFixable,
         individualFailures = Seq(IndividualFailure._4._1),
-        expected = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._4._1(isConfirmed = None)))
+        expected = RiskingOutcomeIndividual.FailedFixable(
+          fixes = Seq(IndividualFix._4._1(isConfirmed = None)),
+          declarationAgreed = false
+        )
       ),
       TestCase(
         description = "FailedFixable riskingOutcome with multiple non-_10 fixable individual failures yields FailedFixable with one fix per failure",
@@ -60,7 +63,8 @@ extends UnitSpec:
             IndividualFix._4._1(isConfirmed = None),
             IndividualFix._5._3(isConfirmed = None),
             IndividualFix._8._7(isConfirmed = None)
-          )
+          ),
+          declarationAgreed = false
         )
       ),
       TestCase(
@@ -75,14 +79,18 @@ extends UnitSpec:
               nino = None,
               isConfirmed = None
             )
-          )
+          ),
+          declarationAgreed = false
         )
       ),
       TestCase(
         description = "FailedFixable riskingOutcome with duplicate fixable individual failures yields a single fix after distinct",
         riskingOutcome = RiskingOutcome.FailedFixable,
         individualFailures = Seq(IndividualFailure._5._1, IndividualFailure._5._1),
-        expected = RiskingOutcomeIndividual.FailedFixable(fixes = Seq(IndividualFix._5._1(isConfirmed = None)))
+        expected = RiskingOutcomeIndividual.FailedFixable(
+          fixes = Seq(IndividualFix._5._1(isConfirmed = None)),
+          declarationAgreed = false
+        )
       ),
       TestCase(
         description = "FailedNonFixable riskingOutcome with a single non-fixable individual failure yields FailedNonFixable with the failure",

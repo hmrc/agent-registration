@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLessOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity.Approved
 import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.AgentDetailsData
 import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.AmlsDetailsData
 import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.ApplicantContactDetailsData
@@ -174,6 +175,12 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
     val afterSentToMinerva: AgentApplicationLlp = afterDeclarationSubmitted.copy(
       applicationState = ApplicationState.SentToMinerva
+    )
+
+    val afterRiskingCompletedApprovedWithFixableIndividuals: AgentApplicationLlp = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(Approved)
     )
 
     def afterRiskingCompletedWithFixableAmls(failure: EntityFailure.IsAmls): AgentApplicationLlp = afterSentToMinerva.copy(
