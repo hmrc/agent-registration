@@ -63,4 +63,4 @@ object RiskingOutcomeEntityHelper:
         RiskingOutcomeEntity.FailedFixable(
           fixes = entityFailures.collect { case f: EntityFailure.Fixable => f.asEntityFix }.distinct
         )
-      case RiskingOutcome.FailedNonFixable => RiskingOutcomeEntity.FailedNonFixable(failures = entityFailures)
+      case RiskingOutcome.FailedNonFixable => RiskingOutcomeEntity.FailedNonFixable(failures = entityFailures.distinct)

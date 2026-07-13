@@ -366,6 +366,54 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
 
+  "receiveRiskingOutcome overrides the existing outcome when the application is already RiskingCompleted — supports data correction (e.g. Minerva initially sent incorrect risking results and later resends the corrected outcome)" in:
+    given Request[?] = tdAll.backendRequest
+    val staleCompletedApp = agentApplicationSentForRisking.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(RiskingOutcomeApplication.FailedNonFixable(
+        actualDecisionDate = emailsSentAtLocalDate,
+        correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+      )),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7)))
+    )
+    agentApplicationRepo.upsert(staleCompletedApp).futureValue
+    individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.OK
+    val corrected = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
+    corrected.applicationState shouldBe ApplicationState.RiskingCompleted
+    corrected.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate)) withClue
+      "corrected outcome must override the stale FailedNonFixable outcome"
+    corrected.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved) withClue
+      "corrected entity outcome must override the stale FailedNonFixable entity"
+
+  "receiveRiskingOutcome applies the outcome even when the application is in an unexpected state (e.g. Started) — the anomaly is logged as a warning so ops can investigate, but the update is not silently dropped" in:
+    given Request[?] = tdAll.backendRequest
+    val startedApp = agentApplicationSentForRisking.copy(applicationState = ApplicationState.Started)
+    agentApplicationRepo.upsert(startedApp).futureValue
+    individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.OK
+    val updated = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
+    updated.applicationState shouldBe ApplicationState.RiskingCompleted withClue
+      "outcome must be applied even from an unexpected state; ops receive a warning log for investigation"
+    updated.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate))
+    updated.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved)
+
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
     given Request[?] = tdAll.backendRequest
 

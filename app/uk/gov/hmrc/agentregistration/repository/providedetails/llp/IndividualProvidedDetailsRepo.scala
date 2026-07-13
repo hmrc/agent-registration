@@ -96,6 +96,18 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
     )
     .headOption()
 
+  def findByPersonReferenceAndAgentApplicationId(
+    personReference: PersonReference,
+    agentApplicationId: AgentApplicationId
+  ): Future[Option[IndividualProvidedDetails]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq("personReference", personReference.value),
+        Filters.eq("agentApplicationId", agentApplicationId.value)
+      )
+    )
+    .headOption()
+
 object IndividualProvidedDetailsRepo:
   val collectionName = "individual"
 

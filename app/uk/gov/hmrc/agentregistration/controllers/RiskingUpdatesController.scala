@@ -40,6 +40,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
@@ -74,8 +75,11 @@ extends BackendController(cc):
                 logger.warn(message)
                 Future.successful(NotFound(message))
               case Some(agentApplication) =>
-                markRiskingCompleted(agentApplication, request.body)
-                  .map(_ => Ok(""))
+                if agentApplication.applicationState =!= ApplicationState.SentForRisking then
+                  logger.warn(
+                    s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [${agentApplication.applicationState}] "
+                  )
+                markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
@@ -96,17 +100,18 @@ extends BackendController(cc):
     val riskingOutcomeApplication: RiskingOutcomeApplication = makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest)
 
     for
-      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(individualOutcomes)
+      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(agentApplication, individualOutcomes)
+      _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
       _ <- agentApplicationRepo.upsert(
         agentApplication
           .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeApplication))
           .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeEntity))
           .modify(_.applicationState).setTo(ApplicationState.RiskingCompleted)
       )
-      _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
     yield ()
 
   private def resolveIndividualOutcomes(
+    agentApplication: AgentApplication,
     individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)]
   )(using RequestHeader): Future[Seq[IndividualProvidedDetails]] =
     individualOutcomes.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
@@ -114,7 +119,7 @@ extends BackendController(cc):
         for
           individualProvidedDetailsList: Seq[IndividualProvidedDetails] <- accumulator
           individualProvidedDetails: IndividualProvidedDetails <- individualProvidedDetailsRepo
-            .findByPersonReference(personReference)
+            .findByPersonReferenceAndAgentApplicationId(personReference, agentApplication._id)
             .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${personReference.value}]"))
         yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
 
