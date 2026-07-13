@@ -298,7 +298,8 @@ trait TdBase:
     )
     def failedFixable: RiskingOutcomeApplication.FailedFixable = RiskingOutcomeApplication.FailedFixable(
       actualDecisionDate = riskingCompletedDate,
-      correctiveActionExpiryDate = correctiveActionExpiryDate
+      correctiveActionExpiryDate = correctiveActionExpiryDate,
+      reSubmittedAt = None
     )
     def failedNonFixable: RiskingOutcomeApplication.FailedNonFixable = RiskingOutcomeApplication.FailedNonFixable(
       actualDecisionDate = riskingCompletedDate,
@@ -327,15 +328,15 @@ trait TdBase:
     )
   )
 
-  def riskingOutcomeEntityFailedFixable: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
+  def riskingOutcomeEntityFailedFixable(isFixed: Option[Boolean] = None): RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._3.AmlsFix(
         failure = EntityFailure._3._5,
-        isConfirmed = None,
+        isConfirmed = isFixed,
         amlsDetails = Some(completeAmlsDetails)
       ),
-      EntityFix._4._4(isConfirmed = None),
-      EntityFix._5._4(isConfirmed = None)
+      EntityFix._4._4(isConfirmed = isFixed),
+      EntityFix._5._4(isConfirmed = isFixed)
     )
   )
 

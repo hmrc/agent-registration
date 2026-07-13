@@ -145,7 +145,8 @@ extends BackendController(cc):
       case RiskingOutcome.FailedFixable =>
         RiskingOutcomeApplication.FailedFixable(
           actualDecisionDate = actualDecisionDate,
-          correctiveActionExpiryDate = actualDecisionDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong)
+          correctiveActionExpiryDate = actualDecisionDate.plusDays(appConfig.CorrectiveAction.daysToTakeCorrectiveAction.toLong),
+          reSubmittedAt = None
         )
       case RiskingOutcome.FailedNonFixable =>
         RiskingOutcomeApplication.FailedNonFixable(
