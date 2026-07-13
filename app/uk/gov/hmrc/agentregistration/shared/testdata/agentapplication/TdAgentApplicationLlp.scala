@@ -219,6 +219,11 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedNonFixable)
     )
 
+    val afterResubmitted: AgentApplicationLlp = afterRiskingCompletedFixableFixed.copy(
+      applicationState = ApplicationState.SentForRisking,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable.copy(reSubmittedAt = Some(dependencies.nowAsInstant)))
+    )
+
     val applicationData: ApplicationData =
       val a: AgentApplicationLlp = afterDeclarationSubmitted
       ApplicationData(
