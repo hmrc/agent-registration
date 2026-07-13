@@ -447,6 +447,18 @@ trait TdBase:
     declarationAgreed = false
   )
 
+  val riskingOutcomeIndividualDetailsFixApplicantProvidedDateOfBirth: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.ApplicantProvided(dateOfBirth)),
+        nino = Some(IndividualNino.NotProvided),
+        saUtr = Some(IndividualSaUtr.NotProvided),
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
+
   val riskingOutcomeIndividualDetailsFixWithoutIds: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._10.IndividualDetailsFix(

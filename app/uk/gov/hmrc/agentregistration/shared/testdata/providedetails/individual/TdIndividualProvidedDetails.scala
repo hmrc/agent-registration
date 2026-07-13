@@ -170,6 +170,10 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFix))
 
+    val afterRiskedFixableIndividualDetailsApplicantProvidedDateOfBirth: IndividualProvidedDetails = afterFinished
+      .modify(_.riskingOutcomeIndividual)
+      .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixApplicantProvidedDateOfBirth))
+
     val afterRiskedFixableIndividualDetailsWithoutIds: IndividualProvidedDetails = afterFinished
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixWithoutIds))
