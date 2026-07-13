@@ -40,6 +40,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
+import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
@@ -74,12 +75,11 @@ extends BackendController(cc):
                 logger.warn(message)
                 Future.successful(NotFound(message))
               case Some(agentApplication) =>
-                agentApplication.applicationState match
-                  case ApplicationState.SentForRisking => markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
-                  case ApplicationState.RiskingCompleted => Future.successful(Ok(""))
-                  case other =>
-                    logger.warn(s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [$other] ")
-                    Future.successful(Ok(""))
+                if agentApplication.applicationState =!= ApplicationState.SentForRisking then
+                  logger.warn(
+                    s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [${agentApplication.applicationState}] "
+                  )
+                markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,

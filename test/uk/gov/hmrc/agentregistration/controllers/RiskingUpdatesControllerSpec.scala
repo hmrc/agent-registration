@@ -366,14 +366,17 @@ extends ControllerSpec:
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
 
-  "receiveRiskingOutcome returns 200 without rework when the application is already RiskingCompleted with the SAME outcome (idempotent retry)" in:
+  "receiveRiskingOutcome overrides the existing outcome when the application is already RiskingCompleted — supports data correction (e.g. Minerva initially sent incorrect risking results and later resends the corrected outcome)" in:
     given Request[?] = tdAll.backendRequest
-    val completedApp = agentApplicationSentForRisking.copy(
+    val staleCompletedApp = agentApplicationSentForRisking.copy(
       applicationState = ApplicationState.RiskingCompleted,
-      riskingOutcomeApplication = Some(RiskingOutcomeApplication.Approved(emailsSentAtLocalDate)),
-      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+      riskingOutcomeApplication = Some(RiskingOutcomeApplication.FailedNonFixable(
+        actualDecisionDate = emailsSentAtLocalDate,
+        correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate
+      )),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.FailedNonFixable(failures = Seq(EntityFailure._7)))
     )
-    agentApplicationRepo.upsert(completedApp).futureValue
+    agentApplicationRepo.upsert(staleCompletedApp).futureValue
     individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
 
     val response =
@@ -384,10 +387,14 @@ extends ControllerSpec:
         .futureValue
 
     response.status shouldBe Status.OK
-    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe completedApp withClue
-      "application must remain unchanged — idempotent retry must not rewrite state"
+    val corrected = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
+    corrected.applicationState shouldBe ApplicationState.RiskingCompleted
+    corrected.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate)) withClue
+      "corrected outcome must override the stale FailedNonFixable outcome"
+    corrected.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved) withClue
+      "corrected entity outcome must override the stale FailedNonFixable entity"
 
-  "receiveRiskingOutcome returns 200 without modifying the application when its state is anything other than SentForRisking or RiskingCompleted (e.g. Started) — the anomaly is logged as a warning; 200 is returned to prevent Risking from entering an infinite retry loop against a non-writable state" in:
+  "receiveRiskingOutcome applies the outcome even when the application is in an unexpected state (e.g. Started) — the anomaly is logged as a warning so ops can investigate, but the update is not silently dropped" in:
     given Request[?] = tdAll.backendRequest
     val startedApp = agentApplicationSentForRisking.copy(applicationState = ApplicationState.Started)
     agentApplicationRepo.upsert(startedApp).futureValue
@@ -401,8 +408,11 @@ extends ControllerSpec:
         .futureValue
 
     response.status shouldBe Status.OK
-    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe startedApp withClue
-      "premature request against pre-SentForRisking state must not modify the application (state is untouched even though the caller sees 200)"
+    val updated = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
+    updated.applicationState shouldBe ApplicationState.RiskingCompleted withClue
+      "outcome must be applied even from an unexpected state; ops receive a warning log for investigation"
+    updated.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate))
+    updated.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved)
 
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
     given Request[?] = tdAll.backendRequest
