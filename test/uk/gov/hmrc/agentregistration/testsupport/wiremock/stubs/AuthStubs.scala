@@ -52,6 +52,28 @@ object AuthStubs {
     count = count
   )
 
+  def stubInternalAuth(
+    responseStatus: Int = Status.OK,
+    responseBody: String = """{"retrievals": []}"""
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching("/internal-auth/auth"),
+    responseStatus = responseStatus,
+    responseBody = responseBody
+  )
+
+  def stubInternalAuthForbidden(): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching("/internal-auth/auth"),
+    responseStatus = Status.FORBIDDEN
+  )
+
+  def verifyInternalAuth(count: Int = 1): Unit = StubMaker.verify(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = wm.urlMatching("/internal-auth/auth"),
+    count = count
+  )
+
   def responseBodyAsCleanAgent(internalUserId: InternalUserId = TdAll.tdAll.internalUserId): String =
     // language=JSON
     s"""

@@ -70,6 +70,8 @@ extends AnyFreeSpecLike,
       "microservice.services.des.port" -> WireMockSupport.port,
       "microservice.services.hip.port" -> WireMockSupport.port,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
+      "microservice.services.internal-auth.port" -> WireMockSupport.port,
+      "internal-auth.enabled" -> false,
       "mongodb.uri" -> mongoUri
     ) ++ configOverrides
 
