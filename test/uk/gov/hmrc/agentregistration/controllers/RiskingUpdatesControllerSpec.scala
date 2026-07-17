@@ -171,6 +171,56 @@ extends ControllerSpec:
         ),
         expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
         expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedNonFixable(failures = Seq(IndividualFailure._6))
+      ),
+      OutcomeTestCase(
+        description =
+          "an AMLS entity failure (3.1) yields FailedFixable with an AmlsFix pre-populated with the application's existing AMLS details so the FE fix pages can render them",
+        applicationOutcome = RiskingOutcome.FailedFixable,
+        entityOutcome = RiskingOutcome.FailedFixable,
+        entityFailures = Seq(EntityFailure._3._1),
+        individualOutcome = RiskingOutcome.Approved,
+        individualFailures = Seq.empty,
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate,
+          reSubmittedAt = None
+        ),
+        expectedRiskingOutcomeEntity = RiskingOutcomeEntity.FailedFixable(
+          fixes = Seq(
+            EntityFix._3.AmlsFix(
+              EntityFailure._3._1,
+              isConfirmed = None,
+              amlsDetails = agentApplicationSentForRisking.amlsDetails
+            )
+          )
+        ),
+        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.Approved
+      ),
+      OutcomeTestCase(
+        description =
+          "a personal-details individual failure (10.1) yields FailedFixable with an IndividualDetailsFix pre-populated with the individual's existing user-provided DoB, NINO and SAUTR so the FE fix pages can render them",
+        applicationOutcome = RiskingOutcome.FailedFixable,
+        entityOutcome = RiskingOutcome.Approved,
+        entityFailures = Seq.empty,
+        individualOutcome = RiskingOutcome.FailedFixable,
+        individualFailures = Seq(IndividualFailure._10._1),
+        expectedRiskingOutcomeApplicationOutcome = RiskingOutcomeApplication.FailedFixable(
+          actualDecisionDate = emailsSentAtLocalDate,
+          correctiveActionExpiryDate = expectedCorrectiveActionExpiryDate,
+          reSubmittedAt = None
+        ),
+        expectedRiskingOutcomeEntity = RiskingOutcomeEntity.Approved,
+        expectedRiskingOutcomeIndividual = RiskingOutcomeIndividual.FailedFixable(
+          fixes = Seq(
+            IndividualFix._10.IndividualDetailsFix(
+              dateOfBirth = Some(tdAll.dateOfBirthProvided),
+              saUtr = Some(tdAll.saUtrProvided),
+              nino = Some(tdAll.ninoProvided),
+              isConfirmed = None
+            )
+          ),
+          declarationAgreed = false
+        )
       )
     ).foreach: tc =>
       tc.description in:

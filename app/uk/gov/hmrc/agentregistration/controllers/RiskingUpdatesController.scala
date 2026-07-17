@@ -32,18 +32,13 @@ import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
+import uk.gov.hmrc.agentregistration.shared.risking.*
+import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
-import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -87,20 +82,14 @@ extends BackendController(cc):
   )(using RequestHeader): Future[Unit] =
     val riskingOutcomeEntity: RiskingOutcomeEntity = RiskingOutcomeEntityHelper.riskingOutcomeEntity(
       riskingOutcomeRequest.entityOutcome,
-      riskingOutcomeRequest.entityFailures
+      riskingOutcomeRequest.entityFailures,
+      existingAmlsDetails = agentApplication.amlsDetails
     )
-    val individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)] = riskingOutcomeRequest.individualFailures
-      .map(individualFailures =>
-        individualFailures.personReference -> RiskingOutcomeIndividualHelper.riskingOutcomeIndividual(
-          individualFailures.riskingOutcome,
-          individualFailures.failures
-        )
-      )
 
     val riskingOutcomeApplication: RiskingOutcomeApplication = makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest)
 
     for
-      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(agentApplication, individualOutcomes)
+      updatedIndividualProvidedDetailsList <- resolveIndividualOutcomes(agentApplication, riskingOutcomeRequest.individualFailures)
       _ <- ProcessInSequence.processInSequence(updatedIndividualProvidedDetailsList)(individualProvidedDetailsRepo.upsert)
       _ <- agentApplicationRepo.upsert(
         agentApplication
@@ -112,15 +101,20 @@ extends BackendController(cc):
 
   private def resolveIndividualOutcomes(
     agentApplication: AgentApplication,
-    individualOutcomes: Seq[(PersonReference, RiskingOutcomeIndividual)]
+    individualFailuresList: Seq[IndividualFailures]
   )(using RequestHeader): Future[Seq[IndividualProvidedDetails]] =
-    individualOutcomes.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
-      case (accumulator, (personReference, riskingOutcomeIndividual)) =>
+    individualFailuresList.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
+      case (accumulator, individualFailures) =>
         for
           individualProvidedDetailsList: Seq[IndividualProvidedDetails] <- accumulator
           individualProvidedDetails: IndividualProvidedDetails <- individualProvidedDetailsRepo
-            .findByPersonReferenceAndAgentApplicationId(personReference, agentApplication._id)
-            .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${personReference.value}]"))
+            .findByPersonReferenceAndAgentApplicationId(individualFailures.personReference, agentApplication._id)
+            .map(_.getOrThrowExpectedDataMissing(s"IndividualProvidedDetails for personReference [${individualFailures.personReference.value}]"))
+          riskingOutcomeIndividual: RiskingOutcomeIndividual = RiskingOutcomeIndividualHelper.riskingOutcomeIndividual(
+            individualFailures.riskingOutcome,
+            individualFailures.failures,
+            individualProvidedDetails = individualProvidedDetails
+          )
         yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
 
   def updateApplicationStatusSentToMinerva: Action[UpdateApplicationStateSentToMinervaRequest] =
