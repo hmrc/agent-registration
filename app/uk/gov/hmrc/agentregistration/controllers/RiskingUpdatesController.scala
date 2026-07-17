@@ -39,6 +39,9 @@ import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationSta
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
+import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
+import uk.gov.hmrc.internalauth.client.*
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -52,13 +55,26 @@ class RiskingUpdatesController @Inject() (
   actions: Actions,
   appConfig: AppConfig,
   agentApplicationRepo: AgentApplicationRepo,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
+  authComponents: BackendAuthComponents
 )(using ExecutionContext)
 extends BackendController(cc):
 
+  private val riskingUpdatesWritePermission = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType("agent-registration"),
+      resourceLocation = ResourceLocation("risking-updates")
+    ),
+    action = IAAction("WRITE")
+  )
+
+  private val baseAction =
+    if appConfig.InternalAuth.isEnabled
+    then authComponents.authorizedAction(riskingUpdatesWritePermission)
+    else actions.default
+
   def receiveRiskingOutcome(applicationReference: ApplicationReference): Action[RiskingOutcomeRequest] =
-    actions
-      .default
+    baseAction
       .async(parse.json[RiskingOutcomeRequest]):
         implicit request =>
           logger.info(s"Received risking outcome for applicationReference [${applicationReference.value}]")
@@ -75,6 +91,15 @@ extends BackendController(cc):
                     s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [${agentApplication.applicationState}] "
                   )
                 markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
+
+  def updateApplicationStatusSentToMinerva: Action[UpdateApplicationStateSentToMinervaRequest] =
+    baseAction
+      .async(parse.json[UpdateApplicationStateSentToMinervaRequest]):
+        implicit request =>
+          val applicationReferences = request.body.applicationReferences
+          agentApplicationRepo
+            .updateManyApplicationStateByReference(applicationReferences = applicationReferences, applicationState = SentToMinerva)
+            .map(_ => Ok)
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
@@ -116,16 +141,6 @@ extends BackendController(cc):
             individualProvidedDetails = individualProvidedDetails
           )
         yield individualProvidedDetailsList :+ individualProvidedDetails.modify(_.riskingOutcomeIndividual).setTo(Some(riskingOutcomeIndividual))
-
-  def updateApplicationStatusSentToMinerva: Action[UpdateApplicationStateSentToMinervaRequest] =
-    actions
-      .default // TODO: Replace with auth action as part of https://jira.tools.tax.service.gov.uk/browse/APB-11711
-      .async(parse.json[UpdateApplicationStateSentToMinervaRequest]):
-        implicit request =>
-          val applicationReferences = request.body.applicationReferences
-          agentApplicationRepo
-            .updateManyApplicationStateByReference(applicationReferences = applicationReferences, applicationState = SentToMinerva)
-            .map(_ => Ok)
 
   private def makeRiskingOutcomeApplicationOutcome(riskingOutcomeRequest: RiskingOutcomeRequest): RiskingOutcomeApplication =
     val actualDecisionDate: LocalDate =

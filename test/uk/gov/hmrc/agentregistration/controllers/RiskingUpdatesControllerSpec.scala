@@ -51,6 +51,7 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 
 class RiskingUpdatesControllerSpec
 extends ControllerSpec:
@@ -58,6 +59,10 @@ extends ControllerSpec:
   val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
   private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+
+  override protected def configOverrides: Map[String, Any] = Map[String, Any](
+    "internal-auth.enabled" -> true
+  )
 
   override def afterAll(): Unit =
     dropDatabase()
@@ -224,6 +229,7 @@ extends ControllerSpec:
       )
     ).foreach: tc =>
       tc.description in:
+        AuthStubs.stubInternalAuth()
         given Request[?] = tdAll.backendRequest
         val individualProvidedDetails = tdAll.providedDetails.afterFinished
         agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
@@ -234,7 +240,6 @@ extends ControllerSpec:
         individualProvidedDetailsRepo.findByPersonReference(
           tdAll.personReference
         ).futureValue.value shouldBe individualProvidedDetails withClue "individual exists"
-
         val request = RiskingOutcomeRequest(
           emailsSentAt = emailsSentAt,
           applicationOutcome = tc.applicationOutcome,
@@ -266,9 +271,11 @@ extends ControllerSpec:
 
         val updatedIndividual = individualProvidedDetailsRepo.findByPersonReference(tdAll.personReference).futureValue.value
         updatedIndividual.riskingOutcomeIndividual shouldBe Some(tc.expectedRiskingOutcomeIndividual)
+        AuthStubs.verifyInternalAuth()
   }
 
   "receiveRiskingOutcome applies the correct outcome per-individual when multiple individuals are in the request" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     val individual1 = tdAll.providedDetails.afterFinished
     val individual2PersonReference = PersonReference("PREF2")
@@ -318,8 +325,10 @@ extends ControllerSpec:
         declarationAgreed = false
       )
     )
+    AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome returns NOT_FOUND if no application exists for the given applicationReference" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     agentApplicationRepo.findByApplicationReference(applicationReference).futureValue shouldBe None withClue "no application found"
 
@@ -331,8 +340,10 @@ extends ControllerSpec:
         .futureValue
 
     response.status shouldBe Status.NOT_FOUND
+    AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome fails when validation finds an individual referenced by personReference does not exist, and leaves the application unchanged" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     agentApplicationRepo.upsert(agentApplicationSentForRisking).futureValue
     agentApplicationRepo.findByApplicationReference(
@@ -362,8 +373,10 @@ extends ControllerSpec:
     val applicationAfterFailure = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
     applicationAfterFailure shouldBe agentApplicationSentForRisking withClue
       "application should remain unchanged — state, riskingOutcomeApplication, riskingOutcomeEntity all untouched"
+    AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome fails when validation finds one of several referenced individuals does not exist, and leaves every other individual AND the application unchanged" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     val individual1 = tdAll.providedDetails.afterFinished
     val individual3PersonReference: PersonReference = PersonReference("PREF3")
@@ -415,8 +428,10 @@ extends ControllerSpec:
       "individual1 (referenced before the missing one) must not be updated"
     individualProvidedDetailsRepo.findByPersonReference(individual3PersonReference).futureValue.value.riskingOutcomeIndividual shouldBe None withClue
       "individual3 (referenced after the missing one) must not be updated"
+    AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome overrides the existing outcome when the application is already RiskingCompleted — supports data correction (e.g. Minerva initially sent incorrect risking results and later resends the corrected outcome)" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     val staleCompletedApp = agentApplicationSentForRisking.copy(
       applicationState = ApplicationState.RiskingCompleted,
@@ -443,8 +458,10 @@ extends ControllerSpec:
       "corrected outcome must override the stale FailedNonFixable outcome"
     corrected.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved) withClue
       "corrected entity outcome must override the stale FailedNonFixable entity"
+    AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome applies the outcome even when the application is in an unexpected state (e.g. Started) — the anomaly is logged as a warning so ops can investigate, but the update is not silently dropped" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
     val startedApp = agentApplicationSentForRisking.copy(applicationState = ApplicationState.Started)
     agentApplicationRepo.upsert(startedApp).futureValue
@@ -463,10 +480,11 @@ extends ControllerSpec:
       "outcome must be applied even from an unexpected state; ops receive a warning log for investigation"
     updated.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate))
     updated.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved)
+    AuthStubs.verifyInternalAuth()
 
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
+    AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
-
     val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
     agentApplicationRepo.upsert(exampleAgentApplication).futureValue
     agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
@@ -486,3 +504,20 @@ extends ControllerSpec:
     agentApplicationRepo.findByApplicationReference(
       tdAll.applicationReference
     ).futureValue.value.applicationState shouldBe SentToMinerva withClue "application state should be updated"
+    AuthStubs.verifyInternalAuth()
+
+  "receiveRiskingOutcome returns FORBIDDEN when the calling service does not have the required internal-auth permission" in:
+    AuthStubs.stubInternalAuthForbidden()
+    given Request[?] = tdAll.backendRequest
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.FORBIDDEN
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue shouldBe None withClue
+      "the request must be rejected before any business logic runs"
+    AuthStubs.verifyInternalAuth()
