@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.services
 
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsDetails
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcome
@@ -25,19 +26,19 @@ object RiskingOutcomeEntityHelper:
 
   /** Constructs the initial [[EntityFix]] for a given fixable entity failure.
     *
-    * Each [[EntityFailure.IsAmls]] (3.1–3.5) maps to [[EntityFix._3.AmlsFix]] carrying the originating failure; multiple AMLS failures yield multiple `AmlsFix`
-    * instances, each preserving its own `failure` field.
+    * Each [[EntityFailure.IsAmls]] (3.1–3.5) maps to [[EntityFix._3.AmlsFix]] carrying the originating failure AND the current application AMLS details so the
+    * FE fix pages can pre-populate; multiple AMLS failures yield multiple `AmlsFix` instances, each preserving its own `failure` field.
     *
     * All other fixable failures (4.*, 5.*, 8.5, 8.7) map 1:1 to their corresponding [[EntityFix]] subtype with `isConfirmed = None`.
     */
   extension (failure: EntityFailure.Fixable)
-    def asEntityFix: EntityFix =
+    def asEntityFix(existingAmlsDetails: Option[AmlsDetails]): EntityFix =
       failure match
         case f: EntityFailure.IsAmls =>
           EntityFix._3.AmlsFix(
             f,
             isConfirmed = None,
-            amlsDetails = None
+            amlsDetails = existingAmlsDetails
           )
         case EntityFailure._4._1 => EntityFix._4._1(isConfirmed = None)
         case EntityFailure._4._2 => EntityFix._4._2(isConfirmed = None)
@@ -55,12 +56,13 @@ object RiskingOutcomeEntityHelper:
 
   def riskingOutcomeEntity(
     riskingOutcome: RiskingOutcome,
-    entityFailures: Seq[EntityFailure]
+    entityFailures: Seq[EntityFailure],
+    existingAmlsDetails: Option[AmlsDetails]
   ): RiskingOutcomeEntity =
     riskingOutcome match
       case RiskingOutcome.Approved => RiskingOutcomeEntity.Approved
       case RiskingOutcome.FailedFixable =>
         RiskingOutcomeEntity.FailedFixable(
-          fixes = entityFailures.collect { case f: EntityFailure.Fixable => f.asEntityFix }.distinct
+          fixes = entityFailures.collect { case f: EntityFailure.Fixable => f.asEntityFix(existingAmlsDetails) }.distinct
         )
       case RiskingOutcome.FailedNonFixable => RiskingOutcomeEntity.FailedNonFixable(failures = entityFailures.distinct)
