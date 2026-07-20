@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.testOnly.controllers
 
+import org.bson.Document
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Sorts
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -65,6 +67,7 @@ class TestApplicationController @Inject() (
 extends BackendController(cc):
 
   given ExecutionContext = controllerComponents.executionContext
+  private val logger: Logger = Logger(getClass)
 
   def upsertIndividualProvidedDetails: Action[IndividualProvidedDetails] =
     actions
@@ -94,7 +97,7 @@ extends BackendController(cc):
           .collection
           .find()
           .sort(Sorts.descending("createdAt"))
-          .limit(15)
+          .limit(150)
           .toFuture()
           .map((recentApplications: Seq[AgentApplication]) => Ok(Json.toJson(recentApplications)))
 
