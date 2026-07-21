@@ -368,12 +368,12 @@ trait TdBase:
       EntityFix._5._5(isConfirmed = None),
       EntityFix._5._6(isConfirmed = None),
       EntityFix._5._7(isConfirmed = None),
-      EntityFix._8._5(isConfirmed = None),
-      EntityFix._8._7(isConfirmed = None)
+      EntityFix._8._5(isConfirmed = None)
     )
   )
 
   // sole traders will never have 4.2 or 5.2 failures, so we don't include them in the list of fixes for sole traders
+  // entities don't have 8.7 either, so we don't include that in the list of fixes for sole traders
   val riskingOutcomeEntityFailedFixableAllSoleTraderCodes: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
     fixes = Seq(
       EntityFix._4._1(isConfirmed = None),
@@ -385,8 +385,23 @@ trait TdBase:
       EntityFix._5._5(isConfirmed = None),
       EntityFix._5._6(isConfirmed = None),
       EntityFix._5._7(isConfirmed = None),
-      EntityFix._8._5(isConfirmed = None),
-      EntityFix._8._7(isConfirmed = None)
+      EntityFix._8._5(isConfirmed = None)
+    )
+  )
+
+  // all the possible duplicates a sole trader can have, 8.5 and 8.7 cannot be duplicates
+  // as 8.5 is an entity only code and 8.7 is an individual only code
+  val riskingOutcomeEntitySoleTraderDuplicateFixes: RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
+    fixes = Seq(
+      EntityFix._4._1(isConfirmed = None),
+      EntityFix._4._3(isConfirmed = None),
+      EntityFix._4._4(isConfirmed = None),
+      EntityFix._5._1(isConfirmed = None),
+      EntityFix._5._3(isConfirmed = None),
+      EntityFix._5._4(isConfirmed = None),
+      EntityFix._5._5(isConfirmed = None),
+      EntityFix._5._6(isConfirmed = None),
+      EntityFix._5._7(isConfirmed = None)
     )
   )
 
@@ -419,6 +434,23 @@ trait TdBase:
     declarationAgreed = false
   )
 
+  // all the possible duplicates a sole trader can have, 8.5 and 8.7 cannot be duplicates
+  // as 8.5 is an entity only code and 8.7 is an individual only code
+  val riskingOutcomeIndividualSoleTraderDuplicateFixes: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._4._1(isConfirmed = None),
+      IndividualFix._4._3(isConfirmed = None),
+      IndividualFix._4._4(isConfirmed = None),
+      IndividualFix._5._1(isConfirmed = None),
+      IndividualFix._5._3(isConfirmed = None),
+      IndividualFix._5._4(isConfirmed = None),
+      IndividualFix._5._5(isConfirmed = None),
+      IndividualFix._5._6(isConfirmed = None),
+      IndividualFix._5._7(isConfirmed = None)
+    ),
+    declarationAgreed = false
+  )
+
   val beforeDeclaration: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._4._1(isConfirmed = Some(true)),
@@ -447,6 +479,30 @@ trait TdBase:
     declarationAgreed = false
   )
 
+  val riskingOutcomeIndividualDetailsFixSaUtrNotProvided: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.Provided(nino)),
+        saUtr = Some(IndividualSaUtr.NotProvided),
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
+
+  val riskingOutcomeIndividualDetailsFixOnlySaUtr: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = None,
+        nino = None,
+        saUtr = Some(IndividualSaUtr.Provided(saUtr)),
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
+
   val riskingOutcomeIndividualDetailsFixApplicantProvidedDateOfBirth: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._10.IndividualDetailsFix(
@@ -459,10 +515,22 @@ trait TdBase:
     declarationAgreed = false
   )
 
-  val riskingOutcomeIndividualDetailsFixWithoutIds: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+  val riskingOutcomeIndividualDetailsFixNinoNotProvided: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._10.IndividualDetailsFix(
         dateOfBirth = Some(IndividualDateOfBirth.Provided(dateOfBirth)),
+        nino = Some(IndividualNino.NotProvided),
+        saUtr = Some(IndividualSaUtr.Provided(saUtr)),
+        isConfirmed = None
+      )
+    ),
+    declarationAgreed = false
+  )
+
+  val riskingOutcomeIndividualDetailsFixWithoutIds: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
+    fixes = Seq(
+      IndividualFix._10.IndividualDetailsFix(
+        dateOfBirth = None,
         nino = Some(IndividualNino.NotProvided),
         saUtr = Some(IndividualSaUtr.NotProvided),
         isConfirmed = None
@@ -470,7 +538,6 @@ trait TdBase:
     ),
     declarationAgreed = false
   )
-
   val riskingOutcomeIndividualDetailsFixMissingSaUtr: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
     fixes = Seq(
       IndividualFix._10.IndividualDetailsFix(
