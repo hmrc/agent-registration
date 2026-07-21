@@ -86,15 +86,21 @@ extends BackendController(cc):
             .upsert(request.body)
             .map(_ => Ok(""))
 
-  def recentApplications: Action[AnyContent] = actions
+  def recentApplications(
+    page: Int,
+    pageSize: Int
+  ): Action[AnyContent] = actions
     .default
     .async:
       implicit request =>
+        val safePage = math.max(page, 1)
+        val safePageSize = math.min(math.max(pageSize, 1), 100)
         agentApplicationRepo
           .collection
           .find()
           .sort(Sorts.descending("createdAt"))
-          .limit(15)
+          .skip((safePage - 1) * safePageSize)
+          .limit(safePageSize)
           .toFuture()
           .map((recentApplications: Seq[AgentApplication]) => Ok(Json.toJson(recentApplications)))
 
