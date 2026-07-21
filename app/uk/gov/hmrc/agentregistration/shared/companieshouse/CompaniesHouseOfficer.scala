@@ -44,10 +44,10 @@ object CompaniesHouseOfficer:
     val trimmed = raw.trim
 
     if trimmed.contains(",") then
-      // Format: SURNAME, Forename(s)
-      val parts = trimmed.split(",", 2).map(_.trim)
+      // Format: SURNAME, Forename(s), Title (Not used in matching, Optional, e.g. Mr.)
+      val parts = trimmed.split(",").map(_.trim)
       parts.toList match
-        case surname :: forenames :: Nil => s"${titleCase(forenames)} ${titleCase(surname)}"
+        case surname :: forenames :: title => s"${titleCase(forenames)} ${titleCase(surname)}"
         case _ => trimmed
     else
       // Already likely "Forename Surname" or corporate name

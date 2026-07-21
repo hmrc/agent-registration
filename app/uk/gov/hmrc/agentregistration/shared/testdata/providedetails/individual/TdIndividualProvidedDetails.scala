@@ -178,6 +178,14 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixWithoutIds))
 
+    val afterFixableIndividualDetailsWithNinoNotProvided: IndividualProvidedDetails = afterFinished
+      .modify(_.riskingOutcomeIndividual)
+      .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixNinoNotProvided))
+
+    val afterFixableIndividualDetailsWithSaUtrNotProvided: IndividualProvidedDetails = afterFinished
+      .modify(_.riskingOutcomeIndividual)
+      .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixSaUtrNotProvided))
+
     val individualData: IndividualData = IndividualData(
       personReference = dependencies.personReference,
       individualName = dependencies.individualName,

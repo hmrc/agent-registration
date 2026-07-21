@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
-import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 
@@ -127,10 +127,22 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllSoleTraderCodes)
     )
 
+    val riskingOutcomeEntitySoleTraderDuplicateCodes: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntitySoleTraderDuplicateFixes)
+    )
+
     val riskingOutcomeSoleTraderAmls: AgentApplicationSoleTrader = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
       riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable(isFixed = None))
+    )
+
+    val riskingOutcomeEntityFailedFixableNoEntityFailures: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
     )
 
 }
