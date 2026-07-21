@@ -1,0 +1,96 @@
+{
+  "apiId": "AR03",
+  "apiTitle": "Get Agent Application by Agent Application ID",
+  "description": "Retrieves an agent application by its unique agent application ID. Requires Individual affinity group authentication.",
+  "method": "GET",
+  "path": "/application/by-agent-application-id/{agentApplicationId}",
+  "pathParameters": [
+    {
+      "name": "agentApplicationId",
+      "type": "string",
+      "required": true,
+      "description": "The unique identifier of the agent application"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Agent application found",
+      "body": "AgentApplication JSON object"
+    },
+    {
+      "status": 204,
+      "description": "No application found for the given ID"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 caller is not Individual affinity group"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Individual",
+    "notes": "Uses individualAuthorised action. Requires Individual affinity group."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.ApplicationController",
+  "controllerMethod": "findById",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "GET /application/by-agent-application-id/{agentApplicationId}",
+      "target": "ApplicationController"
+    },
+    {
+      "step": 2,
+      "actor": "ApplicationController",
+      "action": "individualAuthorised() \u2013 validate Individual affinity, retrieve internalId",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "ApplicationController",
+      "action": "agentApplicationRepo.findById(agentApplicationId)",
+      "target": "MongoDB (agent-application)"
+    },
+    {
+      "step": 4,
+      "actor": "ApplicationController",
+      "action": "Return 200 Ok(agentApplication) or 204 NoContent",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller with Individual affinity group"
+    }
+  ],
+  "databaseCollections": [
+    {
+      "name": "agent-application",
+      "operation": "findOne",
+      "filter": "_id == agentApplicationId"
+    }
+  ],
+  "specialCases": [
+    "Requires Individual (not Agent) affinity group",
+    "Returns 204 rather than 404 when not found"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}
