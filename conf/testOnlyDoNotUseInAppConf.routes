@@ -21,7 +21,7 @@ GET           /agent-registration/test-only/individuals/by-id/:individualProvide
 POST          /                                                                                               uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
 GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
-GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.recentApplications
+GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.recentApplications(page: Int ?= 1, pageSize: Int ?= 15)
 GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
 
 DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteAllApplications
