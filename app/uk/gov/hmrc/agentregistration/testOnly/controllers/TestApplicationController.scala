@@ -133,6 +133,16 @@ extends BackendController(cc):
             case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
             case None => NoContent
 
+  def findIndividualByPersonReference(personReference: PersonReference): Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        individualProvidedDetailsRepo
+          .findByPersonReference(personReference)
+          .map:
+            case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
+            case None => NoContent
+
   def createTestApplication: Action[AnyContent] = Action
     .async:
       implicit request =>
