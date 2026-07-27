@@ -10,7 +10,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%highlight(%level)] logger=[%logger] thread=[%thread] rid=[%X{X-Request-ID}] user=[%X{Authorization}] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%date{HH:mm:ss.SSS} [%highlight(%level)] [%logger{36}]  [%green(%message)] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
         </encoder>
     </appender>
 
@@ -24,16 +24,16 @@
 
     <logger name="com.google.inject" level="INFO"/>
 
-    <logger name="uk.gov" level="INFO"/>
+    <logger name="uk.gov" level="WARN"/>
+    <logger name="uk.gov.hmrc.agentregistration" level="DEBUG"/>
 
     <logger name="application" level="DEBUG"/>
+    <logger name="DatastreamHandler" level="WARN"/>
+    <logger name="connector" level="INFO"/>
 
-    <logger name="connector" level="TRACE">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
+
 </configuration>

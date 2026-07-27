@@ -16,6 +16,7 @@ POST          /agent-registration/test-only/individual-provided-details         
 
 GET           /agent-registration/test-only/individuals/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividuals(agentApplicationId: AgentApplicationId)
 GET           /agent-registration/test-only/individuals/by-id/:individualProvidedDetailsId                    uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividual(individualProvidedDetailsId: IndividualProvidedDetailsId)
+GET           /agent-registration/test-only/individuals/by-person-reference/:personReference                  uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividualByPersonReference(personReference: PersonReference)
 
 
 POST          /                                                                                               uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
