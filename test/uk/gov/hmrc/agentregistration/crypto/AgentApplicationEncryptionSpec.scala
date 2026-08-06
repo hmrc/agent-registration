@@ -228,7 +228,7 @@ extends UnitSpec:
         service.decrypt(service.encrypt(model)) shouldBe model
 
       s"$name rendered JSON of the encrypted model contains no plaintext PII" in:
-        val rendered = Json.toJson[AgentApplication](service.encrypt(model))(AgentApplication.format).toString
+        val rendered = Json.toJson[AgentApplication](service.encrypt(model))(using AgentApplication.format).toString
         piiStringsFor(model).foreach { plaintext =>
           withClue(s"plaintext '$plaintext' must not appear as a JSON value in $name encrypted JSON: ") {
             rendered should not include s"\"$plaintext\""

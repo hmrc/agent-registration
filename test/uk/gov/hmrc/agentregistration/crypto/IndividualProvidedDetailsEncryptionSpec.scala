@@ -150,7 +150,7 @@ extends UnitSpec:
       service.decrypt(service.encrypt(model)) shouldBe model
 
     "rendered JSON of the encrypted model contains no plaintext PII" in:
-      val rendered = Json.toJson(service.encrypt(model))(IndividualProvidedDetails.format).toString
+      val rendered = Json.toJson(service.encrypt(model))(using IndividualProvidedDetails.format).toString
       val plaintextPii: List[String] =
         List(
           model.individualName.value,
