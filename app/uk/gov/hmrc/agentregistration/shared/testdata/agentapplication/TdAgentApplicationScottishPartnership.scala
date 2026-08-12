@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMore
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 
 trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
@@ -53,52 +54,52 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       payeRefs = None,
       riskingOutcomeApplication = None,
       riskingOutcomeEntity = None
-    )
+    ).assertDataIntegrity()
 
     val afterGrsDataReceived: AgentApplicationScottishPartnership = afterStarted.copy(
       businessDetails = Some(
         dependencies.grsBusinessDetails.scottishPartnership.businessDetails
       ),
       applicationState = GrsDataReceived
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckPass: AgentApplicationScottishPartnership = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckFail: AgentApplicationScottishPartnership = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationScottishPartnership = afterRefusalToDealWithCheckPass.copy(
       vrns = Some(List(dependencies.vrn)),
       payeRefs = Some(List(dependencies.payeRef))
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckPass: AgentApplicationScottishPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckFail: AgentApplicationScottishPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterContactDetailsComplete: AgentApplicationScottishPartnership = afterGlobalAsaEnrolmentCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
-    )
+    ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationScottishPartnership = afterContactDetailsComplete.copy(
       agentDetails = Some(dependencies.completeAgentDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationScottishPartnership = afterAgentDetailsComplete.copy(
       amlsDetails = Some(dependencies.completeAmlsDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterHmrcStandardForAgentsAgreed: AgentApplicationScottishPartnership = afterAmlsComplete.copy(
       hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
-    )
+    ).assertDataIntegrity()
 
     val afterHowManyKeyIndividuals: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
@@ -106,11 +107,12 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
           numberOfKeyIndividuals = 3
         )
       )
-    )
+    ).assertDataIntegrity()
+
     val afterConfirmOtherRelevantIndividualsNo: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
       .copy(
         hasOtherRelevantIndividuals = Some(false)
-      )
+      ).assertDataIntegrity()
 
     val afterOnlyOneKeyIndividual: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
@@ -118,7 +120,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
           numberOfKeyIndividuals = 1
         )
       )
-    )
+    ).assertDataIntegrity()
 
     val afterHowManyKeyIndividualsNeedsNoPadding: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
@@ -126,13 +128,13 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
           numberOfKeyIndividualsResponsibleForTaxMatters = 6
         )
       )
-    )
+    ).assertDataIntegrity()
 
     // when the number of key individuals is of type SixOrMore and padding is required because the number of
     // key individuals responsible for tax matters is less than minimum list size(5)
     val afterHowManyKeyIndividualsNeedsPadding: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(dependencies.sixOrMoreKeyIndividuals)
-    )
+    ).assertDataIntegrity()
 
     val afterConfirmTwoIndividuals: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
       .copy(
@@ -142,7 +144,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
-      )
+      ).assertDataIntegrity()
 
     val afterConfirmSixIndividuals: AgentApplicationScottishPartnership = afterHowManyKeyIndividuals
       .copy(
@@ -152,18 +154,18 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
-      )
+      ).assertDataIntegrity()
 
     val afterDeclarationSubmitted: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
-    )
+    ).assertDataIntegrity()
 
     val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationScottishPartnership = afterConfirmTwoIndividuals.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
-    )
+    ).assertDataIntegrity()
 
 }
