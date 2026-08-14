@@ -3,8 +3,8 @@ import sbt.*
 
 object AppDependencies {
 
-  private val bootstrapVersion = "10.7.0"
-  private val hmrcMongoVersion = "2.12.0"
+  private val bootstrapVersion = "10.8.0"
+  private val hmrcMongoVersion = "2.13.0"
 
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"  % bootstrapVersion,
@@ -12,7 +12,7 @@ object AppDependencies {
     "uk.gov.hmrc"             %% "crypto-json-play-30"        % "8.4.0",
     "uk.gov.hmrc.objectstore" %% "object-store-client-common" % "2.6.0",
     "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "4.4.0",
-    "com.softwaremill.quicklens" %% "quicklens" % "1.9.12", // Updated for Scala 3 compatibility
+    "com.softwaremill.quicklens" %% "quicklens" % "1.9.15", // Updated for Scala 3 compatibility
 
   )
 

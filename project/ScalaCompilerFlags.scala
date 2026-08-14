@@ -12,7 +12,7 @@ object ScalaCompilerFlags {
 //    "-rewrite",             // Enable rewriting
 //    "-new-syntax",          // Enable significant indentation syntax
 //    "-indent",              // Enable significant indentation syntax
-//    "-source:3.6-migration" // Use Scala 3 migration mode
+//    "-source:3.7-migration" // Use Scala 3 migration mode
     "-Wconf:src=target/.*:s"
   )
 

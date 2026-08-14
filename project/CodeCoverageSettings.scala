@@ -10,10 +10,12 @@ object CodeCoverageSettings {
     "app.*",
     "prod.*",
     ".*Routes.*",
-    "testOnly.*"
+    "uk.gov.hmrc.agentregistration.testOnly.*",
+    "uk.gov.hmrc.agentregistration.shared.*"
   )
 
   val settings: Seq[Setting[_]] = Seq(
+    ScoverageKeys.coverageEnabled := true,
     ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(","),
     ScoverageKeys.coverageMinimumStmtTotal := 100,
     ScoverageKeys.coverageFailOnMinimum := false,
