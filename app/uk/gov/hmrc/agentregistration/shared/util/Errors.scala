@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentregistration.shared.util
 
 import play.api.http.Status
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
@@ -49,7 +48,7 @@ object Errors:
   inline def require(
     requirement: Boolean,
     message: => String
-  )(using request: RequestHeader): Unit =
+  ): Unit =
     if !requirement then
       throw InternalServerException(message)
     else ()
@@ -57,7 +56,7 @@ object Errors:
   def requireF(
     requirement: Boolean,
     message: => String
-  )(using request: RequestHeader): Future[Unit] =
+  ): Future[Unit] =
     if !requirement then
       Future.failed(InternalServerException(message))
     else Future.successful(())

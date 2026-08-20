@@ -17,8 +17,10 @@
 package uk.gov.hmrc.agentregistration.shared.util
 
 import scala.annotation.implicitNotFound
+import scala.annotation.nowarn
 
 // scalafix:off DisableSyntax
+@nowarn("msg=unused.*parameter")
 object SafeEquals:
 
   /** Simple safe equals so we don't have to import cats

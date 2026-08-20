@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.shared.risking.submitforrisking
+package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
-import play.api.libs.json.*
-import uk.gov.hmrc.agentregistration.shared.risking.*
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.dataintegrity.DataIntegrity
 
-final case class SubmitForRiskingRequest(
-  applicationData: ApplicationData,
-  individuals: List[IndividualData],
-  isResubmission: Boolean,
-  entityAlreadyApproved: Boolean
-)
+object DataIntegrityAssertion:
 
-object SubmitForRiskingRequest:
-  given OFormat[SubmitForRiskingRequest] = Json.format[SubmitForRiskingRequest]
+  extension [A <: AgentApplication](agentApplication: A)
+
+    def assertDataIntegrity(): A =
+      val violations = DataIntegrity.violations(agentApplication)
+      if violations.nonEmpty then throw new IllegalStateException(violations.mkString("; "))
+      agentApplication

@@ -170,6 +170,10 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFix))
 
+    val afterRiskedFixableIndividualDetailsAndConfirmed: IndividualProvidedDetails = afterFinished
+      .modify(_.riskingOutcomeIndividual)
+      .setTo(Some(riskingOutcomeIndividualDetailsFixConfirmed))
+
     val afterRiskedFixableIndividualDetailsApplicantProvidedDateOfBirth: IndividualProvidedDetails = afterFinished
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixApplicantProvidedDateOfBirth))
@@ -185,6 +189,10 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
     val afterFixableIndividualDetailsWithSaUtrNotProvided: IndividualProvidedDetails = afterFinished
       .modify(_.riskingOutcomeIndividual)
       .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixSaUtrNotProvided))
+
+    val afterFixableIndividualDetailsWithOnlySaUtr: IndividualProvidedDetails = afterFinished
+      .modify(_.riskingOutcomeIndividual)
+      .setTo(Some(dependencies.riskingOutcomeIndividualDetailsFixOnlySaUtr))
 
     val individualData: IndividualData = IndividualData(
       personReference = dependencies.personReference,

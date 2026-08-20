@@ -34,6 +34,7 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 import java.time.Clock
 import java.time.Instant
+import scala.annotation.nowarn
 
 /** Agent (Registration) Application. This final case class represents the data entered by a user for registering as an agent.
   */
@@ -485,5 +486,8 @@ object AgentApplication:
       IsAgentApplicationForKeyIndividuals,
       IsNotAgentApplicationForKeyIndividuals
     ]
+
+  // referenced only to satisfy the "unused" check
+  locally(CompilationProofs)
 
 private inline def expectedDataNotDefinedError(key: String): Nothing = throw new RuntimeException(s"Expected $key to be defined")
