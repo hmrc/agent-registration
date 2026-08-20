@@ -47,7 +47,7 @@ object CompaniesHouseOfficer:
       // Format: SURNAME, Forename(s), Title (Not used in matching, Optional, e.g. Mr.)
       val parts = trimmed.split(",").map(_.trim)
       parts.toList match
-        case surname :: forenames :: title => s"${titleCase(forenames)} ${titleCase(surname)}"
+        case surname :: forenames :: _ => s"${titleCase(forenames)} ${titleCase(surname)}"
         case _ => trimmed
     else
       // Already likely "Forename Surname" or corporate name

@@ -20,6 +20,7 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 
 trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrsBusinessDetails) =>
 
@@ -51,65 +52,65 @@ trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrs
       payeRefs = None,
       riskingOutcomeApplication = None,
       riskingOutcomeEntity = None
-    )
+    ).assertDataIntegrity()
 
     val afterGrsDataReceived: AgentApplicationSoleTrader = afterStarted.copy(
       businessDetails = Some(
         dependencies.grsBusinessDetails.soleTrader.businessDetails
       ),
       applicationState = GrsDataReceived
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckPass: AgentApplicationSoleTrader = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckFail: AgentApplicationSoleTrader = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterDeceasedCheckPass: AgentApplicationSoleTrader = afterRefusalToDealWithCheckPass.copy(
       deceasedCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterDeceasedCheckFail: AgentApplicationSoleTrader = afterRefusalToDealWithCheckPass.copy(
       deceasedCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationSoleTrader = afterDeceasedCheckPass.copy(
       vrns = Some(List(dependencies.vrn)),
       payeRefs = Some(List(dependencies.payeRef))
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckPass: AgentApplicationSoleTrader = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckFail: AgentApplicationSoleTrader = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterContactDetailsComplete: AgentApplicationSoleTrader = afterGlobalAsaEnrolmentCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
-    )
+    ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationSoleTrader = afterContactDetailsComplete.copy(
       agentDetails = Some(dependencies.completeAgentDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationSoleTrader = afterAgentDetailsComplete.copy(
       amlsDetails = Some(dependencies.completeAmlsDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterHmrcStandardForAgentsAgreed: AgentApplicationSoleTrader = afterAmlsComplete.copy(
       hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
-    )
+    ).assertDataIntegrity()
 
     val afterDeclarationSubmitted: AgentApplicationSoleTrader = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
-    )
+    ).assertDataIntegrity()
 
 }

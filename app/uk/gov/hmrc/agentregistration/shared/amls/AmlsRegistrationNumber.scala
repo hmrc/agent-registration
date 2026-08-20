@@ -40,7 +40,7 @@ object AmlsRegistrationNumber:
     "CIOT" -> """^CIOT AML-\d{1,4}-\d{6}$""".r,
     "FCA" -> """^\d{6}$""".r,
     "ICAEW" -> """^(?:[A-Za-z]\d{9}|\d{7})$""".r,
-    "ICAS" -> """^[A-Za-z]\d{6}$""".r,
+    "ICAS" -> """^[Ff]\d{4}$""".r,
     "ICB" -> """^\d{4,5}$""".r,
     "IFA" -> """^\d{6}$""".r,
     "FRA" -> """^\d{5,6}$""".r

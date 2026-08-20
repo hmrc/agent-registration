@@ -124,7 +124,7 @@ object DisjointUnions:
     def extractUnionMembers(repr: TypeRepr): List[TypeRepr] =
       repr.dealias match
         case OrType(left, right) => extractUnionMembers(left) ++ extractUnionMembers(right)
-        case AndType(left, right) => extractUnionMembers(left) // For (A | B) & Parent, extract from left
+        case AndType(left, _) => extractUnionMembers(left) // For (A | B) & Parent, extract from left
         case other => List(other)
 
     val leftMembers = extractUnionMembers(leftRepr)

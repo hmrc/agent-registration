@@ -19,9 +19,9 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLessOfficers
-import uk.gov.hmrc.agentregistration.shared.lists.SixOrMoreOfficers
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 
 trait TdAgentApplicationLimitedPartnership {
   dependencies: (TdBase & TdGrsBusinessDetails) =>
@@ -54,89 +54,89 @@ trait TdAgentApplicationLimitedPartnership {
       payeRefs = None,
       riskingOutcomeApplication = None,
       riskingOutcomeEntity = None
-    )
+    ).assertDataIntegrity()
 
     val afterGrsDataReceived: AgentApplicationLimitedPartnership = afterStarted.copy(
       businessDetails = Some(
         dependencies.grsBusinessDetails.ltdPartnership.businessDetails
       ),
       applicationState = GrsDataReceived
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckPass: AgentApplicationLimitedPartnership = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckFail: AgentApplicationLimitedPartnership = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterUnifiedCustomerRegistryUpdateIdentifiers: AgentApplicationLimitedPartnership = afterRefusalToDealWithCheckPass.copy(
       vrns = Some(List(dependencies.vrn)),
       payeRefs = Some(List(dependencies.payeRef))
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckPass: AgentApplicationLimitedPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Pass)
-    )
+    ).assertDataIntegrity()
 
     val afterGlobalAsaEnrolmentCheckFail: AgentApplicationLimitedPartnership = afterUnifiedCustomerRegistryUpdateIdentifiers.copy(
       globalAsaEnrolmentCheckResult = Some(CheckResult.Fail)
-    )
+    ).assertDataIntegrity()
 
     val afterContactDetailsComplete: AgentApplicationLimitedPartnership = afterGlobalAsaEnrolmentCheckPass.copy(
       applicantContactDetails = Some(dependencies.applicantContactDetails),
       agentDetails = None
-    )
+    ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationLimitedPartnership = afterContactDetailsComplete.copy(
       agentDetails = Some(dependencies.completeAgentDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationLimitedPartnership = afterAgentDetailsComplete.copy(
       amlsDetails = Some(dependencies.completeAmlsDetails)
-    )
+    ).assertDataIntegrity()
 
     val afterHmrcStandardForAgentsAgreed: AgentApplicationLimitedPartnership = afterAmlsComplete.copy(
       hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed
-    )
+    ).assertDataIntegrity()
 
     val afterConfirmCompaniesHouseOfficersYes: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.twoCompaniesHouseOfficers
       )
-    )
+    ).assertDataIntegrity()
 
     val afterNumberOfConfirmCompaniesHouseOfficers: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.sixOrMoreCompaniesHouseOfficers
       )
-    )
+    ).assertDataIntegrity()
 
     val afterConfirmCompaniesHouseOfficersNo: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.twoCompaniesHouseOfficers.copy(isCompaniesHouseOfficersListCorrect = false)
       )
-    )
+    ).assertDataIntegrity()
 
     val afterConfirmTwoChOfficers: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.twoCompaniesHouseOfficers
       ),
       hasOtherRelevantIndividuals = Some(false)
-    )
+    ).assertDataIntegrity()
 
     val afterConfirmSixChOfficers: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         dependencies.sixCompaniesHouseOfficersSelectAll
       ),
       hasOtherRelevantIndividuals = Some(false)
-    )
+    ).assertDataIntegrity()
 
     val afterDeclarationSubmitted: AgentApplicationLimitedPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
-    )
+    ).assertDataIntegrity()
 
 }
