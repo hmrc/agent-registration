@@ -1,0 +1,93 @@
+{
+  "apiId": "AR12",
+  "apiTitle": "Delete Individual Provided Details by ID",
+  "description": "Deletes an individual provided details record by its unique ID. Requires Agent affinity group.",
+  "method": "DELETE",
+  "path": "/individual-provided-details/delete-by-id/{individualProvidedDetailsId}",
+  "pathParameters": [
+    {
+      "name": "individualProvidedDetailsId",
+      "type": "string",
+      "required": true,
+      "description": "Unique identifier of the record to delete"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Record deleted (or did not exist \u2013 idempotent)"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 unsupported credential role or HMRC-AS-AGENT active"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Agent",
+    "credentialRoles": [
+      "User",
+      "Admin"
+    ]
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController",
+  "controllerMethod": "deleteById",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "DELETE /individual-provided-details/delete-by-id/{individualProvidedDetailsId}",
+      "target": "IndividualProvidedDetailsController"
+    },
+    {
+      "step": 2,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "authorised() \u2013 validate Agent affinity",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "individualProvidedDetailsRepo.removeById(individualProvidedDetailsId)",
+      "target": "MongoDB (individual)"
+    },
+    {
+      "step": 4,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "Return 200 Ok",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller (Agent)"
+    }
+  ],
+  "databaseCollections": [
+    {
+      "name": "individual",
+      "operation": "deleteOne",
+      "filter": "_id == individualProvidedDetailsId"
+    }
+  ],
+  "specialCases": [
+    "Returns 200 regardless of whether record existed (idempotent delete)"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}

@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Client
+    participant IndividualProvidedDetailsController
+    participant HMRC_Auth as HMRC Auth
+    participant MongoDB as MongoDB (individual)
+
+    Client->>IndividualProvidedDetailsController: POST /individual-provided-details/for-application (IndividualProvidedDetails JSON)
+    IndividualProvidedDetailsController->>HMRC_Auth: Authenticate (GG, Agent affinity)
+    alt Auth fails
+        HMRC_Auth-->>IndividualProvidedDetailsController: 401 Unauthorised
+        IndividualProvidedDetailsController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>IndividualProvidedDetailsController: Authenticated
+        IndividualProvidedDetailsController->>IndividualProvidedDetailsController: Parse request body
+        alt Body parse fails
+            IndividualProvidedDetailsController-->>Client: 400 Bad Request
+        else Body parse succeeds
+            Note over IndividualProvidedDetailsController: internalUserId guard NOT enforced
+            IndividualProvidedDetailsController->>MongoDB: upsert (filter: internalUserId + agentApplicationId)
+            MongoDB-->>IndividualProvidedDetailsController: Updated/Inserted
+            IndividualProvidedDetailsController-->>Client: 200 OK (IndividualProvidedDetails JSON)
+        end
+    end

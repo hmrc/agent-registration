@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Client
+    participant BusinessPartnerRecordController
+    participant HMRC_Auth as HMRC Auth
+    participant DES
+
+    Client->>BusinessPartnerRecordController: GET /application-business-partner-record/utr/{utr}
+    BusinessPartnerRecordController->>HMRC_Auth: Authenticate (GG, Individual affinity)
+    alt Auth fails
+        HMRC_Auth-->>BusinessPartnerRecordController: 401 Unauthorised
+        BusinessPartnerRecordController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>BusinessPartnerRecordController: Authenticated
+        BusinessPartnerRecordController->>DES: POST /registration/individual/utr/{utr}<br/>(isAnAgent=false, regime=ITSA, CorrelationId header)
+        alt DES 200 OK
+            DES-->>BusinessPartnerRecordController: BusinessPartnerRecord JSON
+            BusinessPartnerRecordController-->>Client: 200 OK (BusinessPartnerRecord JSON)
+        else DES 404 Not Found
+            DES-->>BusinessPartnerRecordController: 404
+            BusinessPartnerRecordController-->>Client: 204 No Content
+        else DES 400 Bad Request
+            DES-->>BusinessPartnerRecordController: 400
+            BusinessPartnerRecordController-->>Client: 400 Bad Request
+        else DES 5xx Error
+            DES-->>BusinessPartnerRecordController: 5xx
+            BusinessPartnerRecordController-->>Client: 500 Internal Server Error
+        end
+    end
