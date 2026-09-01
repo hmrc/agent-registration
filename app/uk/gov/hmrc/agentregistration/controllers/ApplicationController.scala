@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.auth.core.AuthorisationException
 
@@ -91,6 +92,13 @@ extends BackendController(cc):
   def findByApplicationReference(applicationReference: ApplicationReference): Action[AnyContent] = actions.default.async: request =>
     agentApplicationRepo
       .findByApplicationReference(applicationReference)
+      .map:
+        case Some(agentApplication) => Ok(Json.toJson(agentApplication))
+        case None => NoContent
+
+  def findByUtr(utr: Utr): Action[AnyContent] = actions.authorised.async: request =>
+    agentApplicationRepo
+      .findByUtr(utr)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent

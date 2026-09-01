@@ -29,8 +29,11 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
+import uk.gov.hmrc.agentregistration.shared.CtUtr
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.agentregistration.shared.SaUtr
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -41,6 +44,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
+
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
@@ -71,6 +75,23 @@ extends Repo[AgentApplicationId, AgentApplication](
   def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
     .find(
       filter = Filters.eq("applicationReference", applicationReference.value)
+    )
+    .headOption()
+
+  def findByUtr(utr: Utr): Future[Option[AgentApplication]] = collection
+    .find(
+      filter = Filters.or(
+        Filters.and(
+          Filters.exists("businessDetails.ctUtr", exists = true),
+          Filters.exists("businessDetails.saUtr", exists = false),
+          Filters.equal("businessDetails.ctUtr", agentApplicationEncryption.encrypt(CtUtr(utr.value)).value)
+        ),
+        Filters.and(
+          Filters.exists("businessDetails.saUtr", exists = true),
+          Filters.exists("businessDetails.ctUtr", exists = false),
+          Filters.equal("businessDetails.saUtr", agentApplicationEncryption.encrypt(SaUtr(utr.value)).value)
+        )
+      )
     )
     .headOption()
 

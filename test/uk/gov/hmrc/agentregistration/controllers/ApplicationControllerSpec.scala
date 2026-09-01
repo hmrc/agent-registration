@@ -146,3 +146,56 @@ extends ControllerSpec:
     val agentApplication = response.json.as[AgentApplication]
     agentApplication shouldBe exampleAgentApplication
     AuthStubs.verifyAuthorise()
+
+  "find application by UTR returns NO_CONTENT if there are no matching records" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    AuthStubs.stubAuthorise()
+
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/by-utr/${tdAll.saUtr.asUtr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.NO_CONTENT
+    response.body shouldBe ""
+    AuthStubs.verifyAuthorise()
+
+  "find application by UTR returns Ok and the Application as Json body when SaUtr is present" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    AuthStubs.stubAuthorise()
+    val repo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    repo.upsert(exampleAgentApplication).futureValue
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/by-utr/${tdAll.saUtr.asUtr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val agentApplication = response.json.as[AgentApplication]
+    agentApplication shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
+
+  "find application by UTR returns Ok and the Application as Json body when CtUtr is present" in:
+
+    given Request[?] = tdAll.backendRequest
+
+    AuthStubs.stubAuthorise()
+    val repo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication = tdAll.agentApplicationLimitedCompany.afterGrsDataReceived
+    repo.upsert(exampleAgentApplication).futureValue
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication withClue "sanity check"
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/application/by-utr/${tdAll.ctUtr.asUtr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val agentApplication = response.json.as[AgentApplication]
+    agentApplication shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
