@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentregistration.services
 
 import com.softwaremill.quicklens.*
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualDateOfBirth
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr

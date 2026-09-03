@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.providedetails
 import com.github.tomakehurst.wiremock.client.WireMock as wm
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import play.api.http.Status
-import uk.gov.hmrc.agentregistration.shared.GroupId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
@@ -44,8 +43,7 @@ object IndividualAuthStubs {
   )
 
   def responseBodyAsCleanAgent(
-    internalUserId: InternalUserId = TdAll.tdAll.internalUserId,
-    groupId: GroupId = TdAll.tdAll.groupId
+    internalUserId: InternalUserId = TdAll.tdAll.internalUserId
   ): String =
     // language=JSON
     s"""
@@ -69,7 +67,6 @@ object IndividualAuthStubs {
       |    }
       |  ],
       |  "retrieve": [
-      |    "allEnrolments",
       |    "internalId"
       |  ]
       |}

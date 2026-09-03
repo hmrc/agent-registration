@@ -11,18 +11,18 @@
 
 # Add all the application routes to the prod.routes file
 ->            /                                                                                               prod.Routes
-POST          /agent-registration/test-only/application                                                       uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.upsertApplication
-POST          /agent-registration/test-only/individual-provided-details                                       uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.upsertIndividualProvidedDetails
+POST          /agent-registration/test-only/application                                                       uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.upsertApplication
+POST          /agent-registration/test-only/individual-provided-details                                       uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.upsertIndividualProvidedDetails
 
-GET           /agent-registration/test-only/individuals/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividuals(agentApplicationId: AgentApplicationId)
-GET           /agent-registration/test-only/individuals/by-id/:individualProvidedDetailsId                    uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividual(individualProvidedDetailsId: IndividualProvidedDetailsId)
-GET           /agent-registration/test-only/individuals/by-person-reference/:personReference                  uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findIndividualByPersonReference(personReference: PersonReference)
+GET           /agent-registration/test-only/individuals/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findIndividuals(agentApplicationId: AgentApplicationId)
+GET           /agent-registration/test-only/individuals/by-id/:individualProvidedDetailsId                    uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findIndividual(individualProvidedDetailsId: IndividualProvidedDetailsId)
+GET           /agent-registration/test-only/individuals/by-person-reference/:personReference                  uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findIndividualByPersonReference(personReference: PersonReference)
 
 
 POST          /                                                                                               uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
-GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.createTestApplication
-GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.recentApplications(page: Int ?= 1, pageSize: Int ?= 15)
-GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
+GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.createTestApplication
+GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.recentApplications(page: Int ?= 1, pageSize: Int ?= 15)
+GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
 
-DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testOnly.controllers.TestApplicationController.deleteAllApplications
+DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteAllApplications

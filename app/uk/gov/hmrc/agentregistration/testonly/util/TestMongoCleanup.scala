@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.testOnly.util
+package uk.gov.hmrc.agentregistration.testonly.util
 
 import org.mongodb.scala.Document
 import org.mongodb.scala.ObservableFuture

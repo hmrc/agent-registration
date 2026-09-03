@@ -17,12 +17,8 @@
 package uk.gov.hmrc.agentregistration.controllers
 
 import com.softwaremill.quicklens.*
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
 import play.api.mvc.Action
-import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
@@ -32,10 +28,8 @@ import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.risking.*
-import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
@@ -104,7 +98,7 @@ extends BackendController(cc):
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
     riskingOutcomeRequest: RiskingOutcomeRequest
-  )(using RequestHeader): Future[Unit] =
+  ): Future[Unit] =
     val riskingOutcomeEntity: RiskingOutcomeEntity = RiskingOutcomeEntityHelper.riskingOutcomeEntity(
       riskingOutcomeRequest.entityOutcome,
       riskingOutcomeRequest.entityFailures,
@@ -127,7 +121,7 @@ extends BackendController(cc):
   private def resolveIndividualOutcomes(
     agentApplication: AgentApplication,
     individualFailuresList: Seq[IndividualFailures]
-  )(using RequestHeader): Future[Seq[IndividualProvidedDetails]] =
+  ): Future[Seq[IndividualProvidedDetails]] =
     individualFailuresList.foldLeft(Future.successful(Seq.empty[IndividualProvidedDetails])):
       case (accumulator, individualFailures) =>
         for

@@ -6,9 +6,7 @@ object ScalaCompilerFlags {
     "-language:implicitConversions",
     "-language:reflectiveCalls",
     "-Wconf:msg=While parsing annotations in:silent",
-    "-Wconf:src=html/.*:silent", // Suppress warnings in all `.html` template files
-    "-Wconf:src=.*conf/.*\\.routes:silent", // Suppress warnings specifically for .routes files in conf directory
-    "-Wconf:src=.*\\.scala\\.html:silent", // Suppress warnings specifically for Play template files
+    "-Yno-flexible-types",
 //    "-rewrite",             // Enable rewriting
 //    "-new-syntax",          // Enable significant indentation syntax
 //    "-indent",              // Enable significant indentation syntax

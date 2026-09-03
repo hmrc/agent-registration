@@ -18,10 +18,8 @@ package uk.gov.hmrc.agentregistration.controllers
 
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.api.libs.ws.JsonBodyWritables.given
 import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.PersonReference
@@ -37,8 +35,6 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeRequest
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpResponse

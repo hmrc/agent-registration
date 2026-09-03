@@ -122,7 +122,6 @@ object AuthStubs {
         }
       ],
       "retrieve": [
-        "allEnrolments",
         "credentialRole",
         "internalId"
       ]
@@ -142,7 +141,6 @@ object AuthStubs {
       }
       ],
       "retrieve": [
-        "allEnrolments",
         "internalId"
       ]
     }

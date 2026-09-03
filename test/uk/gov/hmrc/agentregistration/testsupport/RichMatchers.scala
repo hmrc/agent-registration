@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentregistration.testsupport
 
 import org.scalatest.*
 import org.scalatest.concurrent.Eventually
-import org.scalatest.concurrent.Futures.scaled
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.diagrams.Diagrams
 import org.scalatest.matchers.should.Matchers

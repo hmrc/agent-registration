@@ -17,10 +17,7 @@
 package uk.gov.hmrc.agentregistration.controllers
 
 import play.api.http.Status
-import play.api.libs.json.Json
 import play.api.mvc.Request
-import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec

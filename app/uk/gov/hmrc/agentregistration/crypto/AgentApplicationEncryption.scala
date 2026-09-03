@@ -18,8 +18,6 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
