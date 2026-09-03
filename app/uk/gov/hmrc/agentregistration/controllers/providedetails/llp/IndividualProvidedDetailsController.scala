@@ -21,15 +21,12 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
-import uk.gov.hmrc.agentregistration.action.providedetails.IndividualAuthorisedRequest
 import uk.gov.hmrc.agentregistration.controllers.BackendController
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
-import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
-import uk.gov.hmrc.auth.core.AuthorisationException
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,7 +42,6 @@ extends BackendController(cc):
   def upsert: Action[IndividualProvidedDetails] =
     actions.individualAuthorised.async(parse.json[IndividualProvidedDetails]):
       implicit request =>
-        val individualProvidedDetails: IndividualProvidedDetails = request.body
         individualProvidedDetailsRepo
           .upsert(request.body)
           .map(_ => Ok(""))
@@ -55,12 +51,11 @@ extends BackendController(cc):
   def upsertForApplication: Action[IndividualProvidedDetails] =
     actions.authorised.async(parse.json[IndividualProvidedDetails]):
       implicit request =>
-        val individualProvidedDetails: IndividualProvidedDetails = request.body
         individualProvidedDetailsRepo
           .upsert(request.body)
           .map(_ => Ok(""))
 
-  def findById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: request =>
+  def findById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: _ =>
     individualProvidedDetailsRepo
       .findById(individualProvidedDetailsId)
       .map {
@@ -68,31 +63,24 @@ extends BackendController(cc):
         case None => NoContent
       }
 
-  def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: request =>
+  def findForApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.authorised.async: _ =>
     individualProvidedDetailsRepo
       .findForApplication(agentApplicationId)
       .map: list =>
         Ok(Json.toJson(list))
 
-  def findForMatchingWithApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def findForMatchingWithApplication(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: _ =>
     individualProvidedDetailsRepo
       .findForApplication(agentApplicationId)
       .map: list =>
         Ok(Json.toJson(list))
 
-  private def ensureInternalUserId(individualProvidedDetails: IndividualProvidedDetails)(using request: IndividualAuthorisedRequest[?]): Unit =
-    if individualProvidedDetails.getInternalUserId =!= request.internalUserId then
-      throw AuthorisationException.fromString(
-        s"InternalUserId in request body (${individualProvidedDetails.getInternalUserId.value}) does not match InternalUserId from enrolments (${request.internalUserId.value})"
-      )
-    else ()
-
-  def deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: request =>
+  def deleteById(individualProvidedDetailsId: IndividualProvidedDetailsId): Action[AnyContent] = actions.authorised.async: _ =>
     individualProvidedDetailsRepo
       .removeById(individualProvidedDetailsId)
       .map(_ => Ok(""))
 
-  def findByPersonReference(personReference: PersonReference): Action[AnyContent] = actions.authorised.async: request =>
+  def findByPersonReference(personReference: PersonReference): Action[AnyContent] = actions.authorised.async: _ =>
     individualProvidedDetailsRepo
       .findByPersonReference(personReference)
       .map {

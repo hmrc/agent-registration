@@ -10,7 +10,7 @@ object CodeCoverageSettings {
     "app.*",
     "prod.*",
     ".*Routes.*",
-    "uk.gov.hmrc.agentregistration.testOnly.*",
+    "uk.gov.hmrc.agentregistration.testonly.*",
     "uk.gov.hmrc.agentregistration.shared.*"
   )
 

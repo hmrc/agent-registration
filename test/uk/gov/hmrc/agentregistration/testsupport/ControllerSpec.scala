@@ -19,8 +19,6 @@ package uk.gov.hmrc.agentregistration.testsupport
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.client.HttpClientV2
 
-import scala.concurrent.ExecutionContext
-
 trait ControllerSpec
 extends ISpec:
 

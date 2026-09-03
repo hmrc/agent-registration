@@ -74,21 +74,21 @@ extends BackendController(cc):
           yield NoContent
         case None => Future.successful(NoContent)
 
-  def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: request =>
+  def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: _ =>
     agentApplicationRepo
       .findByLinkId(linkId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  def findById(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: request =>
+  def findById(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions.individualAuthorised.async: _ =>
     agentApplicationRepo
       .findById(agentApplicationId)
       .map:
         case Some(agentApplication) => Ok(Json.toJson(agentApplication))
         case None => NoContent
 
-  def findByApplicationReference(applicationReference: ApplicationReference): Action[AnyContent] = actions.default.async: request =>
+  def findByApplicationReference(applicationReference: ApplicationReference): Action[AnyContent] = actions.default.async: _ =>
     agentApplicationRepo
       .findByApplicationReference(applicationReference)
       .map:

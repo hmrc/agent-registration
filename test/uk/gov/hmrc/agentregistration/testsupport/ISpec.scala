@@ -18,15 +18,9 @@ package uk.gov.hmrc.agentregistration.testsupport
 
 import com.google.inject.AbstractModule
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.freespec.AnyFreeSpecLike
-import org.scalatest.time.Millis
-import org.scalatest.time.Seconds
-import org.scalatest.time.Span
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
-import play.api.Logging
 import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
@@ -36,7 +30,6 @@ import play.core.server.ServerConfig
 import uk.gov.hmrc.agentregistration.testsupport.RichMatchers
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.WireMockSupport
-import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.mongo.test.MongoSupport
 
 import java.time.Clock
@@ -104,4 +97,4 @@ extends AnyFreeSpecLike,
   }
 
 object ISpec:
-  val testServerPort: Int = 19001
+  val testServerPort: Int = 19002 // not 19001: frontend uses that; avoids cross-repo clashes

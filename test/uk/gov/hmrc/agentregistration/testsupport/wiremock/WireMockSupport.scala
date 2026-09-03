@@ -50,4 +50,4 @@ extends BeforeAndAfterAll,
     logger.info("Stopping wire mock server - done")
 
 object WireMockSupport:
-  lazy val port: Int = 11111
+  val port: Int = 11112 // not 11111: frontend uses that; avoids cross-repo clashes

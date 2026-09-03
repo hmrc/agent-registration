@@ -19,8 +19,6 @@ package uk.gov.hmrc.agentregistration.config
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import play.api.i18n.I18nSupport
-import play.api.i18n.MessagesApi
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 

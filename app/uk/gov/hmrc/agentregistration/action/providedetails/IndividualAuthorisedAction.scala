@@ -19,13 +19,11 @@ package uk.gov.hmrc.agentregistration.action.providedetails
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.mvc.*
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 
 import scala.concurrent.ExecutionContext
@@ -40,7 +38,6 @@ extends WrappedRequest[A](request)
 @Singleton
 class IndividualAuthorisedAction @Inject() (
   af: AuthorisedFunctions,
-  appConfig: AppConfig,
   cc: MessagesControllerComponents
 )
 extends ActionRefiner[Request, IndividualAuthorisedRequest]
@@ -52,16 +49,14 @@ with RequestAwareLogging:
     af.authorised(
       AuthProviders(GovernmentGateway)
     ).retrieve(
-      Retrievals.allEnrolments
-        and Retrievals.internalId
-    ).apply:
-      case allEnrolments ~ maybeInternalId =>
-        Future.successful(Right(new IndividualAuthorisedRequest(
-          internalUserId = maybeInternalId
-            .map(InternalUserId.apply)
-            .getOrElse(throw RuntimeException("Retrievals for internalId is missing")),
-          request = request
-        )))
+      Retrievals.internalId
+    ).apply: maybeInternalId =>
+      Future.successful(Right(new IndividualAuthorisedRequest(
+        internalUserId = maybeInternalId
+          .map(InternalUserId.apply)
+          .getOrElse(throw RuntimeException("Retrievals for internalId is missing")),
+        request = request
+      )))
 
   private given ExecutionContext = cc.executionContext
   override protected def executionContext: ExecutionContext = cc.executionContext

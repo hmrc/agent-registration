@@ -21,7 +21,6 @@ import play.api.mvc.Result
 import play.api.mvc.Results.Ok
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
-import uk.gov.hmrc.auth.core.InternalError
 import uk.gov.hmrc.auth.core.MissingBearerToken
 import uk.gov.hmrc.auth.core.UnsupportedCredentialRole
 

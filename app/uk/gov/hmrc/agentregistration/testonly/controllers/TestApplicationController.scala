@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.testOnly.controllers
+package uk.gov.hmrc.agentregistration.testonly.controllers
 
 import org.mongodb.scala.ObservableFuture
-import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Sorts
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -36,19 +35,15 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetai
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.individual.*
-import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
-import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
-import uk.gov.hmrc.agentregistration.testOnly.util.TestMongoCleanup
+import uk.gov.hmrc.agentregistration.testonly.util.TestMongoCleanup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.Instant
-import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
 @Singleton()
 class TestApplicationController @Inject() (
@@ -57,9 +52,7 @@ class TestApplicationController @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   agentApplicationIdGenerator: AgentApplicationIdGenerator,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  individualProvidedDetailsIdGenerator: IndividualProvidedDetailsIdGenerator,
   applicationReferenceGenerator: ApplicationReferenceGenerator,
-  personReferenceGenerator: PersonReferenceGenerator,
   testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
@@ -71,7 +64,6 @@ extends BackendController(cc):
       .default
       .async(parse.json[IndividualProvidedDetails]):
         implicit request =>
-          val individualProvidedDetails: IndividualProvidedDetails = request.body
           individualProvidedDetailsRepo
             .upsert(request.body)
             .map(_ => Ok(""))
@@ -81,7 +73,6 @@ extends BackendController(cc):
       .default
       .async(parse.json[AgentApplication]):
         implicit request =>
-          val agentApplication: AgentApplication = request.body
           agentApplicationRepo
             .upsert(request.body)
             .map(_ => Ok(""))
@@ -206,24 +197,4 @@ extends BackendController(cc):
     payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765"))),
     riskingOutcomeApplication = None,
     riskingOutcomeEntity = None
-  )
-  // TODO: Same as makeApplicationToProvideDetailsFor, we should use test data here or create FF links to populate this data
-  private def makeIndividualProvidedDetailsFor(agentApplicationId: AgentApplicationId): IndividualProvidedDetails = IndividualProvidedDetails(
-    _id = individualProvidedDetailsIdGenerator.nextIndividualProvidedDetailsId(),
-    personReference = personReferenceGenerator.generatePersonReference(),
-    individualName = IndividualName("George Smiley"),
-    isPersonOfControl = true,
-    internalUserId = Some(InternalUserId(value = s"test-${UUID.randomUUID().toString}")),
-    createdAt = Instant.now(),
-    providedDetailsState = ProvidedDetailsState.Finished,
-    agentApplicationId = agentApplicationId,
-    individualDateOfBirth = Some(IndividualDateOfBirth.Provided(LocalDate.of(1980, 1, 1))),
-    telephoneNumber = Some(TelephoneNumber("1234658979")),
-    emailAddress = Some(IndividualVerifiedEmailAddress(EmailAddress("g.smiley@test.com"), isVerified = true)),
-    individualNino = Some(IndividualNino.Provided(Nino("AA123456A"))),
-    individualSaUtr = Some(IndividualSaUtr.Provided(SaUtr("1234567890"))),
-    hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    hasApprovedApplication = Some(true),
-    vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765")))
   )
