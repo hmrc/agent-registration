@@ -56,7 +56,7 @@ extends ISpec:
     rawJson should not include record.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value withClue "applicant email is encrypted"
     rawJson should not include s"""\"${record.getAgentDetails.businessName.agentBusinessName}\"""" withClue "agentBusinessName is encrypted"
     rawJson should not include record.getAgentDetails.getTelephoneNumber.agentTelephoneNumber withClue "agentTelephoneNumber is encrypted"
-    rawJson should not include record.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress withClue "agentEmailAddress is encrypted"
+    rawJson should not include record.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value withClue "agentEmailAddress is encrypted"
     rawJson should not include s"""\"${record.getAgentDetails.getAgentCorrespondenceAddress.addressLine1}\"""" withClue "agent addressLine1 is encrypted"
     record.vrns.value.foreach { vrn =>
       rawJson should not include s"""\"${vrn.value}\"""" withClue "vrn is encrypted"

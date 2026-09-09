@@ -120,8 +120,8 @@ extends UnitSpec:
       llpEncrypted.getAgentDetails.getTelephoneNumber.agentTelephoneNumber shouldBe enc(llpModel.getAgentDetails.getTelephoneNumber.agentTelephoneNumber)
 
     "agentDetails.agentEmailAddress.emailAddress.agentEmailAddress is encrypted" in:
-      llpEncrypted.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress shouldBe
-        enc(llpModel.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress)
+      llpEncrypted.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value shouldBe
+        enc(llpModel.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value)
 
     "agentDetails.agentCorrespondenceAddress.addressLine1 is encrypted" in:
       llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.addressLine1 shouldBe enc(llpModel.getAgentDetails.getAgentCorrespondenceAddress.addressLine1)
@@ -263,7 +263,9 @@ extends UnitSpec:
           List(a.businessName.agentBusinessName) ++
             a.businessName.otherAgentBusinessName.toList ++
             a.telephoneNumber.toList.flatMap(t => List(t.agentTelephoneNumber) ++ t.otherAgentTelephoneNumber.toList) ++
-            a.agentEmailAddress.toList.flatMap(e => List(e.emailAddress.agentEmailAddress) ++ e.emailAddress.otherAgentEmailAddress.toList) ++
+            a.agentEmailAddress.toList.flatMap(e =>
+              List(e.emailAddress.agentEmailAddress.value) ++ e.emailAddress.otherAgentEmailAddress.toList.map(_.value)
+            ) ++
             a.agentCorrespondenceAddress.toList.flatMap(addr => List(addr.addressLine1) ++ addr.addressLine2.toList ++ addr.postalCode.toList)
         } ++
         application.vrns.toList.flatten.map(_.value) ++

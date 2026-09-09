@@ -21,7 +21,6 @@ GET           /agent-registration/test-only/individuals/by-person-reference/:per
 
 POST          /                                                                                               uk.gov.hmrc.agentregistration.controllers.ApplicationController.upsertApplication
 
-GET           /agent-registration/test-only/create-submitted-application                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.createTestApplication
 GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.recentApplications(page: Int ?= 1, pageSize: Int ?= 15)
 GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
 
