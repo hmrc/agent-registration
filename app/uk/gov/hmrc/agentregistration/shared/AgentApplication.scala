@@ -98,15 +98,6 @@ sealed trait AgentApplication:
   def getApplicantContactDetails: ApplicantContactDetails = applicantContactDetails.getOrThrowExpectedDataMissing("agentDetails")
   def getAgentDetails: AgentDetails = agentDetails.getOrThrowExpectedDataMissing("agentDetails")
 
-  // TODO: This method is a bug and is called even if the application is not an Incorporated one.
-  def dontCallMe_getCompanyProfile: CompanyProfile =
-    businessType match
-      case BusinessType.Partnership.LimitedLiabilityPartnership => this.asLlpApplication.getBusinessDetails.companyProfile
-      case BusinessType.LimitedCompany => this.asLimitedCompanyApplication.getBusinessDetails.companyProfile
-      case BusinessType.Partnership.LimitedPartnership => this.asLimitedPartnershipApplication.getBusinessDetails.companyProfile
-      case BusinessType.Partnership.ScottishLimitedPartnership => this.asScottishLimitedPartnershipApplication.getBusinessDetails.companyProfile
-      case _ => expectedDataNotDefinedError("Calling getCompanyProfile on non-incorporated business types is not supported")
-
   // all agent applications must have a UTR
   def getUtr: Utr =
     businessType match

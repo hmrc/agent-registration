@@ -292,7 +292,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
         )),
         agentEmailAddress = Some(AgentVerifiedEmailAddress(
           emailAddress = AgentEmailAddress(
-            agentEmailAddress = dependencies.applicantEmailAddress.value,
+            agentEmailAddress = dependencies.applicantEmailAddress,
             otherAgentEmailAddress = None
           ),
           isVerified = true
@@ -319,8 +319,8 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
         )),
         agentEmailAddress = Some(AgentVerifiedEmailAddress(
           emailAddress = AgentEmailAddress(
-            agentEmailAddress = dependencies.applicantEmailAddress.value,
-            otherAgentEmailAddress = Some("other.address@example.com")
+            agentEmailAddress = dependencies.applicantEmailAddress,
+            otherAgentEmailAddress = Some(EmailAddress("other.address@example.com"))
           ),
           isVerified = true
         )),

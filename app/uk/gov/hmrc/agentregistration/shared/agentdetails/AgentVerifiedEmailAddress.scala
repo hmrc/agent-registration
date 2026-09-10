@@ -18,12 +18,13 @@ package uk.gov.hmrc.agentregistration.shared.agentdetails
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
 final case class AgentVerifiedEmailAddress(
   emailAddress: AgentEmailAddress,
   isVerified: Boolean
 ):
-  def getEmailAddress: String = emailAddress.otherAgentEmailAddress.getOrElse(emailAddress.agentEmailAddress)
+  def getEmailAddress: EmailAddress = emailAddress.getEmailAddress
 
 object AgentVerifiedEmailAddress:
   given format: Format[AgentVerifiedEmailAddress] = Json.format[AgentVerifiedEmailAddress]

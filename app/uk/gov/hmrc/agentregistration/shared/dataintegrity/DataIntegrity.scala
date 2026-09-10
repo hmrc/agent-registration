@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentregistration.shared.dataintegrity
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.*
 
+import java.time.Instant
+
 object DataIntegrity:
 
   def violations(agentApplication: AgentApplication): Seq[String] =
@@ -41,6 +43,11 @@ object DataIntegrity:
       requireThat(agentApplication.riskingOutcomeEntity.isEmpty, s"riskingOutcomeEntity should not be defined in $state state")
     ).flatten
 
+  /** deployment of v0.335.0 of agent-registration-frontend on 15 June 2026 13:57 added the global ASA enrolment check so we don't log errors if it's missing
+    * for application submitted before that date
+    */
+  private def globalAsaEnrolmentCheckDeployed: Instant = Instant.parse("2026-06-15T13:57:00Z")
+
   private def violationsAfterSubmission(agentApplication: AgentApplication)(using state: ApplicationState): Seq[String] =
     Seq(
       requireThat(agentApplication.applicationExpiresAt.isEmpty, s"applicationExpiresAt should not be defined in $state state"),
@@ -53,7 +60,10 @@ object DataIntegrity:
       requireThat(agentApplication.agentDetails.isDefined, s"agentDetails should be defined in $state state"),
       requireThat(agentApplication.agentDetails.forall(_.isComplete), s"agentDetails should be complete in $state state"),
       requireThat(agentApplication.refusalToDealWithCheckResult.isDefined, s"refusalToDealWithCheckResult should be defined in $state state"),
-      requireThat(agentApplication.globalAsaEnrolmentCheckResult.isDefined, s"globalAsaEnrolmentCheckResult should be defined in $state state"),
+      requireThat(
+        agentApplication.globalAsaEnrolmentCheckResult.isDefined | agentApplication.getSubmittedAt.isBefore(globalAsaEnrolmentCheckDeployed),
+        s"globalAsaEnrolmentCheckResult should be defined in $state state"
+      ),
       requireThat(agentApplication.vrns.isDefined, s"vrns should be defined in $state state"),
       requireThat(agentApplication.payeRefs.isDefined, s"payeRefs should be defined in $state state")
     ).flatten

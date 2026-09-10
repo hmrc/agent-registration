@@ -141,7 +141,7 @@ trait TdBase:
   def authorisedPersonName: String = "Alice Smith"
   def agentVerifiedEmailAddress = AgentVerifiedEmailAddress(
     emailAddress = AgentEmailAddress(
-      agentEmailAddress = applicantEmailAddress.value,
+      agentEmailAddress = applicantEmailAddress,
       otherAgentEmailAddress = None
     ),
     isVerified = true

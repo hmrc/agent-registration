@@ -26,21 +26,10 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.*
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
-import uk.gov.hmrc.agentregistration.shared.CheckResult.Pass
-import uk.gov.hmrc.agentregistration.shared.audit.SessionId
-import uk.gov.hmrc.agentregistration.shared.businessdetails.BusinessDetailsLlp
-import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
-import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
-import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantEmailAddress
-import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantName
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.testonly.util.TestMongoCleanup
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.Instant
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -50,9 +39,7 @@ class TestApplicationController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
   agentApplicationRepo: AgentApplicationRepo,
-  agentApplicationIdGenerator: AgentApplicationIdGenerator,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  applicationReferenceGenerator: ApplicationReferenceGenerator,
   testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
@@ -134,14 +121,6 @@ extends BackendController(cc):
             case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
             case None => NoContent
 
-  def createTestApplication: Action[AnyContent] = Action
-    .async:
-      implicit request =>
-        val agentApplication: AgentApplication = makeApplicationToProvideDetailsFor()
-        agentApplicationRepo
-          .upsert(agentApplication)
-          .map(_ => Ok(Json.obj("linkId" -> agentApplication.linkId.value)))
-
   def deleteAllApplications: Action[AnyContent] = actions
     .default
     .async:
@@ -150,51 +129,3 @@ extends BackendController(cc):
           _ <- testMongoCleanup.deleteAllApplications
           _ <- testMongoCleanup.deleteAllIndividuals
         yield NoContent
-
-  // TODO: We should revisit the way that we handle the stubbing here after we have brought test data into the shared space
-  private def makeApplicationToProvideDetailsFor(applicationState: ApplicationState = Started): AgentApplication = AgentApplicationLlp(
-    _id = agentApplicationIdGenerator.nextApplicationId(),
-    cachedSessionId = SessionId(value = UUID.randomUUID().toString),
-    applicationReference = applicationReferenceGenerator.generateApplicationReference(),
-    linkId = LinkId(value = UUID.randomUUID().toString),
-    internalUserId = InternalUserId(value = s"test-${UUID.randomUUID().toString}"),
-    applicantCredentials = Credentials(
-      providerId = s"test-provider-id-${UUID.randomUUID().toString}",
-      providerType = s"test-provider-type-${UUID.randomUUID().toString}"
-    ),
-    groupId = GroupId(value = UUID.randomUUID().toString),
-    createdAt = Instant.now(),
-    applicationExpiresAt = Some(Instant.now().plus(java.time.Duration.ofDays(73))),
-    submittedAt = Some(Instant.now()),
-    applicationState = applicationState, // Provide details journeys now happen before an application is finished
-    userRole = Some(UserRole.Authorised),
-    businessDetails = Some(BusinessDetailsLlp(
-      safeId = SafeId("safe-id-12345"),
-      saUtr = SaUtr("1234567890"),
-      companyProfile = CompanyProfile(
-        companyNumber = Crn("12345566"),
-        companyName = "Test Partnership LLP",
-        dateOfIncorporation = None,
-        unsanitisedCHROAddress = None
-      )
-    )),
-    applicantContactDetails = Some(ApplicantContactDetails(
-      applicantName = ApplicantName("Bob Ross"),
-      telephoneNumber = Some(TelephoneNumber("1234658979")),
-      applicantEmailAddress = Some(ApplicantEmailAddress(
-        emailAddress = EmailAddress("user@test.com"),
-        isVerified = true
-      ))
-    )),
-    amlsDetails = None,
-    agentDetails = None,
-    hmrcStandardForAgentsAgreed = StateOfAgreement.Agreed,
-    numberOfIndividuals = None,
-    hasOtherRelevantIndividuals = None,
-    refusalToDealWithCheckResult = Some(Pass),
-    globalAsaEnrolmentCheckResult = Some(Pass),
-    vrns = Some(List(Vrn("12341234"), Vrn("43214321"))),
-    payeRefs = Some(List(PayeRef("56785678"), PayeRef("87658765"))),
-    riskingOutcomeApplication = None,
-    riskingOutcomeEntity = None
-  )

@@ -21,12 +21,11 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 
 final case class AgentEmailAddress(
-  agentEmailAddress: String, // TODO: use EmailAddress instead of String
-  otherAgentEmailAddress: Option[String] // TODO: use EmailAddress instead of String
+  agentEmailAddress: EmailAddress,
+  otherAgentEmailAddress: Option[EmailAddress]
 ):
-  def getEmailAddress: EmailAddress = EmailAddress(otherAgentEmailAddress.getOrElse(agentEmailAddress))
+  def getEmailAddress: EmailAddress = otherAgentEmailAddress.getOrElse(agentEmailAddress)
 
 object AgentEmailAddress:
 
   given format: Format[AgentEmailAddress] = Json.format[AgentEmailAddress]
-  def isValid(email: String): Boolean = email.matches("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
