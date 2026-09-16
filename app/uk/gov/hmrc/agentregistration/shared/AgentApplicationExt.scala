@@ -64,7 +64,7 @@ extension (agentApplication: AgentApplication.IsIncorporated)
       case a: AgentApplicationLimitedPartnership => a.numberOfIndividuals
       case a: AgentApplicationScottishLimitedPartnership => a.numberOfIndividuals
 
-extension (agentApplication: AgentApplication.IsAgentApplicationForDeclaringNumberOfKeyIndividuals)
+extension (agentApplication: AgentApplication.IsUnincorporatedPartnership)
 
   def getNumberOfRequiredKeyIndividuals: Option[NumberOfRequiredKeyIndividuals] =
     agentApplication match
