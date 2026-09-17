@@ -443,7 +443,8 @@ object AgentApplication:
     (AgentApplicationSoleTrader
       | AgentApplicationLimitedCompany) & AgentApplication
 
-  type IsAgentApplicationForDeclaringNumberOfKeyIndividuals = (AgentApplicationGeneralPartnership | AgentApplicationScottishPartnership) & AgentApplication
+  /** [[IsNotIncorporated]] without sole trader. */
+  type IsUnincorporatedPartnership = (AgentApplicationGeneralPartnership | AgentApplicationScottishPartnership) & AgentApplication
 
   type IsAgentApplicationForKeyIndividuals =
     (AgentApplicationGeneralPartnership
