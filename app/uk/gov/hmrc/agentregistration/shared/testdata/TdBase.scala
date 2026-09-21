@@ -41,6 +41,7 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.agentregistration.shared.companieshouse.CompaniesHouseOfficerRole.LlpMember
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
+import uk.gov.hmrc.agentregistration.shared.risking.IndividualFailure
 import uk.gov.hmrc.agentregistration.shared.risking.IndividualFix
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
@@ -416,6 +417,12 @@ trait TdBase:
       IndividualFix._4._1(isConfirmed = None)
     ),
     declarationAgreed = false
+  )
+
+  def riskingOutcomeIndividualNonFixable: RiskingOutcomeIndividual.FailedNonFixable = RiskingOutcomeIndividual.FailedNonFixable(
+    failures = Seq(
+      IndividualFailure._6 // non fixable
+    )
   )
 
   val riskingOutcomeIndividualFailedFixableAllCodes: RiskingOutcomeIndividual.FailedFixable = RiskingOutcomeIndividual.FailedFixable(
