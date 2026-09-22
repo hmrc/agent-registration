@@ -27,6 +27,7 @@ enum ApplicationState:
   case SentForRisking
   case SentToMinerva
   case RiskingCompleted // outcomes are populated now
+  case Expired
 
 object ApplicationState:
 
