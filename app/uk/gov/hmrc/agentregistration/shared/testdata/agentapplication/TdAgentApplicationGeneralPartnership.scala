@@ -43,6 +43,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
       createdAt = dependencies.nowAsInstant,
       applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
+      gracePeriodEndsAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
       businessDetails = None,

@@ -17,16 +17,29 @@
 package uk.gov.hmrc.agentregistration.scheduler
 
 import play.api.Logging
+import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AgentRegistrationSchedulerInitializer @Inject() (
-  scheduler: Scheduler
+  scheduler: Scheduler,
+  appConfig: AppConfig,
+  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner
 )
 extends Logging:
 
   initialize()
 
-  private def initialize(): Unit = logger.info("Scheduler subsystem initialised - no jobs registered yet")
+  private def initialize(): Unit =
+    if appConfig.Scheduler.expiryEnabled then
+      logger.info("Bootstrapping expiry scheduler")
+      scheduler.scheduleDaily(
+        "expiring unsubmitted applications",
+        appConfig.Scheduler.expiryTime,
+        () => expireUnsubmittedApplicationsRunner.run()
+      )
+    else
+      logger.info("expiry scheduler not scheduled as it is not enabled")
