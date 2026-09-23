@@ -101,7 +101,8 @@ extends Repo[AgentApplicationId, AgentApplication](
       ),
       update = Updates.combine(
         Updates.set("applicationState", ApplicationState.Expired.toString),
-        Updates.set("gracePeriodEndsAt", gracePeriodEndsAt.toString)
+        Updates.set("gracePeriodEndsAt", gracePeriodEndsAt.toString),
+        Updates.unset("applicationExpiresAt")
       )
     )
     .toFuture()

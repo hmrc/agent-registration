@@ -117,14 +117,17 @@ extends ISpec:
     val loadedExpiredStarted = repo.findById(expiredStarted.agentApplicationId).futureValue.value
     loadedExpiredStarted.applicationState shouldBe Expired withClue "Started + past expiry -> Expired"
     loadedExpiredStarted.gracePeriodEndsAt shouldBe Some(expectedGracePeriodEndsAt) withClue "gracePeriodEndsAt stamped on flipped Started record"
+    loadedExpiredStarted.applicationExpiresAt shouldBe None withClue "applicationExpiresAt cleared on flipped Started record"
 
     val loadedExpiredGrs = repo.findById(expiredGrs.agentApplicationId).futureValue.value
     loadedExpiredGrs.applicationState shouldBe Expired withClue "GrsDataReceived + past expiry -> Expired"
     loadedExpiredGrs.gracePeriodEndsAt shouldBe Some(expectedGracePeriodEndsAt) withClue "gracePeriodEndsAt stamped on flipped GrsDataReceived record"
+    loadedExpiredGrs.applicationExpiresAt shouldBe None withClue "applicationExpiresAt cleared on flipped GrsDataReceived record"
 
     val loadedNotYetExpired = repo.findById(notYetExpired.agentApplicationId).futureValue.value
     loadedNotYetExpired.applicationState shouldBe Started withClue "future expiry -> unchanged"
     loadedNotYetExpired.gracePeriodEndsAt shouldBe None withClue "gracePeriodEndsAt not stamped on untouched record"
+    loadedNotYetExpired.applicationExpiresAt shouldBe Some(futureExpiry) withClue "applicationExpiresAt untouched on record still in Started"
 
     val loadedAlreadySubmitted = repo.findById(alreadySubmitted.agentApplicationId).futureValue.value
     loadedAlreadySubmitted.applicationState shouldBe SentForRisking withClue "post-submission state -> unchanged"
