@@ -34,6 +34,7 @@ import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -84,6 +85,28 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
     .map(_ => ())
+
+  def updateManyToExpiredForUnsubmitted(
+    now: Instant,
+    gracePeriodEndsAt: Instant
+  ): Future[Long] = collection
+    .updateMany(
+      filter = Filters.and(
+        Filters.in(
+          "applicationState",
+          ApplicationState.Started.toString,
+          ApplicationState.GrsDataReceived.toString
+        ),
+        Filters.lt("applicationExpiresAt", now.toString)
+      ),
+      update = Updates.combine(
+        Updates.set("applicationState", ApplicationState.Expired.toString),
+        Updates.set("gracePeriodEndsAt", gracePeriodEndsAt.toString),
+        Updates.unset("applicationExpiresAt")
+      )
+    )
+    .toFuture()
+    .map(_.getModifiedCount)
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"

@@ -53,6 +53,7 @@ extends UnitSpec:
       |field-level-encryption.enabled = true
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
+      |post-expiry-grace-period = 45 days
       |""".stripMargin
   ))
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)

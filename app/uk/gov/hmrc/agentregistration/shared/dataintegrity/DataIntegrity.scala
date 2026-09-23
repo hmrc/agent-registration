@@ -76,10 +76,21 @@ object DataIntegrity:
         case ApplicationState.GrsDataReceived => whenGrsDataReceived(agentApplication)
         case ApplicationState.SentForRisking | ApplicationState.SentToMinerva => whenAwaitingRiskingOutcome(agentApplication)
         case ApplicationState.RiskingCompleted => whenRiskingCompleted(agentApplication)
+        case ApplicationState.Expired => whenExpired(agentApplication)
 
     private def whenStarted(agentApplication: AgentApplication): Seq[String] =
       given ApplicationState = ApplicationState.Started
       violationsBeforeSubmission(agentApplication)
+
+    private def whenExpired(agentApplication: AgentApplication): Seq[String] =
+      given state: ApplicationState = ApplicationState.Expired
+      Seq(
+        requireThat(agentApplication.applicationExpiresAt.isEmpty, s"applicationExpiresAt should not be defined in $state state"),
+        requireThat(agentApplication.submittedAt.isEmpty, s"submittedAt should not be defined in $state state"),
+        requireThat(agentApplication.riskingOutcomeApplication.isEmpty, s"riskingOutcomeApplication should not be defined in $state state"),
+        requireThat(agentApplication.riskingOutcomeEntity.isEmpty, s"riskingOutcomeEntity should not be defined in $state state"),
+        requireThat(agentApplication.gracePeriodEndsAt.isDefined, s"gracePeriodEndsAt should be defined in $state state")
+      ).flatten
 
     private def whenGrsDataReceived(agentApplication: AgentApplication): Seq[String] =
       given state: ApplicationState = ApplicationState.GrsDataReceived
