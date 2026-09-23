@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.connectors.hip
+package uk.gov.hmrc.agentregistration.shared
 
-import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
+import play.api.libs.json.Format
+import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 
 import java.util.UUID
 import javax.inject.Singleton
-import scala.util.chaining.*
+
+final case class CorrelationId(value: String)
+
+object CorrelationId:
+  given format: Format[CorrelationId] = JsonFormatsFactory.makeValueClassFormat
 
 @Singleton
-class CorrelationIdGenerator
-extends RequestAwareLogging:
-
-  def makeCorrelationId()(using requestHeader: RequestHeader): String = UUID
-    .randomUUID()
-    .toString
-    .tap(correlationId => logger.info(s"Generated correlationId: $correlationId"))
+class CorrelationIdGenerator:
+  def nextCorrelationId: CorrelationId = CorrelationId(UUID.randomUUID().toString)
