@@ -29,10 +29,12 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.individual.*
 import uk.gov.hmrc.agentregistration.testonly.util.TestMongoCleanup
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.agentregistration.testonly.models.CleanupApplicationsRequest
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton()
 class TestApplicationController @Inject() (
@@ -120,6 +122,26 @@ extends BackendController(cc):
           .map:
             case Some(individualProvidedDetails) => Ok(Json.toJson(individualProvidedDetails))
             case None => NoContent
+
+  def deleteApplications: Action[CleanupApplicationsRequest] =
+    actions
+      .default
+      .async(parse.json[CleanupApplicationsRequest]):
+        implicit request =>
+          val agentApplicationIds =
+            request.body.agentApplicationIds
+              .map(_.trim)
+              .filter(_.nonEmpty)
+              .distinct
+
+          if agentApplicationIds.isEmpty then
+            Future.successful(
+              BadRequest("agentApplicationIds must contain at least one application id")
+            )
+          else
+            testMongoCleanup
+              .deleteApplicationsAndIndividuals(agentApplicationIds)
+              .map(_ => NoContent)
 
   def deleteAllApplications: Action[AnyContent] = actions
     .default

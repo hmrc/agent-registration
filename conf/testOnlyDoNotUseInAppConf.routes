@@ -24,4 +24,5 @@ POST          /                                                                 
 GET           /agent-registration/test-only/recent-applications                                               uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.recentApplications(page: Int ?= 1, pageSize: Int ?= 15)
 GET           /agent-registration/test-only/application/by-agent-application-id/:agentApplicationId           uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.findApplication(agentApplicationId: AgentApplicationId)
 
+POST          /agent-registration/test-only/applications/cleanup                                              uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteApplications
 DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteAllApplications
