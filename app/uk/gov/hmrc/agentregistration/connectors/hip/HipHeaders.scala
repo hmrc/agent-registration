@@ -19,6 +19,9 @@ package uk.gov.hmrc.agentregistration.connectors.hip
 import play.api.http.HeaderNames
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.shared.CorrelationId
+import uk.gov.hmrc.agentregistration.shared.CorrelationIdGenerator
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import java.time.Clock
 import java.time.Instant
@@ -30,7 +33,8 @@ class HipHeaders @Inject() (
   correlationIdGenerator: CorrelationIdGenerator,
   appConfig: AppConfig,
   clock: Clock
-):
+)
+extends RequestAwareLogging:
 
   private val correlationIdHeader = "correlationId"
   private val xOriginatingSystemHeader = "X-Originating-System"
@@ -38,9 +42,11 @@ class HipHeaders @Inject() (
   private val xTransmittingSystemHeader = "X-Transmitting-System"
 
   def makeHeaders()(implicit requestHeader: RequestHeader): Seq[(String, String)] =
+    val correlationId: CorrelationId = correlationIdGenerator.nextCorrelationId
+    logger.info(s"Generated correlationId: ${correlationId.value}")
     CommonHeaders() ++ Seq(
       HeaderNames.AUTHORIZATION -> s"Basic ${appConfig.hipAuthToken}",
-      correlationIdHeader -> correlationIdGenerator.makeCorrelationId(),
+      correlationIdHeader -> correlationId.value,
       xOriginatingSystemHeader -> "MDTP-AgentRegistration",
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP",

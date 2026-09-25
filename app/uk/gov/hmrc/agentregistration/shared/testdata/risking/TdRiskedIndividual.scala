@@ -34,21 +34,12 @@ trait TdRiskedIndividual:
     failures = Nil
   )
 
-  def riskedIndividualFixable(
-    personReference: PersonReference = dependencies.personReference,
-    individualName: IndividualName = dependencies.individualName
-  ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
-    failures = List(
-      IndividualFailure._4._1 // Fixable
-    )
-  )
-
   def riskedIndividualWithSingleNonFixable(
     personReference: PersonReference = dependencies.personReference,
     individualName: IndividualName = dependencies.individualName
   ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
     failures = List(
-      IndividualFailure._4._1 // NonFixable
+      IndividualFailure._9 // non fixable
     )
   )
 
@@ -57,7 +48,7 @@ trait TdRiskedIndividual:
     individualName: IndividualName = dependencies.individualName
   ): RiskedIndividual = riskedIndividualApproved(personReference, individualName).copy(
     failures = List(
-      IndividualFailure._5._1, // Fixable
-      IndividualFailure._6 // NonFixable
+      IndividualFailure._5._1, // fixable
+      IndividualFailure._6 // non fixable
     )
   )

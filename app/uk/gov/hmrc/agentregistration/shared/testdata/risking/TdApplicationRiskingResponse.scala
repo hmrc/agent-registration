@@ -31,32 +31,6 @@ trait TdApplicationRiskingResponse:
 
   object applicationRiskingResponse:
 
-    val failedFixable: RiskingProgress.FailedFixable = RiskingProgress.FailedFixable(
-      riskedEntity = dependencies.riskedEntityApproved,
-      riskedIndividuals = List(
-        dependencies.riskedIndividualApproved(
-          personReference = PersonReference("PREF0"),
-          individualName = dependencies.getIndividualName(0)
-        ),
-        dependencies.riskedIndividualFixable(individualName = dependencies.getIndividualName(1))
-      ),
-      riskingCompletedDate = riskingCompletedDate,
-      correctiveActionExpiryDate = None
-    )
-
-    val failedFixableWithAmls: RiskingProgress.FailedFixable = RiskingProgress.FailedFixable(
-      riskedEntity = dependencies.riskedEntityFailedFixableWithAmls,
-      riskedIndividuals = List(
-        dependencies.riskedIndividualApproved(
-          personReference = PersonReference("PREF0"),
-          individualName = dependencies.getIndividualName(0)
-        ),
-        dependencies.riskedIndividualFixable(individualName = dependencies.getIndividualName(1))
-      ),
-      riskingCompletedDate = riskingCompletedDate,
-      correctiveActionExpiryDate = None
-    )
-
     val failedNonFixableIndividualsOnly: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
       riskedEntity = dependencies.riskedEntityApproved,
       riskedIndividuals = List(
@@ -105,6 +79,38 @@ trait TdApplicationRiskingResponse:
       correctiveActionExpiryDate = None
     )
 
+    val failedNonFixableSingleEntityFailureApplicantOnly: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityWithSingleNonFixableFailure,
+      riskedIndividuals = List(
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF0"),
+          individualName = dependencies.getIndividualName(0)
+        ),
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF1"),
+          individualName = dependencies.getIndividualName(1)
+        )
+      ),
+      riskingCompletedDate = riskingCompletedDate,
+      correctiveActionExpiryDate = None
+    )
+
+    val failedNonFixableSingleEntityFailureAndIndividuals: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
+      riskedEntity = dependencies.riskedEntityWithSingleNonFixableFailure,
+      riskedIndividuals = List(
+        dependencies.riskedIndividualNonFixable(
+          personReference = PersonReference("PREF0"),
+          individualName = dependencies.getIndividualName(0)
+        ),
+        dependencies.riskedIndividualApproved(
+          personReference = PersonReference("PREF1"),
+          individualName = dependencies.getIndividualName(1)
+        )
+      ),
+      riskingCompletedDate = riskingCompletedDate,
+      correctiveActionExpiryDate = None
+    )
+
     val failedNonFixableFailedApplicantOnly: RiskingProgress.FailedNonFixable = RiskingProgress.FailedNonFixable(
       riskedEntity = dependencies.riskedEntityFailedNonFixable,
       riskedIndividuals = List(
@@ -120,5 +126,3 @@ trait TdApplicationRiskingResponse:
       riskingCompletedDate = riskingCompletedDate,
       correctiveActionExpiryDate = None
     )
-
-    // TODO: more cases possible, those should be created and used in tests

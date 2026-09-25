@@ -176,6 +176,12 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       applicationState = ApplicationState.SentToMinerva
     ).assertDataIntegrity()
 
+    val afterRiskingCompletedApproved: AgentApplicationLlp = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.approved),
+      riskingOutcomeEntity = Some(Approved)
+    ).assertDataIntegrity()
+
     val afterRiskingCompletedApprovedWithFixableIndividuals: AgentApplicationLlp = afterSentToMinerva.copy(
       applicationState = ApplicationState.RiskingCompleted,
       riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
@@ -221,6 +227,10 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
     val afterResubmitted: AgentApplicationLlp = afterRiskingCompletedFixableFixed.copy(
       applicationState = ApplicationState.SentForRisking,
       riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable.copy(reSubmittedAt = Some(dependencies.nowAsInstant)))
+    ).assertDataIntegrity()
+
+    val afterResubmittedSentToMinerva: AgentApplicationLlp = afterResubmitted.copy(
+      applicationState = ApplicationState.SentToMinerva
     ).assertDataIntegrity()
 
     val applicationData: ApplicationData =
