@@ -22,7 +22,6 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.Expired
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
@@ -73,62 +72,44 @@ extends ISpec:
     val loaded: AgentApplication = repo.findById(started.agentApplicationId).futureValue.value
     loaded.applicationExpiresAt shouldBe started.applicationExpiresAt withClue "the field must survive the round-trip through Mongo"
 
-  "updateManyToExpiredForUnsubmitted should flip Started and GrsDataReceived applications whose applicationExpiresAt has passed and stamp gracePeriodEndsAt" in:
-    val pastExpiry: Instant = tdAll.instant.minusSeconds(60)
-    val futureExpiry: Instant = tdAll.instant.plusSeconds(3600)
-    val expectedGracePeriodEndsAt: Instant = tdAll.instant.plus(Duration.ofDays(45))
+  private val gracePeriodEndsAt: Instant = tdAll.instant.plus(Duration.ofDays(45))
 
-    val expiredStarted: AgentApplication = tdAll.agentApplicationLlp.afterStarted.copy(
-      _id = AgentApplicationId("expired-started-id"),
-      applicationReference = ApplicationReference("EXPSTART1"),
-      internalUserId = InternalUserId("expired-started-user"),
-      linkId = LinkId("expired-started-link"),
-      applicationExpiresAt = Some(pastExpiry)
-    )
-    val expiredGrs: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived.copy(
-      _id = AgentApplicationId("expired-grs-id"),
-      applicationReference = ApplicationReference("EXPGRS001"),
-      internalUserId = InternalUserId("expired-grs-user"),
-      linkId = LinkId("expired-grs-link"),
-      applicationExpiresAt = Some(pastExpiry)
-    )
-    val notYetExpired: AgentApplication = tdAll.agentApplicationLlp.afterStarted.copy(
-      _id = AgentApplicationId("not-yet-expired-id"),
-      applicationReference = ApplicationReference("NOTEXP001"),
-      internalUserId = InternalUserId("not-yet-expired-user"),
-      linkId = LinkId("not-yet-expired-link"),
-      applicationExpiresAt = Some(futureExpiry)
-    )
-    val alreadySubmitted: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking.copy(
-      _id = AgentApplicationId("submitted-id"),
-      applicationReference = ApplicationReference("SUBMITT01"),
-      internalUserId = InternalUserId("submitted-user"),
-      linkId = LinkId("submitted-link")
-    )
+  "updateManyToExpiredForUnsubmitted flips a Started application past its applicationExpiresAt to Expired, stamps gracePeriodEndsAt and clears applicationExpiresAt" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpired
+    repo.upsert(record).futureValue
 
-    repo.upsert(expiredStarted).futureValue
-    repo.upsert(expiredGrs).futureValue
-    repo.upsert(notYetExpired).futureValue
-    repo.upsert(alreadySubmitted).futureValue
+    repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 1L
 
-    val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.instant, expectedGracePeriodEndsAt).futureValue
-    modifiedCount shouldBe 2L withClue "only the two past-expiry pre-submission applications should be updated"
+    val loaded: AgentApplication = repo.findById(record.agentApplicationId).futureValue.value
+    loaded.applicationState shouldBe Expired
+    loaded.gracePeriodEndsAt shouldBe Some(gracePeriodEndsAt)
+    loaded.applicationExpiresAt shouldBe None
 
-    val loadedExpiredStarted = repo.findById(expiredStarted.agentApplicationId).futureValue.value
-    loadedExpiredStarted.applicationState shouldBe Expired withClue "Started + past expiry -> Expired"
-    loadedExpiredStarted.gracePeriodEndsAt shouldBe Some(expectedGracePeriodEndsAt) withClue "gracePeriodEndsAt stamped on flipped Started record"
-    loadedExpiredStarted.applicationExpiresAt shouldBe None withClue "applicationExpiresAt cleared on flipped Started record"
+  "updateManyToExpiredForUnsubmitted flips a GrsDataReceived application past its applicationExpiresAt to Expired, stamps gracePeriodEndsAt and clears applicationExpiresAt" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceivedExpired
+    repo.upsert(record).futureValue
 
-    val loadedExpiredGrs = repo.findById(expiredGrs.agentApplicationId).futureValue.value
-    loadedExpiredGrs.applicationState shouldBe Expired withClue "GrsDataReceived + past expiry -> Expired"
-    loadedExpiredGrs.gracePeriodEndsAt shouldBe Some(expectedGracePeriodEndsAt) withClue "gracePeriodEndsAt stamped on flipped GrsDataReceived record"
-    loadedExpiredGrs.applicationExpiresAt shouldBe None withClue "applicationExpiresAt cleared on flipped GrsDataReceived record"
+    repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 1L
 
-    val loadedNotYetExpired = repo.findById(notYetExpired.agentApplicationId).futureValue.value
-    loadedNotYetExpired.applicationState shouldBe Started withClue "future expiry -> unchanged"
-    loadedNotYetExpired.gracePeriodEndsAt shouldBe None withClue "gracePeriodEndsAt not stamped on untouched record"
-    loadedNotYetExpired.applicationExpiresAt shouldBe Some(futureExpiry) withClue "applicationExpiresAt untouched on record still in Started"
+    val loaded: AgentApplication = repo.findById(record.agentApplicationId).futureValue.value
+    loaded.applicationState shouldBe Expired
+    loaded.gracePeriodEndsAt shouldBe Some(gracePeriodEndsAt)
+    loaded.applicationExpiresAt shouldBe None
 
-    val loadedAlreadySubmitted = repo.findById(alreadySubmitted.agentApplicationId).futureValue.value
-    loadedAlreadySubmitted.applicationState shouldBe SentForRisking withClue "post-submission state -> unchanged"
-    loadedAlreadySubmitted.gracePeriodEndsAt shouldBe None withClue "gracePeriodEndsAt not stamped on untouched record"
+  "updateManyToExpiredForUnsubmitted leaves a Started application whose applicationExpiresAt is still in the future unchanged" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    record.applicationExpiresAt.value.isAfter(tdAll.instant) shouldBe true withClue
+      "sanity: afterStarted must have applicationExpiresAt in the future relative to the test clock for this test to be meaningful"
+    repo.upsert(record).futureValue
+
+    repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 0L
+
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "updateManyToExpiredForUnsubmitted leaves a SentForRisking application unchanged regardless of applicationExpiresAt" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    repo.upsert(record).futureValue
+
+    repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 0L
+
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
