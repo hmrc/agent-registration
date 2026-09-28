@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
@@ -144,6 +145,17 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       applicationState = ApplicationState.RiskingCompleted,
       riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
       riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    ).assertDataIntegrity()
+
+    val afterFailedNonFixable: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedNonFixable),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.FailedNonFixable(failures =
+        List(
+          EntityFailure._4._1,
+          EntityFailure._7
+        )
+      ))
     ).assertDataIntegrity()
 
 }

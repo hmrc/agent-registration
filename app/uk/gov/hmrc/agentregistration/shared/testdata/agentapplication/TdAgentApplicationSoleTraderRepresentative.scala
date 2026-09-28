@@ -18,6 +18,8 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
@@ -111,6 +113,17 @@ trait TdAgentApplicationSoleTraderRepresentative { dependencies: (TdBase & TdGrs
       applicationState = ApplicationState.SentForRisking,
       submittedAt = Some(dependencies.nowAsInstant),
       applicationExpiresAt = None
+    ).assertDataIntegrity()
+
+    val afterFailedNonFixable: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedNonFixable),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.FailedNonFixable(failures =
+        List(
+          EntityFailure._4._1, // fixable
+          EntityFailure._7 // non-fixable
+        )
+      ))
     ).assertDataIntegrity()
 
 }
