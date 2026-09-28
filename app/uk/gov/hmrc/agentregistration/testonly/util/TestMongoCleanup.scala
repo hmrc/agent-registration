@@ -18,13 +18,13 @@ package uk.gov.hmrc.agentregistration.testonly.util
 
 import org.mongodb.scala.Document
 import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.model.Filters
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.mongo.MongoComponent
 
 import javax.inject.Inject
 import javax.inject.Singleton
-import uk.gov.hmrc.mongo.MongoComponent
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -38,6 +38,49 @@ class TestMongoCleanup @Inject() (
     .deleteMany(Document())
     .toFuture()
     .map(_ => ())
+
+  private def deleteByField(
+    collectionName: String,
+    fieldName: String,
+    values: Seq[String]
+  ): Future[Unit] =
+    if values.isEmpty then
+      Future.unit
+    else
+      mongoComponent.database
+        .getCollection(collectionName)
+        .deleteMany(
+          Filters.in(fieldName, values*)
+        )
+        .toFuture()
+        .map(_ => ())
+
+  private def deleteIndividualsForApplications(
+    agentApplicationIds: Seq[String]
+  ): Future[Unit] = deleteByField(
+    IndividualProvidedDetailsRepo.collectionName,
+    "agentApplicationId",
+    agentApplicationIds
+  )
+
+  private def deleteApplications(
+    agentApplicationIds: Seq[String]
+  ): Future[Unit] = deleteByField(
+    AgentApplicationRepo.collectionName,
+    "_id",
+    agentApplicationIds
+  )
+
+  def deleteApplicationsAndIndividuals(
+    agentApplicationIds: Seq[String]
+  ): Future[Unit] =
+    if agentApplicationIds.isEmpty then
+      Future.unit
+    else
+      for
+        _ <- deleteIndividualsForApplications(agentApplicationIds)
+        _ <- deleteApplications(agentApplicationIds)
+      yield ()
 
   def deleteAllIndividuals: Future[Unit] = deleteAll(IndividualProvidedDetailsRepo.collectionName)
 
