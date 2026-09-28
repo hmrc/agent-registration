@@ -26,3 +26,5 @@ GET           /agent-registration/test-only/application/by-agent-application-id/
 
 POST          /agent-registration/test-only/applications/cleanup                                              uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteApplications
 DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteAllApplications
+
+POST          /agent-registration/test-only/run-expiry-scheduler                                              uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.runExpiryScheduler

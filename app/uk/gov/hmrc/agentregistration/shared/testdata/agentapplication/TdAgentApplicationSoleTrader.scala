@@ -39,6 +39,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       createdAt = dependencies.nowAsInstant,
       applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
+      gracePeriodEndsAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Owner),
       businessDetails = None,

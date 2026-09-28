@@ -39,6 +39,7 @@ extends UnitSpec:
       |microservice.services.hip.authorization-token = "test-token"
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
+      |post-expiry-grace-period = 45 days
       |""".stripMargin
 
   private def fleWith(enabled: Boolean): FieldLevelEncryption = {
