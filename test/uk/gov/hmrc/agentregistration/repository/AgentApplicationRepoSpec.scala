@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.bson.BsonDocument
+import org.bson.BsonType
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Updates
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
@@ -115,3 +120,58 @@ extends ISpec:
     repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 0L
 
     repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "updateManyToExpiredForUnsubmitted picks up a legacy record whose applicationExpiresAt is still stored as a BSON String (pre-migration shape)" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpired
+    repo.upsert(record).futureValue
+
+    val legacyApplicationExpiresAt: String = tdAll.instant.minusSeconds(60).toString
+    repo
+      .collection
+      .updateOne(
+        filter = Filters.eq("_id", record.agentApplicationId.value),
+        update = Updates.set("applicationExpiresAt", legacyApplicationExpiresAt)
+      )
+      .toFuture()
+      .futureValue
+
+    repo.updateManyToExpiredForUnsubmitted(tdAll.instant, gracePeriodEndsAt).futureValue shouldBe 1L
+
+    val loaded: AgentApplication = repo.findById(record.agentApplicationId).futureValue.value
+    loaded.applicationState shouldBe Expired
+    loaded.gracePeriodEndsAt shouldBe Some(gracePeriodEndsAt)
+    loaded.applicationExpiresAt shouldBe None
+
+  "findById reconstructs applicationExpiresAt correctly when it is stored as a legacy BSON String (pre-migration shape)" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpired
+    repo.upsert(record).futureValue
+
+    val legacyApplicationExpiresAt: String = record.applicationExpiresAt.value.toString
+    repo
+      .collection
+      .updateOne(
+        filter = Filters.eq("_id", record.agentApplicationId.value),
+        update = Updates.set("applicationExpiresAt", legacyApplicationExpiresAt)
+      )
+      .toFuture()
+      .futureValue
+
+    val loaded: AgentApplication = repo.findById(record.agentApplicationId).futureValue.value
+    loaded.applicationExpiresAt shouldBe record.applicationExpiresAt withClue
+      "dual-read must reconstruct a legacy ISO string field back into the same Instant"
+
+  "upsert stores applicationExpiresAt as a BSON Date, not as a string" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpired
+    repo.upsert(record).futureValue
+
+    val rawDocument: BsonDocument =
+      repo
+        .collection
+        .withDocumentClass[BsonDocument]()
+        .find(Filters.eq("_id", record.agentApplicationId.value))
+        .headOption()
+        .futureValue
+        .value
+
+    rawDocument.get("applicationExpiresAt").getBsonType shouldBe BsonType.DATE_TIME withClue
+      "applicationExpiresAt must persist as a BSON Date so scheduler comparisons stay type-correct"

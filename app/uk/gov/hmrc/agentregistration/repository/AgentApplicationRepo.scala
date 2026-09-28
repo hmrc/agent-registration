@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.mongodb.scala.bson.BsonDateTime
+import org.mongodb.scala.bson.BsonString
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -97,11 +99,14 @@ extends Repo[AgentApplicationId, AgentApplication](
           ApplicationState.Started.toString,
           ApplicationState.GrsDataReceived.toString
         ),
-        Filters.lt("applicationExpiresAt", now.toString)
+        Filters.or(
+          Filters.lt("applicationExpiresAt", BsonDateTime(now.toEpochMilli)),
+          Filters.lt("applicationExpiresAt", BsonString(now.toString))
+        )
       ),
       update = Updates.combine(
         Updates.set("applicationState", ApplicationState.Expired.toString),
-        Updates.set("gracePeriodEndsAt", gracePeriodEndsAt.toString),
+        Updates.set("gracePeriodEndsAt", BsonDateTime(gracePeriodEndsAt.toEpochMilli)),
         Updates.unset("applicationExpiresAt")
       )
     )
