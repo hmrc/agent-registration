@@ -17,8 +17,12 @@
 package uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import play.api.http.Status
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 
 object HipStubs:
@@ -187,5 +191,85 @@ object HipStubs:
   def verifyOrganisationIdentifierSearch(count: Int = 1): Unit = StubMaker.verify(
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = urlPathEqualTo(organisationIdentifierSearchUrl),
+    count = count
+  )
+
+  def stubGetBusinessPartnerRecord(
+    utr: Utr,
+    hipRegistrationResponse: BusinessPartnerRecordResponse
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    requestBody = Some(expectedRequestBody),
+    responseStatus = Status.OK,
+    responseBody = expectedResponseBody(utr, hipRegistrationResponse)
+  )
+
+  def stubGetBusinessPartnerRecordNotFound(
+    utr: Utr
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    requestBody = Some(expectedRequestBody),
+    responseStatus = Status.NOT_FOUND
+  )
+
+  private def expectedResponseBody(
+    utr: Utr,
+    hipRegistrationResponse: BusinessPartnerRecordResponse
+  ) =
+    // language=JSON
+    s"""
+        {
+          "businessPartnerExists" : true,
+          "safeId" : "X00000123456789",
+          "agentReferenceNumber" : "${hipRegistrationResponse.agentReferenceNumber.map(_.value).getOrElse("")}",
+          "uniqueTaxReference" : "${utr.value}",
+          "utr" : "${utr.value}",
+          "urn" : "",
+          "nino" : "",
+          "eori" : "",
+          "crn" : "12345678",
+          "isAnAgent" : false,
+          "isAnASAgent" : false,
+          "isAnIndividual" : false,
+          "isAnOrganisation" : true,
+          "organisation" : {
+            "organisationName" : "${hipRegistrationResponse.organisationName.getOrElse("")}",
+            "isAGroup" : true,
+            "organisationType" : " 5T"
+          },
+          "address" : {
+            "addressLine1" : "${hipRegistrationResponse.address.addressLine1}",
+            "addressLine2" : "${hipRegistrationResponse.address.addressLine2.getOrElse("")}",
+            "postalCode" : "${hipRegistrationResponse.address.postalCode.getOrElse("")}",
+            "countryCode" : "GB"
+          },
+          "contactDetails" : {
+            "primaryPhoneNumber" : "${hipRegistrationResponse.primaryPhoneNumber.getOrElse("")}",
+            "mobileNumber" : "09923 317218",
+            "faxNumber" : "09923 317218",
+            "emailAddress" : "${hipRegistrationResponse.emailAddress.getOrElse("")}"
+          }
+        }
+      """
+
+  private val expectedRequestBody: StringValuePattern = equalToJson(
+    // language=JSON
+    """
+        {
+          "requiresNameMatch": false,
+          "regime": "ITSA",
+          "isAnAgent": false
+        }
+      |""".stripMargin
+  )
+
+  def verifyGetBusinessPartnerRecord(
+    utr: Utr,
+    count: Int = 1
+  ): Unit = StubMaker.verify(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
     count = count
   )

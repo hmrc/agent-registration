@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
-import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.DesStubs
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.HipStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpReads
@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.StringContextOps
 class BusinessPartnerRecordControllerSpec
 extends ControllerSpec:
 
-  val desRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
+  val hipRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
     organisationName = Some("Test Company Name"),
     agentReferenceNumber = Some(tdAll.arn),
     individualName = None,
@@ -52,9 +52,9 @@ extends ControllerSpec:
   "getBusinessPartnerRecord by UTR returns Ok and DesRegistrationResponse as Json body" in:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
-    DesStubs.stubGetBusinessPartnerRecord(
+    HipStubs.stubGetBusinessPartnerRecord(
       utr = tdAll.utr,
-      desRegistrationResponse = desRegistrationResponse
+      hipRegistrationResponse = hipRegistrationResponse
     )
     val response =
       httpClient
@@ -63,14 +63,14 @@ extends ControllerSpec:
         .futureValue
     response.status shouldBe Status.OK
     val responseAsDesRegistrationResponse = response.json.as[BusinessPartnerRecordResponse]
-    responseAsDesRegistrationResponse shouldBe desRegistrationResponse
+    responseAsDesRegistrationResponse shouldBe hipRegistrationResponse
     AuthStubs.verifyAuthorise()
-    DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
+    HipStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
 
   "getBusinessPartnerRecord by UTR returns NoContent if no records found" in:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
-    DesStubs.stubGetBusinessPartnerRecordNotFound(
+    HipStubs.stubGetBusinessPartnerRecordNotFound(
       utr = tdAll.utr
     )
     val response =
@@ -82,4 +82,4 @@ extends ControllerSpec:
 
     response.body shouldBe ""
     AuthStubs.verifyAuthorise()
-    DesStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
+    HipStubs.verifyGetBusinessPartnerRecord(tdAll.utr)

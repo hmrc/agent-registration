@@ -65,7 +65,8 @@ extends AnyFreeSpecLike,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
       "microservice.services.internal-auth.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
-      "mongodb.uri" -> mongoUri
+      "mongodb.uri" -> mongoUri,
+      "hip-business-partner-record.enabled" -> true
     ) ++ configOverrides
 
   protected def configOverrides: Map[String, Any] = Map[String, Any]()
