@@ -21,6 +21,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.CorrelationId
 import uk.gov.hmrc.agentregistration.shared.CorrelationIdGenerator
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import java.time.Clock
@@ -51,6 +52,19 @@ extends RequestAwareLogging:
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP",
       "system-id" -> "agent-registration"
+    )
+
+  def makeHeadersForBusinessPartnerRecord(utr: Utr)(implicit requestHeader: RequestHeader): Seq[(String, String)] =
+    val correlationId: CorrelationId = correlationIdGenerator.nextCorrelationId
+    logger.info(s"Generated correlationId: ${correlationId.value}")
+    CommonHeaders() ++ Seq(
+      HeaderNames.AUTHORIZATION -> s"Basic ${appConfig.hipAuthToken}",
+      correlationIdHeader -> correlationId.value,
+      xOriginatingSystemHeader -> "MDTP-AgentRegistration",
+      xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
+      xTransmittingSystemHeader -> "HIP",
+      "idNumber" -> utr.value,
+      "idType" -> "UTR"
     )
 
   private def formatISOInstantSeconds(now: Instant): String = DateTimeFormatter.ISO_INSTANT
