@@ -1,0 +1,73 @@
+service: agent-registration
+repository: https://github.com/hmrc/agent-registration
+capabilities:
+  - agent-application-management
+  - business-partner-record-lookup
+  - provided-details-management
+  - smu-individual-lookup
+audience:
+  - internal
+interaction: synchronous
+criticality: high
+lifecycle: active
+dependencies:
+  consumes: []
+  produces: []
+tags:
+  - agent-registration
+  - applications
+  - business-partner
+  - provided-details
+apis:
+  - id: AR01
+    method: GET
+    path: /application
+    description: Retrieves an agent application by the authenticated internal user ID.
+  - id: AR02
+    method: GET
+    path: /application/linkId/{linkId}
+    description: Retrieves an agent application by link ID.
+  - id: AR03
+    method: GET
+    path: /application/by-agent-application-id/{agentApplicationId}
+    description: Retrieves an agent application by agent application ID.
+  - id: AR04
+    method: POST
+    path: /application
+    description: Creates or updates an agent application.
+  - id: AR05
+    method: GET
+    path: /business-partner-record/utr/{utr}
+    description: Retrieves a business partner record by UTR.
+  - id: AR06
+    method: GET
+    path: /application-business-partner-record/utr/{utr}
+    description: Retrieves an application business partner record by UTR.
+  - id: AR07
+    method: POST
+    path: /individual-provided-details/for-application
+    description: Creates or updates individual provided details for an application.
+  - id: AR08
+    method: GET
+    path: /individual-provided-details/for-application/{agentApplicationId}
+    description: Retrieves individual provided details for an application.
+  - id: AR09
+    method: GET
+    path: /individual-provided-details/for-matching-application/{agentApplicationId}
+    description: Retrieves individual provided details for matching with an application.
+  - id: AR10
+    method: GET
+    path: /individual-provided-details/by-id/{individualProvidedDetailsId}
+    description: Retrieves individual provided details by ID.
+  - id: AR11
+    method: PUT
+    path: /individual-provided-details/for-individual
+    description: Creates or updates individual provided details for an individual.
+  - id: AR12
+    method: DELETE
+    path: /individual-provided-details/delete-by-id/{individualProvidedDetailsId}
+    description: Deletes individual provided details by ID.
+  - id: AR13
+    method: GET
+    path: /smu-viewer/individual/by-person-reference/{personReference}
+    description: Retrieves SMU viewer individual data by person reference.

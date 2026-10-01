@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Client
+    participant SmuViewerController
+    participant MongoDB_individual as MongoDB (individual)
+    participant MongoDB_application as MongoDB (agent-application)
+
+    Client->>SmuViewerController: GET /smu-viewer/individual/by-person-reference/{personReference}
+    Note over SmuViewerController: No auth enforced (TODO: Stride profile TBD)
+    SmuViewerController->>MongoDB_individual: findOne(_id = personReference)
+    alt IndividualProvidedDetails not found
+        MongoDB_individual-->>SmuViewerController: None
+        SmuViewerController-->>Client: 204 No Content
+    else IndividualProvidedDetails found
+        MongoDB_individual-->>SmuViewerController: IndividualProvidedDetails (ipd)
+        SmuViewerController->>MongoDB_application: findOne(_id = ipd.agentApplicationId)
+        alt AgentApplication not found
+            MongoDB_application-->>SmuViewerController: None
+            SmuViewerController-->>Client: 204 No Content
+        else AgentApplication found
+            MongoDB_application-->>SmuViewerController: AgentApplication (aa)
+            alt aa.applicationState != SentForRisking
+                SmuViewerController-->>Client: 204 No Content
+            else aa.applicationState == SentForRisking
+                SmuViewerController->>SmuViewerController: SmuIndividualResponse.make(ipd, aa)
+                SmuViewerController-->>Client: 200 OK (SmuIndividualResponse JSON)
+            end
+        end
+    end

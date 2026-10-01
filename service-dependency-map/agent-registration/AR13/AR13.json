@@ -1,0 +1,95 @@
+{
+  "apiId": "AR13",
+  "apiTitle": "Get SMU Viewer Individual by Person Reference",
+  "description": "Retrieves aggregated individual and application data for the SMU viewer by person reference (maps to IndividualProvidedDetailsId). Only returns data when the linked application has been sent for risking. Authentication is not yet configured (TODO: Stride profile).",
+  "method": "GET",
+  "path": "/smu-viewer/individual/by-person-reference/{personReference}",
+  "pathParameters": [
+    {
+      "name": "personReference",
+      "type": "string",
+      "required": true,
+      "description": "Person reference (equivalent to IndividualProvidedDetailsId)"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Individual and application data found with SentForRisking state",
+      "body": "SmuIndividualResponse JSON"
+    },
+    {
+      "status": 204,
+      "description": "Individual not found, application not found, or application not in SentForRisking state"
+    }
+  ],
+  "authentication": {
+    "required": false,
+    "type": "None (pending Stride profile)",
+    "notes": "TODO in source: correct Stride profile not yet determined. Uses actions.default (unauthenticated)."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.smu.SmuViewerController",
+  "controllerMethod": "findIndividualByPersonReference",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "GET /smu-viewer/individual/by-person-reference/{personReference}",
+      "target": "SmuViewerController"
+    },
+    {
+      "step": 2,
+      "actor": "SmuViewerController",
+      "action": "individualProvidedDetailsRepo.findById(individualProvidedDetailsId)",
+      "target": "MongoDB (individual)"
+    },
+    {
+      "step": 3,
+      "actor": "SmuViewerController",
+      "action": "If IPD found: agentApplicationRepo.findById(ipd.agentApplicationId)",
+      "target": "MongoDB (agent-application)"
+    },
+    {
+      "step": 4,
+      "actor": "SmuViewerController",
+      "action": "If both found AND applicationState == SentForRisking: SmuIndividualResponse.make(ipd, aa)",
+      "target": "SmuViewerController"
+    },
+    {
+      "step": 5,
+      "actor": "SmuViewerController",
+      "action": "Return 200 Ok(smuResponse) or 204 NoContent",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [],
+  "databaseCollections": [
+    {
+      "name": "individual",
+      "operation": "findOne",
+      "filter": "_id == personReference"
+    },
+    {
+      "name": "agent-application",
+      "operation": "findOne",
+      "filter": "_id == ipd.agentApplicationId"
+    }
+  ],
+  "specialCases": [
+    "Authentication NOT enforced \u2013 marked as TODO in source",
+    "Returns 204 if IPD missing, application missing, or applicationState != SentForRisking",
+    "SmuIndividualResponse aggregates fields from both IndividualProvidedDetails and AgentApplication",
+    "businessDetails/deceasedCheckResult populated only for SoleTrader; companyStatusCheckResult for LLP/LimitedCompany/etc.",
+    "Two sequential MongoDB queries: individual first, then application"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}
