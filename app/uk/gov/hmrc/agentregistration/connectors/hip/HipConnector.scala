@@ -179,7 +179,7 @@ class HipConnector @Inject() (
     http
       .post(url)
       .setHeader(
-        hipHeaders.makeHeadersForBusinessPartnerRecord(utr)*
+        hipHeaders.makeHeadersForBusinessPartnerRecord()*
       )
       .withBody(Json.toJson(BusinessPartnerRecordRequest(isAnAgent = false)))
       .execute[HttpResponse]
