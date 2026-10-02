@@ -175,7 +175,7 @@ class HipConnector @Inject() (
   private def getBusinessPartnerRecordJson(
     utr: Utr
   )(implicit rh: RequestHeader): Future[Option[JsValue]] =
-    val url: URL = url"$baseUrl/RESTAdapter/registration/utr/${utr.value}"
+    val url: URL = url"$baseUrl/RESTAdapter/registration/UTR/${utr.value}"
     http
       .post(url)
       .setHeader(

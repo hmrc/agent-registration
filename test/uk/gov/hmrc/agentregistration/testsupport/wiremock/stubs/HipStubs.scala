@@ -199,7 +199,7 @@ object HipStubs:
     hipRegistrationResponse: BusinessPartnerRecordResponse
   ): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.POST,
-    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
     requestBody = Some(expectedRequestBody),
     responseStatus = Status.CREATED,
     responseBody = expectedBprResponseBody(hipRegistrationResponse)
@@ -209,7 +209,7 @@ object HipStubs:
     utr: Utr
   ): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.POST,
-    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
     requestBody = Some(expectedRequestBody),
     responseStatus = Status.UNPROCESSABLE_ENTITY,
     responseBody = expectedBprNotFoundResponseBody
@@ -220,7 +220,7 @@ object HipStubs:
     count: Int = 1
   ): Unit = StubMaker.verify(
     httpMethod = StubMaker.HttpMethod.POST,
-    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
     count = count
   )
 
