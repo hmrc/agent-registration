@@ -201,7 +201,7 @@ object HipStubs:
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
     requestBody = Some(expectedRequestBody),
-    responseStatus = Status.OK,
+    responseStatus = Status.CREATED,
     responseBody = expectedBprResponseBody(hipRegistrationResponse)
   )
 

@@ -185,7 +185,7 @@ class HipConnector @Inject() (
       .execute[HttpResponse]
       .map { response =>
         response.status match {
-          case OK => Some(response.json)
+          case CREATED => Some(response.json)
           case UNPROCESSABLE_ENTITY if isNotFound(response.json) => None
           case error =>
             throw UpstreamErrorResponse(
