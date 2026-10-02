@@ -202,7 +202,7 @@ object HipStubs:
     urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
     requestBody = Some(expectedRequestBody),
     responseStatus = Status.OK,
-    responseBody = expectedResponseBody(utr, hipRegistrationResponse)
+    responseBody = expectedBprResponseBody(hipRegistrationResponse)
   )
 
   def stubGetBusinessPartnerRecordNotFound(
@@ -211,48 +211,66 @@ object HipStubs:
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
     requestBody = Some(expectedRequestBody),
-    responseStatus = Status.NOT_FOUND
+    responseStatus = Status.UNPROCESSABLE_ENTITY,
+    responseBody = expectedBprNotFoundResponseBody
   )
 
-  private def expectedResponseBody(
+  def verifyGetBusinessPartnerRecord(
     utr: Utr,
+    count: Int = 1
+  ): Unit = StubMaker.verify(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
+    count = count
+  )
+
+  private val expectedBprNotFoundResponseBody =
+    // language=JSON
+    """
+      |{
+      |  "errors": {
+      |    "code": "002",
+      |    "processingDate": "2022-01-31T09:26:17Z",
+      |    "text": "No match found"
+      |  }
+      |}
+      |""".stripMargin
+
+  private def expectedBprResponseBody(
     hipRegistrationResponse: BusinessPartnerRecordResponse
-  ) =
+  ) = {
     // language=JSON
     s"""
-        {
-          "businessPartnerExists" : true,
-          "safeId" : "X00000123456789",
-          "agentReferenceNumber" : "${hipRegistrationResponse.agentReferenceNumber.map(_.value).getOrElse("")}",
-          "uniqueTaxReference" : "${utr.value}",
-          "utr" : "${utr.value}",
-          "urn" : "",
-          "nino" : "",
-          "eori" : "",
-          "crn" : "12345678",
-          "isAnAgent" : false,
-          "isAnASAgent" : false,
-          "isAnIndividual" : false,
-          "isAnOrganisation" : true,
-          "organisation" : {
-            "organisationName" : "${hipRegistrationResponse.organisationName.getOrElse("")}",
-            "isAGroup" : true,
-            "organisationType" : " 5T"
-          },
-          "address" : {
-            "addressLine1" : "${hipRegistrationResponse.address.addressLine1}",
-            "addressLine2" : "${hipRegistrationResponse.address.addressLine2.getOrElse("")}",
-            "postalCode" : "${hipRegistrationResponse.address.postalCode.getOrElse("")}",
-            "countryCode" : "GB"
-          },
-          "contactDetails" : {
-            "primaryPhoneNumber" : "${hipRegistrationResponse.primaryPhoneNumber.getOrElse("")}",
-            "mobileNumber" : "09923 317218",
-            "faxNumber" : "09923 317218",
-            "emailAddress" : "${hipRegistrationResponse.emailAddress.getOrElse("")}"
-          }
-        }
-      """
+       |{
+       |  "success": {
+       |    "address" : {
+       |      "addressLine1" : "${hipRegistrationResponse.address.addressLine1}",
+       |      "addressLine2" : "${hipRegistrationResponse.address.addressLine2.getOrElse("")}",
+       |      "postalCode" : "${hipRegistrationResponse.address.postalCode.getOrElse("")}",
+       |      "countryCode" : "GB"
+       |    },
+       |    "agentReferenceNumber" : "${hipRegistrationResponse.agentReferenceNumber.map(_.value).getOrElse("")}",
+       |    "contactDetails" : {
+       |      "primaryPhoneNumber" : "${hipRegistrationResponse.primaryPhoneNumber.getOrElse("")}",
+       |      "secondaryPhoneNumber" : "09923 317218",
+       |      "faxNumber" : "09923 317218",
+       |      "emailAddress" : "${hipRegistrationResponse.emailAddress.getOrElse("")}"
+       |    },
+       |    "organisation" : {
+       |      "organisationName" : "${hipRegistrationResponse.organisationName.getOrElse("")}",
+       |      "isAGroup" : true,
+       |      "organisationType" : " 5T"
+       |    },
+       |    "isAnASAgent": false,
+       |    "isAnAgent": false,
+       |    "isAnIndividual": false,
+       |    "isEditable": true,
+       |    "safeId" : "X00000123456789",
+       |    "sapNumber": "1234567890"
+       |  }
+       |}
+       |""".stripMargin
+  }
 
   private val expectedRequestBody: StringValuePattern = equalToJson(
     // language=JSON
@@ -263,13 +281,4 @@ object HipStubs:
           "isAnAgent": false
         }
       |""".stripMargin
-  )
-
-  def verifyGetBusinessPartnerRecord(
-    utr: Utr,
-    count: Int = 1
-  ): Unit = StubMaker.verify(
-    httpMethod = StubMaker.HttpMethod.POST,
-    urlPattern = urlMatching(s"/RESTAdapter/registration/utr/${utr.value}"),
-    count = count
   )

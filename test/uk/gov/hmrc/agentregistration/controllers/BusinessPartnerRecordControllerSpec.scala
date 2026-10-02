@@ -49,7 +49,7 @@ extends ControllerSpec:
     primaryPhoneNumber = Some(tdAll.telephoneNumber.value)
   )
 
-  "getBusinessPartnerRecord by UTR returns Ok and DesRegistrationResponse as Json body" in:
+  "getBusinessPartnerRecord by UTR returns Ok and HipRegistrationResponse as Json body" in:
     given Request[?] = tdAll.backendRequest
     AuthStubs.stubAuthorise()
     HipStubs.stubGetBusinessPartnerRecord(
@@ -62,8 +62,8 @@ extends ControllerSpec:
         .execute[HttpResponse]
         .futureValue
     response.status shouldBe Status.OK
-    val responseAsDesRegistrationResponse = response.json.as[BusinessPartnerRecordResponse]
-    responseAsDesRegistrationResponse shouldBe hipRegistrationResponse
+    val responseAsHipRegistrationResponse = response.json.as[BusinessPartnerRecordResponse]
+    responseAsHipRegistrationResponse shouldBe hipRegistrationResponse
     AuthStubs.verifyAuthorise()
     HipStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
 

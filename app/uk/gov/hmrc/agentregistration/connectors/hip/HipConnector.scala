@@ -135,26 +135,27 @@ class HipConnector @Inject() (
     rh: RequestHeader
   ): Future[Option[BusinessPartnerRecordResponse]] = getBusinessPartnerRecordJson(utr).map {
     case Some(r) =>
+      val innerJson = (r \ "success").as[JsObject]
       Some(
         BusinessPartnerRecordResponse(
-          organisationName = (r \ "organisation" \ "organisationName").asOpt[String],
-          agentReferenceNumber = (r \ "agentReferenceNumber").asOpt[Arn],
-          individualName = (r \ "individual" \ "firstName").asOpt[String]
+          organisationName = (innerJson \ "organisation" \ "organisationName").asOpt[String],
+          agentReferenceNumber = (innerJson \ "agentReferenceNumber").asOpt[Arn],
+          individualName = (innerJson \ "individual" \ "firstName").asOpt[String]
             .flatMap { firstName =>
-              (r \ "individual" \ "lastName").asOpt[String].map { lastName =>
+              (innerJson \ "individual" \ "lastName").asOpt[String].map { lastName =>
                 s"$firstName $lastName"
               }
             },
           address =
-            (r \ "address").validate[DesBusinessAddress] match {
+            (innerJson \ "address").validate[DesBusinessAddress] match {
               case JsSuccess(value, _) => value
               case JsError(_) => throw new Exception("HIP response has a bad address format")
             },
-          emailAddress = (r \ "agencyDetails" \ "agencyEmail")
+          emailAddress = (innerJson \ "agencyDetails" \ "agencyEmail")
             .asOpt[String]
-            .orElse((r \ "contactDetails" \ "emailAddress").asOpt[String]),
-          primaryPhoneNumber = (r \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
-          isAnAsaAgent = (r \ "isAnASAgent").as[Boolean]
+            .orElse((innerJson \ "contactDetails" \ "emailAddress").asOpt[String]),
+          primaryPhoneNumber = (innerJson \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
+          isAnAsaAgent = (innerJson \ "isAnASAgent").as[Boolean]
         )
       )
     case _ => None
@@ -185,7 +186,7 @@ class HipConnector @Inject() (
       .map { response =>
         response.status match {
           case OK => Some(response.json)
-          case NOT_FOUND => None
+          case UNPROCESSABLE_ENTITY if isNotFound(response.json) => None
           case error =>
             throw UpstreamErrorResponse(
               s"[HIP-GetAgentRegistration-POST] returned status: $error",
@@ -195,3 +196,4 @@ class HipConnector @Inject() (
       }
       .recover { case badRequest: BadRequestException => throw new Exception(s"400 Bad Request response from HIP for utr ${utr.value}", badRequest) }
 
+  private def isNotFound(r: JsValue): Boolean = (r \ "errors" \ "code").as[String].contains("002")
