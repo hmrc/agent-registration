@@ -21,6 +21,10 @@ import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordRequest
+import uk.gov.hmrc.agentregistration.shared.Arn
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
+import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
 import uk.gov.hmrc.agentregistration.shared.Nino
 import uk.gov.hmrc.agentregistration.shared.PayeRef
 import uk.gov.hmrc.agentregistration.shared.UcrIdentifiers
@@ -125,6 +129,38 @@ class HipConnector @Inject() (
               INTERNAL_SERVER_ERROR
             )
 
+  def getBusinessPartnerRecord(
+    utr: Utr
+  )(implicit
+    rh: RequestHeader
+  ): Future[Option[BusinessPartnerRecordResponse]] = getBusinessPartnerRecordJson(utr).map {
+    case Some(r) =>
+      val innerJson = (r \ "success").as[JsObject]
+      Some(
+        BusinessPartnerRecordResponse(
+          organisationName = (innerJson \ "organisation" \ "organisationName").asOpt[String],
+          agentReferenceNumber = (innerJson \ "agentReferenceNumber").asOpt[Arn],
+          individualName = (innerJson \ "individual" \ "firstName").asOpt[String]
+            .flatMap { firstName =>
+              (innerJson \ "individual" \ "lastName").asOpt[String].map { lastName =>
+                s"$firstName $lastName"
+              }
+            },
+          address =
+            (innerJson \ "address").validate[DesBusinessAddress] match {
+              case JsSuccess(value, _) => value
+              case JsError(_) => throw new Exception("HIP response has a bad address format")
+            },
+          emailAddress = (innerJson \ "agencyDetails" \ "agencyEmail")
+            .asOpt[String]
+            .orElse((innerJson \ "contactDetails" \ "emailAddress").asOpt[String]),
+          primaryPhoneNumber = (innerJson \ "contactDetails" \ "primaryPhoneNumber").asOpt[String],
+          isAnAsaAgent = (innerJson \ "isAnASAgent").as[Boolean]
+        )
+      )
+    case _ => None
+  }
+
   private def extractIdentifiers(json: JsValue): UcrIdentifiers =
     val results = (json \ "results").as[List[JsValue]]
     val identifiers = results.flatMap: result =>
@@ -135,3 +171,29 @@ class HipConnector @Inject() (
     val vrns = identifiers.collect { case ("VRN", value) => Vrn(value) }
     val payeRefs = identifiers.collect { case ("EMPREF", value) => PayeRef(value) }
     UcrIdentifiers(vrns = vrns, payeRefs = payeRefs)
+
+  private def getBusinessPartnerRecordJson(
+    utr: Utr
+  )(implicit rh: RequestHeader): Future[Option[JsValue]] =
+    val url: URL = url"$baseUrl/RESTAdapter/registration/UTR/${utr.value}"
+    http
+      .post(url)
+      .setHeader(
+        hipHeaders.makeHeadersForBusinessPartnerRecord()*
+      )
+      .withBody(Json.toJson(BusinessPartnerRecordRequest(isAnAgent = false)))
+      .execute[HttpResponse]
+      .map { response =>
+        response.status match {
+          case CREATED => Some(response.json)
+          case UNPROCESSABLE_ENTITY if isNotFound(response.json) => None
+          case error =>
+            throw UpstreamErrorResponse(
+              s"[HIP-GetAgentRegistration-POST] returned status: $error",
+              INTERNAL_SERVER_ERROR
+            )
+        }
+      }
+      .recover { case badRequest: BadRequestException => throw new Exception(s"400 Bad Request response from HIP for utr ${utr.value}", badRequest) }
+
+  private def isNotFound(r: JsValue): Boolean = (r \ "errors" \ "code").as[String].contains("002")

@@ -21,7 +21,9 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.connectors.des.BusinessPartnerRecordConnector
+import uk.gov.hmrc.agentregistration.connectors.hip.HipConnector
 import uk.gov.hmrc.agentregistration.shared.Utr
 
 import javax.inject.Inject
@@ -31,7 +33,9 @@ import javax.inject.Singleton
 class BusinessPartnerRecordController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
-  businessPartnerRecordConnector: BusinessPartnerRecordConnector
+  businessPartnerRecordConnector: BusinessPartnerRecordConnector,
+  hipConnector: HipConnector,
+  appConfig: AppConfig
 )
 extends BackendController(cc):
 
@@ -39,18 +43,32 @@ extends BackendController(cc):
     .authorised
     .async:
       implicit request =>
-        businessPartnerRecordConnector
-          .getBusinessPartnerRecord(utr)
-          .map:
-            case Some(bpr) => Ok(Json.toJson(bpr))
-            case None => NoContent
+        if (appConfig.HipBusinessPartnerRecord.isEnabled)
+          hipConnector
+            .getBusinessPartnerRecord(utr)
+            .map:
+              case Some(bpr) => Ok(Json.toJson(bpr))
+              case None => NoContent
+        else
+          businessPartnerRecordConnector
+            .getBusinessPartnerRecord(utr)
+            .map:
+              case Some(bpr) => Ok(Json.toJson(bpr))
+              case None => NoContent
 
   def getApplicationBusinessPartnerRecord(utr: Utr): Action[AnyContent] = actions
     .individualAuthorised
     .async:
       implicit request =>
-        businessPartnerRecordConnector
-          .getBusinessPartnerRecord(utr)
-          .map:
-            case Some(bpr) => Ok(Json.toJson(bpr))
-            case None => NoContent
+        if (appConfig.HipBusinessPartnerRecord.isEnabled)
+          hipConnector
+            .getBusinessPartnerRecord(utr)
+            .map:
+              case Some(bpr) => Ok(Json.toJson(bpr))
+              case None => NoContent
+        else
+          businessPartnerRecordConnector
+            .getBusinessPartnerRecord(utr)
+            .map:
+              case Some(bpr) => Ok(Json.toJson(bpr))
+              case None => NoContent

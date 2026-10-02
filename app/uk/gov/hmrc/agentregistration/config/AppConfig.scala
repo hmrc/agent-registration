@@ -61,3 +61,6 @@ class AppConfig @Inject() (
 
   object InternalAuth:
     val isEnabled: Boolean = configuration.get[Boolean]("internal-auth.enabled")
+
+  object HipBusinessPartnerRecord:
+    val isEnabled: Boolean = configuration.get[Boolean]("hip-business-partner-record.enabled")

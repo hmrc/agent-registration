@@ -17,8 +17,12 @@
 package uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import play.api.http.Status
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
+import uk.gov.hmrc.agentregistration.shared.Utr
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
 
 object HipStubs:
@@ -188,4 +192,93 @@ object HipStubs:
     httpMethod = StubMaker.HttpMethod.POST,
     urlPattern = urlPathEqualTo(organisationIdentifierSearchUrl),
     count = count
+  )
+
+  def stubGetBusinessPartnerRecord(
+    utr: Utr,
+    hipRegistrationResponse: BusinessPartnerRecordResponse
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
+    requestBody = Some(expectedRequestBody),
+    responseStatus = Status.CREATED,
+    responseBody = expectedBprResponseBody(hipRegistrationResponse)
+  )
+
+  def stubGetBusinessPartnerRecordNotFound(
+    utr: Utr
+  ): StubMapping = StubMaker.make(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
+    requestBody = Some(expectedRequestBody),
+    responseStatus = Status.UNPROCESSABLE_ENTITY,
+    responseBody = expectedBprNotFoundResponseBody
+  )
+
+  def verifyGetBusinessPartnerRecord(
+    utr: Utr,
+    count: Int = 1
+  ): Unit = StubMaker.verify(
+    httpMethod = StubMaker.HttpMethod.POST,
+    urlPattern = urlMatching(s"/RESTAdapter/registration/UTR/${utr.value}"),
+    count = count
+  )
+
+  private val expectedBprNotFoundResponseBody =
+    // language=JSON
+    """
+      |{
+      |  "errors": {
+      |    "code": "002",
+      |    "processingDate": "2022-01-31T09:26:17Z",
+      |    "text": "No match found"
+      |  }
+      |}
+      |""".stripMargin
+
+  private def expectedBprResponseBody(
+    hipRegistrationResponse: BusinessPartnerRecordResponse
+  ) = {
+    // language=JSON
+    s"""
+       |{
+       |  "success": {
+       |    "address" : {
+       |      "addressLine1" : "${hipRegistrationResponse.address.addressLine1}",
+       |      "addressLine2" : "${hipRegistrationResponse.address.addressLine2.getOrElse("")}",
+       |      "postalCode" : "${hipRegistrationResponse.address.postalCode.getOrElse("")}",
+       |      "countryCode" : "GB"
+       |    },
+       |    "agentReferenceNumber" : "${hipRegistrationResponse.agentReferenceNumber.map(_.value).getOrElse("")}",
+       |    "contactDetails" : {
+       |      "primaryPhoneNumber" : "${hipRegistrationResponse.primaryPhoneNumber.getOrElse("")}",
+       |      "secondaryPhoneNumber" : "09923 317218",
+       |      "faxNumber" : "09923 317218",
+       |      "emailAddress" : "${hipRegistrationResponse.emailAddress.getOrElse("")}"
+       |    },
+       |    "organisation" : {
+       |      "organisationName" : "${hipRegistrationResponse.organisationName.getOrElse("")}",
+       |      "isAGroup" : true,
+       |      "organisationType" : " 5T"
+       |    },
+       |    "isAnASAgent": false,
+       |    "isAnAgent": false,
+       |    "isAnIndividual": false,
+       |    "isEditable": true,
+       |    "safeId" : "X00000123456789",
+       |    "sapNumber": "1234567890"
+       |  }
+       |}
+       |""".stripMargin
+  }
+
+  private val expectedRequestBody: StringValuePattern = equalToJson(
+    // language=JSON
+    """
+        {
+          "requiresNameMatch": false,
+          "regime": "ITSA",
+          "isAnAgent": false
+        }
+      |""".stripMargin
   )

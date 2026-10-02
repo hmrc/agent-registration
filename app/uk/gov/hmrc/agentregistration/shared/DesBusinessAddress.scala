@@ -20,6 +20,8 @@ import play.api.libs.json.Json
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentregistration.shared.util.StringExtensions.replaceCommasWithSpaces
 
+//TODO: rename to HipBusinessAddress when DES connector replaced with HIP connector
+
 final case class DesBusinessAddress(
   addressLine1: String,
   addressLine2: Option[String],

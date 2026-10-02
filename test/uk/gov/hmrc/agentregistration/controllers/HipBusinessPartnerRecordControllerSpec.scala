@@ -1,0 +1,90 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.agentregistration.controllers
+
+import play.api.http.Status
+import play.api.mvc.Request
+import uk.gov.hmrc.agentregistration.shared.BusinessPartnerRecordResponse
+import uk.gov.hmrc.agentregistration.shared.DesBusinessAddress
+import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.HipStubs
+import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
+import uk.gov.hmrc.http.HttpReads.Implicits.given
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
+
+class HipBusinessPartnerRecordControllerSpec
+extends ControllerSpec:
+
+  override protected def configOverrides: Map[String, Any] =
+    super.configOverrides ++ Map(
+      "hip-business-partner-record.enabled" -> true
+    )
+
+  val hipRegistrationResponse: BusinessPartnerRecordResponse = BusinessPartnerRecordResponse(
+    organisationName = Some("Test Company Name"),
+    agentReferenceNumber = Some(tdAll.arn),
+    individualName = None,
+    address = DesBusinessAddress(
+      addressLine1 = "Line 1",
+      addressLine2 = Some("Line 2"),
+      addressLine3 = None,
+      addressLine4 = None,
+      postalCode = Some("AB1 2CD"),
+      countryCode = "GB"
+    ),
+    emailAddress = Some(tdAll.email),
+    isAnAsaAgent = false,
+    primaryPhoneNumber = Some(tdAll.telephoneNumber.value)
+  )
+
+  "getBusinessPartnerRecord by UTR returns Ok and HipRegistrationResponse as Json body" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    HipStubs.stubGetBusinessPartnerRecord(
+      utr = tdAll.utr,
+      hipRegistrationResponse = hipRegistrationResponse
+    )
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/business-partner-record/utr/${tdAll.utr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    val responseAsHipRegistrationResponse = response.json.as[BusinessPartnerRecordResponse]
+    responseAsHipRegistrationResponse shouldBe hipRegistrationResponse
+    AuthStubs.verifyAuthorise()
+    HipStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
+
+  "getBusinessPartnerRecord by UTR returns NoContent if no records found" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    HipStubs.stubGetBusinessPartnerRecordNotFound(
+      utr = tdAll.utr
+    )
+    val response =
+      httpClient
+        .get(url"$baseUrl/agent-registration/business-partner-record/utr/${tdAll.utr.value}")
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.NO_CONTENT
+
+    response.body shouldBe ""
+    AuthStubs.verifyAuthorise()
+    HipStubs.verifyGetBusinessPartnerRecord(tdAll.utr)
