@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentregistration.config
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import uk.gov.hmrc.agentregistration.repository.AgentApplicationExpiresAtMigration
+import uk.gov.hmrc.agentregistration.repository.AgentApplicationDatesMigration
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
@@ -31,7 +31,7 @@ extends AbstractModule:
 
   override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[AgentApplicationExpiresAtMigration]).asEagerSingleton()
+    bind(classOf[AgentApplicationDatesMigration]).asEagerSingleton()
 
   @Provides
   @Singleton

@@ -55,12 +55,12 @@ class AppConfig @Inject() (
 
   object Migration:
 
-    val applicationExpiresAtToBsonDateEnabled: Boolean = configuration.getOptional[Boolean](
-      "mongo-migration.applicationExpiresAt-to-bson-date.enabled"
+    val agentApplicationDatesToBsonDateEnabled: Boolean = configuration.getOptional[Boolean](
+      "mongo-migration.agent-application-dates-to-bson-date.enabled"
     ).getOrElse(false)
 
-    val applicationExpiresAtToBsonDateRatePerSecond: Int = configuration.getOptional[Int](
-      "mongo-migration.applicationExpiresAt-to-bson-date.rate-per-second"
+    val agentApplicationDatesToBsonDateRatePerSecond: Int = configuration.getOptional[Int](
+      "mongo-migration.agent-application-dates-to-bson-date.rate-per-second"
     ).getOrElse(10)
 
   object FieldLevelEncryption:

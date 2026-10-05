@@ -18,6 +18,9 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
@@ -168,4 +171,22 @@ extends UnitSpec:
           rendered should not include s"\"$plaintext\""
         }
       }
+  }
+
+  "JSON shape of createdAt in the REST format and in the Mongo format" - {
+    val restJson: JsValue = Json.toJson(model)(using IndividualProvidedDetails.format)
+    val mongoJson: JsValue = service.formats.writes(model)
+
+    "REST format writes createdAt as an ISO string" in:
+      (restJson \ "createdAt").get shouldBe JsString(model.createdAt.toString)
+
+    "Mongo format writes createdAt as a BSON Date" in:
+      (mongoJson \ "createdAt").get shouldBe Json.obj("$date" -> Json.obj("$numberLong" -> model.createdAt.toEpochMilli.toString))
+
+    "Mongo format reads back what it wrote" in:
+      service.formats.reads(mongoJson).get shouldBe model
+
+    "Mongo format reads createdAt stored as a legacy ISO string" in:
+      val legacyMongoJson: JsObject = mongoJson.as[JsObject] ++ Json.obj("createdAt" -> model.createdAt.toString)
+      service.formats.reads(legacyMongoJson).get shouldBe model
   }

@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.repository.IndividualProvidedDetailsMongoFormat
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -39,8 +40,8 @@ class IndividualProvidedDetailsEncryption @Inject() (fieldLevelEncryption: Field
     * code path performs the write.
     */
   val formats: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
-    r = IndividualProvidedDetails.format.map[IndividualProvidedDetails](decrypt),
-    w = IndividualProvidedDetails.format.contramap[IndividualProvidedDetails](encrypt)
+    r = IndividualProvidedDetailsMongoFormat.format.map[IndividualProvidedDetails](decrypt),
+    w = IndividualProvidedDetailsMongoFormat.format.contramap[IndividualProvidedDetails](encrypt)
   )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)

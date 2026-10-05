@@ -71,7 +71,7 @@ extends ISpec:
 
     repo.findById(record.agentApplicationId).futureValue.value shouldBe record
 
-  "upsert stores applicationExpiresAt as a BSON Date, not as a string" in:
+  "upsert stores createdAt and applicationExpiresAt as BSON Date, not as strings" in:
     val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
     repo.upsert(record).futureValue
 
@@ -84,20 +84,37 @@ extends ISpec:
         .futureValue
         .value
 
-    rawDocument.get("applicationExpiresAt").getBsonType shouldBe BsonType.DATE_TIME withClue
-      "applicationExpiresAt must persist as a BSON Date so it can be compared as a date, not a string"
+    rawDocument.get("createdAt").getBsonType shouldBe BsonType.DATE_TIME
+    rawDocument.get("applicationExpiresAt").getBsonType shouldBe BsonType.DATE_TIME
 
-  "findById reconstructs applicationExpiresAt correctly when it is still stored as a legacy ISO string (pre-migration shape)" in:
+  "upsert stores submittedAt as BSON Date, not as a string" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    repo.upsert(record).futureValue
+
+    val rawDocument: BsonDocument =
+      repo
+        .collection
+        .withDocumentClass[BsonDocument]()
+        .find(Filters.eq("_id", record.agentApplicationId.value))
+        .headOption()
+        .futureValue
+        .value
+
+    rawDocument.get("submittedAt").getBsonType shouldBe BsonType.DATE_TIME
+
+  "findById reconstructs createdAt and applicationExpiresAt when they are still stored as legacy ISO strings (pre-migration shape)" in:
     val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
     repo.upsert(record).futureValue
     repo
       .collection
       .updateOne(
         filter = Filters.eq("_id", record.agentApplicationId.value),
-        update = Updates.set("applicationExpiresAt", record.applicationExpiresAt.value.toString)
+        update = Updates.combine(
+          Updates.set("createdAt", record.createdAt.toString),
+          Updates.set("applicationExpiresAt", record.applicationExpiresAt.value.toString)
+        )
       )
       .toFuture()
       .futureValue
 
-    repo.findById(record.agentApplicationId).futureValue.value shouldBe record withClue
-      "dual-read must reconstruct a legacy ISO string field back into the same Instant"
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
