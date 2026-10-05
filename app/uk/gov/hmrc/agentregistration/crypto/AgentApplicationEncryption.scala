@@ -18,6 +18,9 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
+import uk.gov.hmrc.agentregistration.repository.MongoInstantFieldOverrides
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
@@ -41,8 +44,8 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
     * code path performs the write.
     */
   val formats: OFormat[AgentApplication] = OFormat[AgentApplication](
-    r = AgentApplication.format.map[AgentApplication](decrypt),
-    w = AgentApplication.format.contramap[AgentApplication](encrypt)
+    r = Reads[AgentApplication](js => AgentApplication.format.reads(MongoInstantFieldOverrides.fromMongo(js)).map(decrypt)),
+    w = OWrites[AgentApplication](app => MongoInstantFieldOverrides.toMongo(AgentApplication.format.writes(encrypt(app))))
   )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)

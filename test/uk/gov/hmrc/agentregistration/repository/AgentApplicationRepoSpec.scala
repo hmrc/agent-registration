@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.bson.BsonDocument
+import org.bson.BsonType
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Updates
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -58,3 +63,41 @@ extends ISpec:
     updatedRecord2.applicationState shouldBe SentToMinerva withClue "application state for record 2 should be updated"
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
+
+  "applicationExpiresAt round-trips through the repository for pre-submission applications" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    record.applicationExpiresAt shouldBe defined withClue "sanity: pre-submission applications must carry applicationExpiresAt"
+    repo.upsert(record).futureValue
+
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "upsert stores applicationExpiresAt as a BSON Date, not as a string" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    repo.upsert(record).futureValue
+
+    val rawDocument: BsonDocument =
+      repo
+        .collection
+        .withDocumentClass[BsonDocument]()
+        .find(Filters.eq("_id", record.agentApplicationId.value))
+        .headOption()
+        .futureValue
+        .value
+
+    rawDocument.get("applicationExpiresAt").getBsonType shouldBe BsonType.DATE_TIME withClue
+      "applicationExpiresAt must persist as a BSON Date so it can be compared as a date, not a string"
+
+  "findById reconstructs applicationExpiresAt correctly when it is still stored as a legacy ISO string (pre-migration shape)" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    repo.upsert(record).futureValue
+    repo
+      .collection
+      .updateOne(
+        filter = Filters.eq("_id", record.agentApplicationId.value),
+        update = Updates.set("applicationExpiresAt", record.applicationExpiresAt.value.toString)
+      )
+      .toFuture()
+      .futureValue
+
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record withClue
+      "dual-read must reconstruct a legacy ISO string field back into the same Instant"

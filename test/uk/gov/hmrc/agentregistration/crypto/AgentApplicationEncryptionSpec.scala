@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -236,6 +237,18 @@ extends UnitSpec:
         }
     }
   }
+
+  "AgentApplicationEncryption.formats round-trips a fully-populated application and does not leak plaintext PII in the written JSON" in:
+    val model: AgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmittedWithAllOptionalFields
+
+    val written: JsObject = service.formats.writes(model)
+    val readBack: AgentApplication = service.formats.reads(written).get
+
+    readBack shouldBe model withClue "service.formats must round-trip write then read to the original model"
+
+    piiStringsFor(model).foreach: plaintext =>
+      withClue(s"plaintext '$plaintext' must not appear as a JSON value in JSON emitted by service.formats: "):
+        written.toString should not include s"\"$plaintext\""
 
   private def companyProfilePiiStrings(cp: CompanyProfile): List[String] =
     List(cp.companyNumber.value, cp.companyName) ++

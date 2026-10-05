@@ -53,6 +53,16 @@ class AppConfig @Inject() (
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 
+  object Migration:
+
+    val applicationExpiresAtToBsonDateEnabled: Boolean = configuration.getOptional[Boolean](
+      "mongo-migration.applicationExpiresAt-to-bson-date.enabled"
+    ).getOrElse(false)
+
+    val applicationExpiresAtToBsonDateRatePerSecond: Int = configuration.getOptional[Int](
+      "mongo-migration.applicationExpiresAt-to-bson-date.rate-per-second"
+    ).getOrElse(10)
+
   object FieldLevelEncryption:
 
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
