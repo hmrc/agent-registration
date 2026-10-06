@@ -53,15 +53,10 @@ class AppConfig @Inject() (
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 
-  object Migration:
+  object Scheduler:
 
-    val agentApplicationDatesToBsonDateEnabled: Boolean = configuration.getOptional[Boolean](
-      "mongo-migration.agent-application-dates-to-bson-date.enabled"
-    ).getOrElse(false)
-
-    val agentApplicationDatesToBsonDateRatePerSecond: Int = configuration.getOptional[Int](
-      "mongo-migration.agent-application-dates-to-bson-date.rate-per-second"
-    ).getOrElse(10)
+    val datesMigrationEnabled: Boolean = configuration.getOptional[Boolean]("scheduler.dates-migration.enabled").getOrElse(false)
+    val datesMigrationInterval: FiniteDuration = configuration.get[FiniteDuration]("scheduler.dates-migration.interval")
 
   object FieldLevelEncryption:
 
