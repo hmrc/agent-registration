@@ -16,59 +16,33 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
-import play.api.libs.json.Reads
-import play.api.libs.json.__
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 import java.time.LocalDate
 import scala.annotation.nowarn
 
-/** Mongo format of [[AgentApplication]]. Same as the REST format except that `createdAt`, `applicationExpiresAt`, `submittedAt`,
-  * `riskingOutcomeApplication.reSubmittedAt` and `riskingOutcomeApplication.correctiveActionExpiryDate` are BSON `Date`.
+/** Mongo format of [[AgentApplication]]. Same as the REST format except that `createdAt`, `applicationExpiresAt`, `submittedAt` and the dates of
+  * `riskingOutcomeApplication` are BSON `Date`.
   */
 object AgentApplicationMongoFormat:
 
-  private given Format[Instant] = MongoInstantFormat.instantFormat
-
-  // for data that exists prior to the migration to BSON Date
-  private val legacyLocalDateReads: Reads[LocalDate] = Reads.DefaultLocalDateReads
-
-  private val correctiveActionExpiryDateFormat: Format[LocalDate] = Format(
-    MongoJavatimeFormats.localDateReads.orElse(legacyLocalDateReads),
-    MongoJavatimeFormats.localDateWrites
-  )
+  private given Format[Instant] = MongoDateFormats.instantFormat
+  private given Format[LocalDate] = MongoDateFormats.localDateFormat
 
   @nowarn()
   private val riskingOutcomeApplicationFormat: OFormat[RiskingOutcomeApplication] =
     given JsonConfiguration = JsonConfig.jsonConfiguration(discriminator = "outcome")
     given OFormat[RiskingOutcomeApplication.Approved] = Json.format[RiskingOutcomeApplication.Approved]
-    given OFormat[RiskingOutcomeApplication.FailedFixable] =
-      (
-        (__ \ "actualDecisionDate").format[LocalDate] and
-          (__ \ "correctiveActionExpiryDate").format[LocalDate](correctiveActionExpiryDateFormat) and
-          (__ \ "reSubmittedAt").formatNullable[Instant]
-      )(
-        RiskingOutcomeApplication.FailedFixable.apply,
-        failedFixable => (failedFixable.actualDecisionDate, failedFixable.correctiveActionExpiryDate, failedFixable.reSubmittedAt)
-      )
-    given OFormat[RiskingOutcomeApplication.FailedNonFixable] =
-      (
-        (__ \ "actualDecisionDate").format[LocalDate] and
-          (__ \ "correctiveActionExpiryDate").format[LocalDate](correctiveActionExpiryDateFormat)
-      )(
-        RiskingOutcomeApplication.FailedNonFixable.apply,
-        failedNonFixable => (failedNonFixable.actualDecisionDate, failedNonFixable.correctiveActionExpiryDate)
-      )
+    given OFormat[RiskingOutcomeApplication.FailedFixable] = Json.format[RiskingOutcomeApplication.FailedFixable]
+    given OFormat[RiskingOutcomeApplication.FailedNonFixable] = Json.format[RiskingOutcomeApplication.FailedNonFixable]
 
     val dontDeleteMe = """
         |Don't delete me.

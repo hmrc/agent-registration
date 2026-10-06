@@ -43,7 +43,7 @@ extends UnitSpec:
   private def bsonDate(instant: Instant): JsObject = Json.obj("$date" -> Json.obj("$numberLong" -> instant.toEpochMilli.toString))
   private def bsonDate(localDate: LocalDate): JsObject = bsonDate(localDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 
-  // expected JSON of the date fields: REST keeps ISO strings, Mongo holds BSON Dates for the migrated fields and a string for actualDecisionDate
+  // expected JSON of the date fields: REST keeps ISO strings, Mongo holds BSON Dates
   private val expectedRestDatesOfUnsubmittedApplication: JsObject = Json.obj(
     "createdAt" -> "2026-03-04T05:06:07.890Z",
     "applicationExpiresAt" -> "2026-05-16T05:06:07.890Z"
@@ -73,7 +73,7 @@ extends UnitSpec:
   private val expectedMongoDatesOfResubmittedApplication: JsObject =
     expectedMongoDatesOfSubmittedApplication ++ Json.obj(
       "riskingOutcomeApplication" -> Json.obj(
-        "actualDecisionDate" -> "2026-05-01",
+        "actualDecisionDate" -> bsonDate(actualDecisionDate),
         "correctiveActionExpiryDate" -> bsonDate(correctiveActionExpiryDate),
         "reSubmittedAt" -> bsonDate(reSubmittedAt)
       )
@@ -89,7 +89,7 @@ extends UnitSpec:
   private val expectedMongoDatesOfApplicationWithNonFixableOutcome: JsObject =
     expectedMongoDatesOfSubmittedApplication ++ Json.obj(
       "riskingOutcomeApplication" -> Json.obj(
-        "actualDecisionDate" -> "2026-05-01",
+        "actualDecisionDate" -> bsonDate(actualDecisionDate),
         "correctiveActionExpiryDate" -> bsonDate(correctiveActionExpiryDate)
       )
     )

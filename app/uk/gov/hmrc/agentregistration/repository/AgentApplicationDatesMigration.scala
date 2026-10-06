@@ -44,6 +44,7 @@ extends Logging:
     AgentApplicationRepo.collectionName -> "createdAt",
     AgentApplicationRepo.collectionName -> "applicationExpiresAt",
     AgentApplicationRepo.collectionName -> "submittedAt",
+    AgentApplicationRepo.collectionName -> "riskingOutcomeApplication.actualDecisionDate",
     AgentApplicationRepo.collectionName -> "riskingOutcomeApplication.reSubmittedAt",
     AgentApplicationRepo.collectionName -> "riskingOutcomeApplication.correctiveActionExpiryDate",
     IndividualProvidedDetailsRepo.collectionName -> "createdAt"

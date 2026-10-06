@@ -21,13 +21,17 @@ import play.api.libs.json.Reads
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
+import java.time.LocalDate
 
-object MongoInstantFormat:
+object MongoDateFormats:
 
-  // for data that exists prior to the migration to BSON Date
-  private val legacyInstantReads: Reads[Instant] = Reads.DefaultInstantReads
-
+  // reads also accept the ISO string shape of data written before the migration to BSON Date
   val instantFormat: Format[Instant] = Format(
-    MongoJavatimeFormats.instantReads.orElse(legacyInstantReads),
+    MongoJavatimeFormats.instantReads.orElse(Reads.DefaultInstantReads),
     MongoJavatimeFormats.instantWrites
+  )
+
+  val localDateFormat: Format[LocalDate] = Format(
+    MongoJavatimeFormats.localDateReads.orElse(Reads.DefaultLocalDateReads),
+    MongoJavatimeFormats.localDateWrites
   )

@@ -27,6 +27,6 @@ import java.time.Instant
   */
 object IndividualProvidedDetailsMongoFormat:
 
-  private given Format[Instant] = MongoInstantFormat.instantFormat
+  private given Format[Instant] = MongoDateFormats.instantFormat
 
   val format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]

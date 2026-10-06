@@ -73,6 +73,7 @@ extends ISpec:
     "createdAt",
     "applicationExpiresAt",
     "submittedAt",
+    "riskingOutcomeApplication.actualDecisionDate",
     "riskingOutcomeApplication.reSubmittedAt",
     "riskingOutcomeApplication.correctiveActionExpiryDate"
   )

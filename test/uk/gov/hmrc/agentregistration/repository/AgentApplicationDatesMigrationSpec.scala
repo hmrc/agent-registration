@@ -75,6 +75,7 @@ extends ISpec:
       record.riskingOutcomeApplication.collect:
         case failedFixable: RiskingOutcomeApplication.FailedFixable => failedFixable.reSubmittedAt
       .flatten
+    val actualDecisionDate: Option[LocalDate] = record.riskingOutcomeApplication.map(_.actualDecisionDate)
     val correctiveActionExpiryDate: Option[LocalDate] = record.riskingOutcomeApplication.collect:
       case failedFixable: RiskingOutcomeApplication.FailedFixable => failedFixable.correctiveActionExpiryDate
       case failedNonFixable: RiskingOutcomeApplication.FailedNonFixable => failedNonFixable.correctiveActionExpiryDate
@@ -82,6 +83,7 @@ extends ISpec:
       "createdAt" -> Some(record.createdAt.toString),
       "applicationExpiresAt" -> record.applicationExpiresAt.map(_.toString),
       "submittedAt" -> record.submittedAt.map(_.toString),
+      "riskingOutcomeApplication.actualDecisionDate" -> actualDecisionDate.map(_.toString),
       "riskingOutcomeApplication.reSubmittedAt" -> reSubmittedAt.map(_.toString),
       "riskingOutcomeApplication.correctiveActionExpiryDate" -> correctiveActionExpiryDate.map(_.toString)
     )
@@ -131,17 +133,18 @@ extends ISpec:
     migration.run().futureValue shouldBe 0L
     repo.findById(record.agentApplicationId).futureValue.value shouldBe record
 
-  "run converts riskingOutcomeApplication.correctiveActionExpiryDate to BSON Date, leaves actualDecisionDate a string and does not add reSubmittedAt" in:
+  "run converts riskingOutcomeApplication.actualDecisionDate and correctiveActionExpiryDate to BSON Date and does not add reSubmittedAt" in:
     val record: AgentApplication = tdAll.agentApplicationLlp.afterRiskingCompletedFixable
     repo.upsert(record).futureValue
     downgradeToLegacyStrings(record)
+    rawApplication(record).getDocument("riskingOutcomeApplication").get("actualDecisionDate").getBsonType shouldBe BsonType.STRING
     rawApplication(record).getDocument("riskingOutcomeApplication").get("correctiveActionExpiryDate").getBsonType shouldBe BsonType.STRING
 
     migration.run().futureValue
 
     val riskingOutcomeApplication: BsonDocument = rawApplication(record).getDocument("riskingOutcomeApplication")
+    riskingOutcomeApplication.get("actualDecisionDate").getBsonType shouldBe BsonType.DATE_TIME
     riskingOutcomeApplication.get("correctiveActionExpiryDate").getBsonType shouldBe BsonType.DATE_TIME
-    riskingOutcomeApplication.get("actualDecisionDate").getBsonType shouldBe BsonType.STRING
     riskingOutcomeApplication.containsKey("reSubmittedAt") shouldBe false
     migration.run().futureValue shouldBe 0L
     repo.findById(record.agentApplicationId).futureValue.value shouldBe record
