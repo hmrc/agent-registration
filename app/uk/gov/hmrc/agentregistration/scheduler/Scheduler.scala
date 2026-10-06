@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentregistration.scheduler
 
 import play.api.Logging
+import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.mongo.lock.LockRepository
 import uk.gov.hmrc.mongo.lock.LockService
@@ -39,11 +40,20 @@ import scala.util.Success
 @Singleton
 class Scheduler @Inject() (
   clock: Clock,
-  mongoLockRepository: MongoLockRepository
+  mongoLockRepository: MongoLockRepository,
+  applicationLifecycle: ApplicationLifecycle
 )(using ec: ExecutionContext)
 extends Logging:
 
   private val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+
+  applicationLifecycle.addStopHook(() => Future.successful(stop()))
+
+  def stop(): Unit =
+    executor.shutdownNow()
+    ()
+
+  def isStopped: Boolean = executor.isShutdown
 
   private def now(): ZonedDateTime = ZonedDateTime.now(clock.withZone(AppConfig.zoneId))
 
@@ -98,23 +108,31 @@ extends Logging:
     delayMillis: Long,
     job: () => Future[Unit]
   )(reschedule: => Unit): Unit =
-    executor.schedule(
-      new Runnable:
-        def run(): Unit = lockServiceFor(name).withLock {
-          logger.info(s"Starting scheduled task: $name at ${ZonedDateTime.now(clock).toString}")
-          job()
-        }.onComplete { result =>
-          result match
-            case Success(Some(_)) => logger.info(s"Scheduled task completed successfully: $name")
-            case Success(None) => logger.debug(s"Scheduled task skipped - already running on another instance: $name")
-            case Failure(e) => logger.error(s"Scheduled task failed: $name, ${e.getMessage}", e)
-          reschedule
-        }
-      ,
-      delayMillis,
-      TimeUnit.MILLISECONDS
-    )
-    ()
+    if executor.isShutdown then
+      logger.info(s"$name not scheduled as the scheduler has been stopped")
+    else
+      executor.schedule(
+        new Runnable:
+          // The lock is taken inside a Future so that a synchronous failure (e.g. a closed Mongo client) is logged and rescheduled like any other.
+          def run(): Unit = Future
+            .unit
+            .flatMap: _ =>
+              lockServiceFor(name).withLock {
+                logger.info(s"Starting scheduled task: $name at ${ZonedDateTime.now(clock).toString}")
+                job()
+              }
+            .onComplete { result =>
+              result match
+                case Success(Some(_)) => logger.info(s"Scheduled task completed successfully: $name")
+                case Success(None) => logger.debug(s"Scheduled task skipped - already running on another instance: $name")
+                case Failure(e) => logger.error(s"Scheduled task failed: $name, ${e.getMessage}", e)
+              reschedule
+            }
+        ,
+        delayMillis,
+        TimeUnit.MILLISECONDS
+      )
+      ()
 
   private def nextDailyRunTime(timeOfDay: LocalTime): ZonedDateTime =
     val currentTime: ZonedDateTime = now()

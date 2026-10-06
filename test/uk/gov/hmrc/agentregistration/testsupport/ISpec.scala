@@ -65,6 +65,7 @@ extends AnyFreeSpecLike,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
       "microservice.services.internal-auth.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
+      "scheduler.dates-migration.enabled" -> false,
       "mongodb.uri" -> mongoUri
     ) ++ configOverrides
 
