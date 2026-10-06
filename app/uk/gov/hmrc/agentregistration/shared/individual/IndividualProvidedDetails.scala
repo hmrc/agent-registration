@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.individual
 
-import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.PayeRef
@@ -83,6 +82,3 @@ final case class IndividualProvidedDetails(
   def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("passedIv")
 
   def getRiskingOutcomeIndividual: RiskingOutcomeIndividual = riskingOutcomeIndividual.getOrThrowExpectedDataMissing("riskingOutcomeIndividual")
-
-object IndividualProvidedDetails:
-  given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]

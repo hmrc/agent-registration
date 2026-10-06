@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.repository.MongoDateFormats
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
@@ -27,22 +28,20 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetai
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Encrypts/decrypts the PII fields of an [[AgentApplication]] as a domain-model transform.
-  *
-  * The Mongo `Format[AgentApplication]` stays plaintext; `AgentApplicationRepo` applies this service on the way in (upsert) and out (find).
-  *
-  * Both `encrypt` and `decrypt` are driven from a single `transform(app, cryptoOp)` that lists every PII path exactly once, so the two sides cannot drift
-  * apart.
+object AgentApplicationMongoFormats:
+
+  /** Dates as BSON dates, PII as it is. */
+  val plaintextFormat: OFormat[AgentApplication] = AgentApplicationFormat.makeFormat(using MongoDateFormats.instantFormat, MongoDateFormats.localDateFormat)
+
+/** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class AgentApplicationMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
 
-  /** Mongo Format that encrypts on write and decrypts on read. Wired into the repo as `domainFormat` so PII can never be persisted in plaintext, no matter what
-    * code path performs the write.
-    */
-  val formats: OFormat[AgentApplication] = OFormat[AgentApplication](
-    r = AgentApplication.format.map[AgentApplication](decrypt),
-    w = AgentApplication.format.contramap[AgentApplication](encrypt)
+  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
+  val encryptingFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
+    r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decrypt),
+    w = AgentApplicationMongoFormats.plaintextFormat.contramap[AgentApplication](encrypt)
   )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)

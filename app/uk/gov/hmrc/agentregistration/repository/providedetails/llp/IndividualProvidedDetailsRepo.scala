@@ -21,8 +21,7 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
-import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
+import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsMongoFormats
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -35,30 +34,29 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig,
-  individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
+  individualProvidedDetailsMongoFormats: IndividualProvidedDetailsMongoFormats
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
-  indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.formats)),
+  indexes = ProvidedDetailsRepoHelp.indexes,
+  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsMongoFormats.encryptingFormat)),
   replaceIndexes = true
-)(using domainFormat = individualProvidedDetailsEncryption.formats):
+)(using domainFormat = individualProvidedDetailsMongoFormats.encryptingFormat):
+
+  override lazy val requiresTtlIndex: Boolean = false
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value)
     )
     .toFuture()
     .map(_.toList)
@@ -83,7 +81,7 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value),
+        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )
@@ -120,11 +118,7 @@ object ProvidedDetailsRepoHelp:
     new IdExtractor[IndividualProvidedDetails, IndividualProvidedDetailsId]:
       override def id(memberProvidedDetails: IndividualProvidedDetails): IndividualProvidedDetailsId = memberProvidedDetails.individualProvidedDetailsId
 
-  def indexes(ttl: FiniteDuration): Seq[IndexModel] = Seq(
-    IndexModel(
-      Indexes.ascending("lastUpdated"),
-      IndexOptions().expireAfter(ttl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
-    ),
+  val indexes: Seq[IndexModel] = Seq(
     IndexModel(
       Indexes.ascending("agentApplicationId")
     ),

@@ -21,8 +21,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.model.Updates
-import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
+import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -34,31 +33,30 @@ import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig,
-  agentApplicationEncryption: AgentApplicationEncryption
+  agentApplicationMongoFormats: AgentApplicationMongoFormats
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
   mongoComponent = mongoComponent,
-  indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.formats)),
+  indexes = AgentApplicationRepoHelp.indexes,
+  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationMongoFormats.encryptingFormat)),
   replaceIndexes = true
-)(using domainFormat = agentApplicationEncryption.formats):
+)(using domainFormat = agentApplicationMongoFormats.encryptingFormat):
+
+  override lazy val requiresTtlIndex: Boolean = false
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", agentApplicationEncryption.encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", agentApplicationMongoFormats.encrypt(internalUserId).value)
     )
     .headOption()
 
@@ -100,11 +98,7 @@ object AgentApplicationRepoHelp:
     new IdExtractor[AgentApplication, AgentApplicationId]:
       override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
 
-  def indexes(cacheTtl: FiniteDuration): Seq[IndexModel] = Seq(
-    IndexModel(
-      keys = Indexes.ascending("lastUpdated"),
-      indexOptions = IndexOptions().expireAfter(cacheTtl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
-    ),
+  val indexes: Seq[IndexModel] = Seq(
     IndexModel(
       keys = Indexes.ascending("internalUserId"),
       IndexOptions()

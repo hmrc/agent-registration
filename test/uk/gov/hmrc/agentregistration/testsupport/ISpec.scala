@@ -45,6 +45,9 @@ extends AnyFreeSpecLike,
   RichMatchers,
   MongoSupport:
 
+  // Specs in other services can have the same name (e.g. DatesMigratorSpec), so the prefix keeps their test databases apart.
+  override protected def databaseName: String = s"test-be-${getClass.getSimpleName}"
+
   given ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   private val testServerPort = ISpec.testServerPort
@@ -65,6 +68,7 @@ extends AnyFreeSpecLike,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
       "microservice.services.internal-auth.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
+      "dates-migrator.enabled" -> false,
       "mongodb.uri" -> mongoUri
     ) ++ configOverrides
 

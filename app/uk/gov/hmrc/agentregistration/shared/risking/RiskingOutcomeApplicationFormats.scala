@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.shared.risking
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
@@ -25,14 +26,21 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.Ap
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedFixable
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication.FailedNonFixable
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.RestDateFormats
 
+import java.time.Instant
 import java.time.LocalDate
 import scala.annotation.nowarn
 
 object RiskingOutcomeApplicationFormats:
 
+  val format: OFormat[RiskingOutcomeApplication] = makeFormat(using RestDateFormats.instantFormat, RestDateFormats.localDateFormat)
+
   @nowarn
-  val format: OFormat[RiskingOutcomeApplication] =
+  def makeFormat(using
+    Format[Instant],
+    Format[LocalDate]
+  ): OFormat[RiskingOutcomeApplication] =
     given jsonConfiguration: JsonConfiguration = JsonConfig.jsonConfiguration(discriminator = "outcome")
     given OFormat[Approved] = Json.format[Approved]
     given OFormat[FailedFixable] = Json.format[FailedFixable]
