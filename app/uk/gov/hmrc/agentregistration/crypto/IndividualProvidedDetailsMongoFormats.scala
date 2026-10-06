@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentregistration.repository.MongoDateFormats
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 
 import javax.inject.Inject
@@ -30,7 +31,7 @@ import javax.inject.Singleton
 object IndividualProvidedDetailsMongoFormats:
 
   /** Dates as BSON dates, PII as it is. */
-  val plaintextFormat: OFormat[IndividualProvidedDetails] = IndividualProvidedDetails.makeFormat(using MongoDateFormats.instantFormat)
+  val plaintextFormat: OFormat[IndividualProvidedDetails] = IndividualProvidedDetailsFormat.makeFormat(using MongoDateFormats.instantFormat)
 
 /** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */

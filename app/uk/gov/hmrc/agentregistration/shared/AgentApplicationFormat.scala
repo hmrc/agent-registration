@@ -30,7 +30,6 @@ import java.time.Instant
 import java.time.LocalDate
 import scala.annotation.nowarn
 
-/** JSON formats for REST data exchange. The backend builds its Mongo format with `makeFormat`. */
 object AgentApplicationFormat:
 
   given restFormat: OFormat[AgentApplication] = makeFormat(using RestDateFormats.instantFormat, RestDateFormats.localDateFormat)

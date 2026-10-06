@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
 class DatesMigratorSpec
@@ -168,7 +169,7 @@ extends ISpec:
     holdAsIsoStrings(
       collection = individualRepo.collection,
       id = record.individualProvidedDetailsId.value,
-      restJson = IndividualProvidedDetails.restFormat.writes(record),
+      restJson = IndividualProvidedDetailsFormat.restFormat.writes(record),
       dateFields = Seq("createdAt")
     )
 

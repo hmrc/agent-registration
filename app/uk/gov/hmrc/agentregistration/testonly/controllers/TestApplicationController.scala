@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.individual.*
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat.restFormat
 import uk.gov.hmrc.agentregistration.testonly.util.TestMongoCleanup
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.agentregistration.testonly.models.CleanupApplicationsRequest

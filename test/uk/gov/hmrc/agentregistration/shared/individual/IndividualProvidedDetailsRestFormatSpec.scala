@@ -26,8 +26,8 @@ extends UnitSpec:
 
   "serialize and deserialize IndividualProvidedDetails" in:
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
-    Json.toJson[IndividualProvidedDetails](individualProvidedDetails) shouldBe afterRiskedFixableRestJson
-    afterRiskedFixableRestJson.as[IndividualProvidedDetails] shouldBe individualProvidedDetails
+    IndividualProvidedDetailsFormat.restFormat.writes(individualProvidedDetails) shouldBe afterRiskedFixableRestJson
+    afterRiskedFixableRestJson.as[IndividualProvidedDetails](using IndividualProvidedDetailsFormat.restFormat) shouldBe individualProvidedDetails
 
   private val tdAll: TdAll = TdAll()
 

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentregistration.shared.individual
 
-import play.api.libs.json.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.PayeRef
@@ -29,7 +28,6 @@ import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Fini
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
-import uk.gov.hmrc.agentregistration.shared.util.RestDateFormats
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 import java.time.Instant
@@ -84,9 +82,3 @@ final case class IndividualProvidedDetails(
   def getPassedIv: Boolean = passedIv.getOrThrowExpectedDataMissing("passedIv")
 
   def getRiskingOutcomeIndividual: RiskingOutcomeIndividual = riskingOutcomeIndividual.getOrThrowExpectedDataMissing("riskingOutcomeIndividual")
-
-object IndividualProvidedDetails:
-
-  given restFormat: OFormat[IndividualProvidedDetails] = makeFormat(using RestDateFormats.instantFormat)
-
-  def makeFormat(using Format[Instant]): OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
