@@ -26,13 +26,13 @@ extends UnitSpec:
 
   "serialize and deserialize IndividualProvidedDetails" in:
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
-    Json.toJson[IndividualProvidedDetails](individualProvidedDetails) shouldBe afterRiskedFixableJson
-    afterRiskedFixableJson.as[IndividualProvidedDetails] shouldBe individualProvidedDetails
+    Json.toJson[IndividualProvidedDetails](individualProvidedDetails) shouldBe afterRiskedFixableRestJson
+    afterRiskedFixableRestJson.as[IndividualProvidedDetails] shouldBe individualProvidedDetails
 
   private val tdAll: TdAll = TdAll()
 
   // dates as ISO strings
-  private val afterRiskedFixableJson: JsValue = Json.parse(
+  private val afterRiskedFixableRestJson: JsValue = Json.parse(
     // language=JSON
     """{
       |  "_id": "individual-provided-details-id-12345",

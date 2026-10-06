@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.repository.IndividualProvidedDetailsMongoFormat
+import uk.gov.hmrc.agentregistration.repository.MongoDateFormats
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -27,21 +27,20 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Encrypts/decrypts the PII fields of an [[IndividualProvidedDetails]] as a domain-model transform.
-  *
-  * The Mongo `Format[IndividualProvidedDetails]` stays plaintext; `IndividualProvidedDetailsRepo` applies this service on the way in (upsert) and out (find).
-  *
-  * Both `encrypt` and `decrypt` are driven from a single `transform(d, cryptoOp)` that lists every PII path exactly once, so the two sides cannot drift apart.
+object IndividualProvidedDetailsMongoFormats:
+
+  /** Dates as BSON dates, PII as it is. */
+  val plaintextFormat: OFormat[IndividualProvidedDetails] = IndividualProvidedDetails.makeFormat(using MongoDateFormats.instantFormat)
+
+/** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class IndividualProvidedDetailsEncryption @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class IndividualProvidedDetailsMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
 
-  /** Mongo Format that encrypts on write and decrypts on read. Wired into the repo as `domainFormat` so PII can never be persisted in plaintext, no matter what
-    * code path performs the write.
-    */
-  val mongoFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
-    r = IndividualProvidedDetailsMongoFormat.format.map[IndividualProvidedDetails](decrypt),
-    w = IndividualProvidedDetailsMongoFormat.format.contramap[IndividualProvidedDetails](encrypt)
+  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
+  val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
+    r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
+    w = IndividualProvidedDetailsMongoFormats.plaintextFormat.contramap[IndividualProvidedDetails](encrypt)
   )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)

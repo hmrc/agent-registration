@@ -105,7 +105,7 @@ extends ISpec:
   private def restJsonValue(
     record: AgentApplication,
     fieldName: String
-  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplication.format.writes(record)))(_ \ _).asOpt[String]
+  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplication.restFormat.writes(record)))(_ \ _).asOpt[String]
 
   private def storedBsonDateFieldNames(record: AgentApplication): Seq[String] =
     val document: BsonDocument = rawDocument(record)

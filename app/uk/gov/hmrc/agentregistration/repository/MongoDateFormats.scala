@@ -23,6 +23,7 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import java.time.Instant
 import java.time.LocalDate
 
+/** Date formats for Mongo storage: BSON dates. */
 object MongoDateFormats:
 
   // reads also accept the ISO string shape of data written before the migration to BSON Date

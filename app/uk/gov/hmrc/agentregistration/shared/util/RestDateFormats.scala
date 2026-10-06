@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository
+package uk.gov.hmrc.agentregistration.shared.util
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
 
 import java.time.Instant
+import java.time.LocalDate
 
-/** Mongo format of [[IndividualProvidedDetails]]. Same as the REST format except that `createdAt` is BSON `Date`.
-  */
-object IndividualProvidedDetailsMongoFormat:
+/** Date formats for REST data exchange: ISO strings. */
+object RestDateFormats:
 
-  private given Format[Instant] = MongoDateFormats.instantFormat
+  val instantFormat: Format[Instant] = Format(Reads.DefaultInstantReads, Writes.DefaultInstantWrites)
 
-  val format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
+  val localDateFormat: Format[LocalDate] = Format(Reads.DefaultLocalDateReads, Writes.DefaultLocalDateWrites)

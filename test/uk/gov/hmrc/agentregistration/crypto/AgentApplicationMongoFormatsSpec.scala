@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -28,43 +29,51 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationScottishLimitedPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationScottishPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationSoleTrader
+import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class AgentApplicationEncryptionSpec
+import java.time.LocalDate
+
+class AgentApplicationMongoFormatsSpec
 extends UnitSpec:
 
-  private val tdAll: TdAll = TdAll()
+  "plaintextFormat" - {
 
-  private val configuration: Configuration = Configuration(ConfigFactory.parseString(
-    """
-      |appName = "agent-registration"
-      |microservice.services.des.host = "localhost"
-      |microservice.services.des.port = 1234
-      |microservice.services.des.protocol = "http"
-      |microservice.services.des.environment = "test"
-      |microservice.services.des.authorization-token = "test-token"
-      |microservice.services.hip.host = "localhost"
-      |microservice.services.hip.port = 1234
-      |microservice.services.hip.protocol = "http"
-      |microservice.services.hip.authorization-token = "test-token"
-      |field-level-encryption.enabled = true
-      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
-      |field-level-encryption.previousKeys = []
-      |""".stripMargin
-  ))
-  private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-  private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val service: AgentApplicationEncryption = new AgentApplicationEncryption(fle)
+    "serialize and deserialize AgentApplication" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      AgentApplicationMongoFormats.plaintextFormat.writes(agentApplication) shouldBe afterResubmittedJson
+      afterResubmittedJson.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
 
-  private def enc(plain: String): String = fle.encrypt(plain)
+    // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
+    "deserialize AgentApplication stored before its dates were migrated to BSON dates" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      // before the migration, applications were stored in the REST shape
+      val storedBeforeMigration: JsValue = Json.toJson(agentApplication)(using AgentApplication.restFormat)
+      storedBeforeMigration.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
+  }
 
-  private val llpModel: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
-  private val llpEncrypted: AgentApplicationLlp = service.encrypt(llpModel)
+  "encryptingFormat" - {
+    BusinessType.values.foreach: businessType =>
+      s"serialize and deserialize a $businessType application" in:
+        val agentApplication: AgentApplication = agentApplicationFor(businessType)
+        mongoFormats.encryptingFormat.reads(mongoFormats.encryptingFormat.writes(agentApplication)).get shouldBe agentApplication
 
-  "AgentApplicationEncryption.encrypt sets ciphertext on every PII field (LLP)" - {
+      s"store no plaintext PII for a $businessType application" in:
+        val agentApplication: AgentApplication = agentApplicationFor(businessType)
+        val written: String = mongoFormats.encryptingFormat.writes(agentApplication).toString
+        piiStringsFor(agentApplication).foreach: plaintext =>
+          withClue(s"plaintext '$plaintext' must not appear as a JSON value in $businessType Mongo JSON: "):
+            written should not include s"\"$plaintext\""
+
+    "agentApplicationFor gives each business type an application of that business type" in:
+      BusinessType.values.foreach: businessType =>
+        agentApplicationFor(businessType).businessType shouldBe businessType
+  }
+
+  "encrypt sets ciphertext on every PII field of an LLP application" - {
 
     "internalUserId is encrypted" in:
       llpEncrypted.internalUserId.value shouldBe enc(llpModel.internalUserId.value)
@@ -151,102 +160,110 @@ extends UnitSpec:
       llpEncrypted.linkId.value shouldBe llpModel.linkId.value
   }
 
-  "AgentApplicationEncryption encrypts subtype-specific PII fields" - {
+  "encrypt sets ciphertext on subtype-specific PII fields" - {
 
     "BusinessDetailsPartnership.postcode is encrypted (LimitedPartnership)" in:
       val model = tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
 
     "BusinessDetailsPartnership.postcode is encrypted (ScottishLimitedPartnership)" in:
       val model = tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
 
     "BusinessDetailsGeneralPartnership.postcode is encrypted" in:
       val model = tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
 
     "BusinessDetailsScottishPartnership.postcode is encrypted" in:
       val model = tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
 
     "BusinessDetailsSoleTrader.trn is encrypted when provided" in:
       val model = tdAll.agentApplicationSoleTrader.soleTraderWithTrn
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.trn.value shouldBe enc(tdAll.trn)
 
     "BusinessDetailsSoleTrader.fullName fields are encrypted" in:
       val model = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.fullName.firstName shouldBe enc(model.getBusinessDetails.fullName.firstName)
       encrypted.getBusinessDetails.fullName.lastName shouldBe enc(model.getBusinessDetails.fullName.lastName)
 
     "BusinessDetailsSoleTrader.nino is encrypted" in:
       val model = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.nino.value.value shouldBe enc(model.getBusinessDetails.nino.value.value)
 
     "BusinessDetailsLimitedCompany.ctUtr is encrypted" in:
       val model = tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted
-      val encrypted = service.encrypt(model)
+      val encrypted = mongoFormats.encrypt(model)
       encrypted.getBusinessDetails.ctUtr.value shouldBe enc(model.getBusinessDetails.ctUtr.value)
   }
 
-  "AgentApplicationEncryption single-value helpers" - {
+  "encrypt and decrypt single values" - {
     "encrypt(InternalUserId) -> decrypt round-trips" in:
-      service.decrypt(service.encrypt(tdAll.internalUserId)) shouldBe tdAll.internalUserId
+      mongoFormats.decrypt(mongoFormats.encrypt(tdAll.internalUserId)) shouldBe tdAll.internalUserId
 
     "encrypt(InternalUserId) produces ciphertext" in:
-      service.encrypt(tdAll.internalUserId).value shouldBe enc(tdAll.internalUserId.value)
+      mongoFormats.encrypt(tdAll.internalUserId).value shouldBe enc(tdAll.internalUserId.value)
 
     "encrypt(GroupId) produces ciphertext" in:
-      service.encrypt(tdAll.groupId).value shouldBe enc(tdAll.groupId.value)
+      mongoFormats.encrypt(tdAll.groupId).value shouldBe enc(tdAll.groupId.value)
 
     "encrypt(Vrn) produces ciphertext" in:
-      service.encrypt(tdAll.vrn).value shouldBe enc(tdAll.vrn.value)
+      mongoFormats.encrypt(tdAll.vrn).value shouldBe enc(tdAll.vrn.value)
 
     "encrypt(PayeRef) produces ciphertext" in:
-      service.encrypt(tdAll.payeRef).value shouldBe enc(tdAll.payeRef.value)
+      mongoFormats.encrypt(tdAll.payeRef).value shouldBe enc(tdAll.payeRef.value)
   }
 
-  "AgentApplicationEncryption round-trips every subtype and does not leak plaintext PII" - {
-    val subtypes: Seq[(String, AgentApplication)] = Seq(
-      "AgentApplicationLlp" -> tdAll.agentApplicationLlp.afterDeclarationSubmittedWithAllOptionalFields,
-      "AgentApplicationSoleTrader" -> tdAll.agentApplicationSoleTrader.soleTraderWithTrn,
-      "AgentApplicationLimitedCompany" -> tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted,
-      "AgentApplicationGeneralPartnership" -> tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted,
-      "AgentApplicationLimitedPartnership" -> tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted,
-      "AgentApplicationScottishLimitedPartnership" -> tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted,
-      "AgentApplicationScottishPartnership" -> tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
-    )
+  private lazy val tdAll: TdAll =
+    new TdAll:
+      // TdBase derives these dates from LocalDate.now(); the document below needs fixed values, so they are taken from the frozen time
+      override def dateOfIncorporation: LocalDate = nowAsLocalDateTime.toLocalDate.minusYears(10)
+      override def riskingCompletedDate: LocalDate = nowAsLocalDateTime.toLocalDate.minusDays(1)
+      override def correctiveActionExpiryDate: LocalDate = nowAsLocalDateTime.toLocalDate.plusDays(45)
 
-    subtypes.foreach { case (name, model) =>
-      s"$name encrypt then decrypt is identity" in:
-        service.decrypt(service.encrypt(model)) shouldBe model
+  // exhaustive on purpose: a new business type does not compile until it has an application here
+  private def agentApplicationFor(businessType: BusinessType): AgentApplication =
+    businessType match
+      case BusinessType.SoleTrader => tdAll.agentApplicationSoleTrader.soleTraderWithTrn
+      case BusinessType.LimitedCompany => tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted
+      case BusinessType.Partnership.GeneralPartnership => tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted
+      case BusinessType.Partnership.LimitedLiabilityPartnership => tdAll.agentApplicationLlp.afterDeclarationSubmittedWithAllOptionalFields
+      case BusinessType.Partnership.LimitedPartnership => tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted
+      case BusinessType.Partnership.ScottishLimitedPartnership => tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted
+      case BusinessType.Partnership.ScottishPartnership => tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
 
-      s"$name rendered JSON of the encrypted model contains no plaintext PII" in:
-        val rendered = Json.toJson[AgentApplication](service.encrypt(model))(using AgentApplication.format).toString
-        piiStringsFor(model).foreach { plaintext =>
-          withClue(s"plaintext '$plaintext' must not appear as a JSON value in $name encrypted JSON: ") {
-            rendered should not include s"\"$plaintext\""
-          }
-        }
+  private val configuration: Configuration = Configuration(ConfigFactory.parseString(
+    """
+      |appName = "agent-registration"
+      |microservice.services.des.host = "localhost"
+      |microservice.services.des.port = 1234
+      |microservice.services.des.protocol = "http"
+      |microservice.services.des.environment = "test"
+      |microservice.services.des.authorization-token = "test-token"
+      |microservice.services.hip.host = "localhost"
+      |microservice.services.hip.port = 1234
+      |microservice.services.hip.protocol = "http"
+      |microservice.services.hip.authorization-token = "test-token"
+      |field-level-encryption.enabled = true
+      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
+      |field-level-encryption.previousKeys = []
+      |""".stripMargin
+  ))
+  private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
+  private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
+  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle)
 
-      s"$name Mongo formats write then read is identity" in:
-        service.mongoFormat.reads(service.mongoFormat.writes(model)).get shouldBe model
+  private def enc(plain: String): String = fle.encrypt(plain)
 
-      s"$name JSON written by the Mongo formats contains no plaintext PII" in:
-        val written: String = service.mongoFormat.writes(model).toString
-        piiStringsFor(model).foreach { plaintext =>
-          withClue(s"plaintext '$plaintext' must not appear as a JSON value in $name Mongo JSON: ") {
-            written should not include s"\"$plaintext\""
-          }
-        }
-    }
-  }
+  private val llpModel: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
+  private val llpEncrypted: AgentApplicationLlp = mongoFormats.encrypt(llpModel)
 
   private def companyProfilePiiStrings(cp: CompanyProfile): List[String] =
     List(cp.companyNumber.value, cp.companyName) ++
@@ -314,3 +331,137 @@ extends UnitSpec:
 
     common ++ businessSpecific
   }
+
+  // dates as BSON dates
+  private val afterResubmittedJson: JsValue = Json.parse(
+    // language=JSON
+    """{
+      |  "_id": "agent-application-id-12345",
+      |  "cachedSessionId": "session-id-123",
+      |  "applicationReference": "APPREF123",
+      |  "internalUserId": "internal-user-id-12345",
+      |  "applicantCredentials": {
+      |    "providerId": "cred-id-12345",
+      |    "providerType": "GovernmentGateway"
+      |  },
+      |  "linkId": "link-id-12345",
+      |  "groupId": "group-id-12345",
+      |  "createdAt": {
+      |    "$date": {
+      |      "$numberLong": "2837003631880"
+      |    }
+      |  },
+      |  "submittedAt": {
+      |    "$date": {
+      |      "$numberLong": "2837003631880"
+      |    }
+      |  },
+      |  "applicationState": "SentForRisking",
+      |  "userRole": "Authorised",
+      |  "businessDetails": {
+      |    "safeId": "XA0001234512345",
+      |    "saUtr": "1234567895",
+      |    "companyProfile": {
+      |      "companyNumber": "1234567890",
+      |      "companyName": "Test Partnership",
+      |      "dateOfIncorporation": "2049-11-25",
+      |      "unsanitisedCHROAddress": {
+      |        "address_line_1": "23 Great Portland Street",
+      |        "address_line_2": "London",
+      |        "postal_code": "W1 8LT",
+      |        "country": "GB"
+      |      }
+      |    }
+      |  },
+      |  "applicantContactDetails": {
+      |    "applicantName": "Alice Smith",
+      |    "telephoneNumber": "(+44) 10794554342",
+      |    "applicantEmailAddress": {
+      |      "emailAddress": "user@test.com",
+      |      "isVerified": true
+      |    }
+      |  },
+      |  "amlsDetails": {
+      |    "supervisoryBody": "HMRC",
+      |    "amlsRegistrationNumber": "XAML00000123456"
+      |  },
+      |  "agentDetails": {
+      |    "businessName": {
+      |      "agentBusinessName": "Test Company Name"
+      |    },
+      |    "telephoneNumber": {
+      |      "agentTelephoneNumber": "(+44) 10794554342"
+      |    },
+      |    "agentEmailAddress": {
+      |      "emailAddress": {
+      |        "agentEmailAddress": "user@test.com"
+      |      },
+      |      "isVerified": true
+      |    },
+      |    "agentCorrespondenceAddress": {
+      |      "addressLine1": "23 Great Portland Street",
+      |      "addressLine2": "London",
+      |      "postalCode": "W1 8LT",
+      |      "countryCode": "GB"
+      |    }
+      |  },
+      |  "refusalToDealWithCheckResult": "Pass",
+      |  "globalAsaEnrolmentCheckResult": "Pass",
+      |  "hmrcStandardForAgentsAgreed": "Agreed",
+      |  "numberOfIndividuals": {
+      |    "numberOfCompaniesHouseOfficers": 2,
+      |    "isCompaniesHouseOfficersListCorrect": true,
+      |    "type": "FiveOrLessOfficers"
+      |  },
+      |  "hasOtherRelevantIndividuals": false,
+      |  "vrns": [
+      |    "123456789"
+      |  ],
+      |  "payeRefs": [
+      |    "123/AB12345"
+      |  ],
+      |  "riskingOutcomeApplication": {
+      |    "actualDecisionDate": {
+      |      "$date": {
+      |        "$numberLong": "2836857600000"
+      |      }
+      |    },
+      |    "correctiveActionExpiryDate": {
+      |      "$date": {
+      |        "$numberLong": "2840832000000"
+      |      }
+      |    },
+      |    "reSubmittedAt": {
+      |      "$date": {
+      |        "$numberLong": "2837003631880"
+      |      }
+      |    },
+      |    "outcome": "FailedFixable"
+      |  },
+      |  "riskingOutcomeEntity": {
+      |    "fixes": [
+      |      {
+      |        "failure": {
+      |          "type": "_3._5"
+      |        },
+      |        "isConfirmed": true,
+      |        "amlsDetails": {
+      |          "supervisoryBody": "HMRC",
+      |          "amlsRegistrationNumber": "XAML00000123456"
+      |        },
+      |        "type": "EntityFix._3.AmlsFix"
+      |      },
+      |      {
+      |        "isConfirmed": true,
+      |        "type": "EntityFix._4._4"
+      |      },
+      |      {
+      |        "isConfirmed": true,
+      |        "type": "EntityFix._5._4"
+      |      }
+      |    ],
+      |    "type": "FailedFixable"
+      |  },
+      |  "type": "AgentApplicationLlp"
+      |}""".stripMargin
+  )

@@ -29,6 +29,7 @@ import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Fini
 import uk.gov.hmrc.agentregistration.shared.individual.ProvidedDetailsState.Precreated
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.agentregistration.shared.util.Errors.*
+import uk.gov.hmrc.agentregistration.shared.util.RestDateFormats
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
 import java.time.Instant
@@ -85,4 +86,7 @@ final case class IndividualProvidedDetails(
   def getRiskingOutcomeIndividual: RiskingOutcomeIndividual = riskingOutcomeIndividual.getOrThrowExpectedDataMissing("riskingOutcomeIndividual")
 
 object IndividualProvidedDetails:
-  given format: OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]
+
+  given restFormat: OFormat[IndividualProvidedDetails] = makeFormat(using RestDateFormats.instantFormat)
+
+  def makeFormat(using Format[Instant]): OFormat[IndividualProvidedDetails] = Json.format[IndividualProvidedDetails]

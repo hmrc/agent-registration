@@ -21,7 +21,7 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
-import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
+import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsMongoFormats
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -42,21 +42,21 @@ import scala.concurrent.Future
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
+  individualProvidedDetailsMongoFormats: IndividualProvidedDetailsMongoFormats
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes,
-  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.mongoFormat)),
+  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsMongoFormats.encryptingFormat)),
   replaceIndexes = true
-)(using domainFormat = individualProvidedDetailsEncryption.mongoFormat):
+)(using domainFormat = individualProvidedDetailsMongoFormats.encryptingFormat):
 
   override lazy val requiresTtlIndex: Boolean = false
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value)
     )
     .toFuture()
     .map(_.toList)
@@ -81,7 +81,7 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", individualProvidedDetailsEncryption.encrypt(internalUserId).value),
+        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )

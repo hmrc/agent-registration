@@ -34,7 +34,6 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 import java.time.Clock
 import java.time.Instant
-import scala.annotation.nowarn
 
 /** Agent (Registration) Application. This final case class represents the data entered by a user for registering as an agent.
   */
@@ -410,7 +409,7 @@ extends AgentApplication:
 
 object AgentApplication:
 
-  export AgentApplicationRestFormats.format
+  export AgentApplicationFormat.restFormat
 
   type IsSoleTrader = AgentApplicationSoleTrader & AgentApplication
   type IsNotSoleTrader =
