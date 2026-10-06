@@ -410,7 +410,7 @@ extends AgentApplication:
 
 object AgentApplication:
 
-  export AgentApplicationFormats.format
+  export AgentApplicationRestFormats.format
 
   type IsSoleTrader = AgentApplicationSoleTrader & AgentApplication
   type IsNotSoleTrader =

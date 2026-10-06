@@ -24,7 +24,8 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 import scala.annotation.nowarn
 
-object AgentApplicationFormats:
+/** JSON formats for REST data exchange. */
+object AgentApplicationRestFormats:
 
   @nowarn()
   given format: OFormat[AgentApplication] =

@@ -23,7 +23,7 @@ import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
 import java.time.LocalDate
 
-class AgentApplicationFormatsSpec
+class AgentApplicationRestFormatsSpec
 extends UnitSpec:
 
   "serialize and deserialize AgentApplication" in:
