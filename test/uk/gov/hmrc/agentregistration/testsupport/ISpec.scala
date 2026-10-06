@@ -45,6 +45,9 @@ extends AnyFreeSpecLike,
   RichMatchers,
   MongoSupport:
 
+  // the service prefix keeps it apart from a same-named spec's database in the sibling services, whose suites may run at the same time
+  override protected def databaseName: String = s"test-be-${getClass.getSimpleName}"
+
   given ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   private val testServerPort = ISpec.testServerPort
