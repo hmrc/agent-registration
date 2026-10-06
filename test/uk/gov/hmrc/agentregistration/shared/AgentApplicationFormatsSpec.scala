@@ -14,27 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository
+package uk.gov.hmrc.agentregistration.shared
 
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
 import java.time.LocalDate
 
-class AgentApplicationMongoFormatSpec
+class AgentApplicationFormatsSpec
 extends UnitSpec:
 
   "serialize and deserialize AgentApplication" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
-    AgentApplicationMongoFormat.format.writes(agentApplication) shouldBe afterResubmittedJson
-    afterResubmittedJson.as[AgentApplication](using AgentApplicationMongoFormat.format) shouldBe agentApplication
-
-  // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
-  "deserialize AgentApplication stored before its dates were migrated to BSON dates" in:
-    afterResubmittedLegacyJson.as[AgentApplication](using AgentApplicationMongoFormat.format) shouldBe tdAll.agentApplicationLlp.afterResubmitted
+    Json.toJson[AgentApplication](agentApplication) shouldBe afterResubmittedJson
+    afterResubmittedJson.as[AgentApplication] shouldBe agentApplication
 
   private val tdAll: TdAll =
     new TdAll:
@@ -43,142 +38,8 @@ extends UnitSpec:
       override def riskingCompletedDate: LocalDate = nowAsLocalDateTime.toLocalDate.minusDays(1)
       override def correctiveActionExpiryDate: LocalDate = nowAsLocalDateTime.toLocalDate.plusDays(45)
 
-  // dates as BSON dates
+  // dates as ISO strings
   private val afterResubmittedJson: JsValue = Json.parse(
-    // language=JSON
-    """{
-      |  "_id": "agent-application-id-12345",
-      |  "cachedSessionId": "session-id-123",
-      |  "applicationReference": "APPREF123",
-      |  "internalUserId": "internal-user-id-12345",
-      |  "applicantCredentials": {
-      |    "providerId": "cred-id-12345",
-      |    "providerType": "GovernmentGateway"
-      |  },
-      |  "linkId": "link-id-12345",
-      |  "groupId": "group-id-12345",
-      |  "createdAt": {
-      |    "$date": {
-      |      "$numberLong": "2837003631880"
-      |    }
-      |  },
-      |  "submittedAt": {
-      |    "$date": {
-      |      "$numberLong": "2837003631880"
-      |    }
-      |  },
-      |  "applicationState": "SentForRisking",
-      |  "userRole": "Authorised",
-      |  "businessDetails": {
-      |    "safeId": "XA0001234512345",
-      |    "saUtr": "1234567895",
-      |    "companyProfile": {
-      |      "companyNumber": "1234567890",
-      |      "companyName": "Test Partnership",
-      |      "dateOfIncorporation": "2049-11-25",
-      |      "unsanitisedCHROAddress": {
-      |        "address_line_1": "23 Great Portland Street",
-      |        "address_line_2": "London",
-      |        "postal_code": "W1 8LT",
-      |        "country": "GB"
-      |      }
-      |    }
-      |  },
-      |  "applicantContactDetails": {
-      |    "applicantName": "Alice Smith",
-      |    "telephoneNumber": "(+44) 10794554342",
-      |    "applicantEmailAddress": {
-      |      "emailAddress": "user@test.com",
-      |      "isVerified": true
-      |    }
-      |  },
-      |  "amlsDetails": {
-      |    "supervisoryBody": "HMRC",
-      |    "amlsRegistrationNumber": "XAML00000123456"
-      |  },
-      |  "agentDetails": {
-      |    "businessName": {
-      |      "agentBusinessName": "Test Company Name"
-      |    },
-      |    "telephoneNumber": {
-      |      "agentTelephoneNumber": "(+44) 10794554342"
-      |    },
-      |    "agentEmailAddress": {
-      |      "emailAddress": {
-      |        "agentEmailAddress": "user@test.com"
-      |      },
-      |      "isVerified": true
-      |    },
-      |    "agentCorrespondenceAddress": {
-      |      "addressLine1": "23 Great Portland Street",
-      |      "addressLine2": "London",
-      |      "postalCode": "W1 8LT",
-      |      "countryCode": "GB"
-      |    }
-      |  },
-      |  "refusalToDealWithCheckResult": "Pass",
-      |  "globalAsaEnrolmentCheckResult": "Pass",
-      |  "hmrcStandardForAgentsAgreed": "Agreed",
-      |  "numberOfIndividuals": {
-      |    "numberOfCompaniesHouseOfficers": 2,
-      |    "isCompaniesHouseOfficersListCorrect": true,
-      |    "type": "FiveOrLessOfficers"
-      |  },
-      |  "hasOtherRelevantIndividuals": false,
-      |  "vrns": [
-      |    "123456789"
-      |  ],
-      |  "payeRefs": [
-      |    "123/AB12345"
-      |  ],
-      |  "riskingOutcomeApplication": {
-      |    "actualDecisionDate": {
-      |      "$date": {
-      |        "$numberLong": "2836857600000"
-      |      }
-      |    },
-      |    "correctiveActionExpiryDate": {
-      |      "$date": {
-      |        "$numberLong": "2840832000000"
-      |      }
-      |    },
-      |    "reSubmittedAt": {
-      |      "$date": {
-      |        "$numberLong": "2837003631880"
-      |      }
-      |    },
-      |    "outcome": "FailedFixable"
-      |  },
-      |  "riskingOutcomeEntity": {
-      |    "fixes": [
-      |      {
-      |        "failure": {
-      |          "type": "_3._5"
-      |        },
-      |        "isConfirmed": true,
-      |        "amlsDetails": {
-      |          "supervisoryBody": "HMRC",
-      |          "amlsRegistrationNumber": "XAML00000123456"
-      |        },
-      |        "type": "EntityFix._3.AmlsFix"
-      |      },
-      |      {
-      |        "isConfirmed": true,
-      |        "type": "EntityFix._4._4"
-      |      },
-      |      {
-      |        "isConfirmed": true,
-      |        "type": "EntityFix._5._4"
-      |      }
-      |    ],
-      |    "type": "FailedFixable"
-      |  },
-      |  "type": "AgentApplicationLlp"
-      |}""".stripMargin
-  )
-
-  // the shape written before the migration: every date an ISO string
-  private val afterResubmittedLegacyJson: JsValue = Json.parse(
     // language=JSON
     """{
       |  "_id": "agent-application-id-12345",

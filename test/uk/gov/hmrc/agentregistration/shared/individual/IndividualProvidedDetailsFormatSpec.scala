@@ -14,87 +14,25 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.repository
+package uk.gov.hmrc.agentregistration.shared.individual
 
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
-class IndividualProvidedDetailsMongoFormatSpec
+class IndividualProvidedDetailsFormatSpec
 extends UnitSpec:
 
   "serialize and deserialize IndividualProvidedDetails" in:
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
-    IndividualProvidedDetailsMongoFormat.format.writes(individualProvidedDetails) shouldBe afterRiskedFixableJson
-    afterRiskedFixableJson.as[IndividualProvidedDetails](using IndividualProvidedDetailsMongoFormat.format) shouldBe individualProvidedDetails
-
-  // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
-  "deserialize IndividualProvidedDetails stored before its dates were migrated to BSON dates" in:
-    afterRiskedFixableLegacyJson.as[IndividualProvidedDetails](using
-      IndividualProvidedDetailsMongoFormat.format
-    ) shouldBe tdAll.providedDetails.afterRiskedFixable
+    Json.toJson[IndividualProvidedDetails](individualProvidedDetails) shouldBe afterRiskedFixableJson
+    afterRiskedFixableJson.as[IndividualProvidedDetails] shouldBe individualProvidedDetails
 
   private val tdAll: TdAll = TdAll()
 
-  // dates as BSON dates
+  // dates as ISO strings
   private val afterRiskedFixableJson: JsValue = Json.parse(
-    // language=JSON
-    """{
-      |  "_id": "individual-provided-details-id-12345",
-      |  "personReference": "1234567890",
-      |  "individualName": "Test Name",
-      |  "isPersonOfControl": true,
-      |  "internalUserId": "internal-user-id-12345",
-      |  "createdAt": {
-      |    "$date": {
-      |      "$numberLong": "2837003631880"
-      |    }
-      |  },
-      |  "providedDetailsState": "Finished",
-      |  "agentApplicationId": "agent-application-id-12345",
-      |  "individualDateOfBirth": {
-      |    "dateOfBirth": "2000-01-01",
-      |    "type": "Provided"
-      |  },
-      |  "telephoneNumber": "(+44) 10794554342",
-      |  "emailAddress": {
-      |    "emailAddress": "member@test.com",
-      |    "isVerified": true
-      |  },
-      |  "individualNino": {
-      |    "nino": "AB123456C",
-      |    "type": "Provided"
-      |  },
-      |  "individualSaUtr": {
-      |    "saUtr": "1234567895",
-      |    "type": "Provided"
-      |  },
-      |  "hmrcStandardForAgentsAgreed": "Agreed",
-      |  "hasApprovedApplication": true,
-      |  "vrns": [
-      |    "123456789"
-      |  ],
-      |  "payeRefs": [
-      |    "123/AB12345"
-      |  ],
-      |  "passedIv": true,
-      |  "providedByApplicant": false,
-      |  "riskingOutcomeIndividual": {
-      |    "fixes": [
-      |      {
-      |        "type": "IndividualFix._4._1"
-      |      }
-      |    ],
-      |    "declarationAgreed": false,
-      |    "type": "FailedFixable"
-      |  }
-      |}""".stripMargin
-  )
-
-  // the shape written before the migration: every date an ISO string
-  private val afterRiskedFixableLegacyJson: JsValue = Json.parse(
     // language=JSON
     """{
       |  "_id": "individual-provided-details-id-12345",

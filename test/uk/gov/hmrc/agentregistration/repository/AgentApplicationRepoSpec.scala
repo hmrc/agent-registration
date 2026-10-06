@@ -122,6 +122,7 @@ extends ISpec:
         withClue(s"$fieldName: "):
           rawValue(document, fieldName).value.getBsonType shouldBe BsonType.DATE_TIME
 
+    // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
     s"findById reads every date field of $name that the migration covers when it is still stored as a legacy ISO string" in:
       repo.upsert(record).futureValue
       val legacyStrings: Seq[Bson] = storedBsonDateFieldNames(record).map(fieldName => Updates.set(fieldName, restJsonValue(record, fieldName).value))

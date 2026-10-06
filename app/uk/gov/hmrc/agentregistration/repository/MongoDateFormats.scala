@@ -27,11 +27,13 @@ object MongoDateFormats:
 
   // reads also accept the ISO string shape of data written before the migration to BSON Date
   val instantFormat: Format[Instant] = Format(
+    // TODO: remove the ISO-string fallback once the dates migration has run in every environment
     MongoJavatimeFormats.instantReads.orElse(Reads.DefaultInstantReads),
     MongoJavatimeFormats.instantWrites
   )
 
   val localDateFormat: Format[LocalDate] = Format(
+    // TODO: remove the ISO-string fallback once the dates migration has run in every environment
     MongoJavatimeFormats.localDateReads.orElse(Reads.DefaultLocalDateReads),
     MongoJavatimeFormats.localDateWrites
   )
