@@ -50,17 +50,29 @@ extends Logging:
     IndividualProvidedDetailsRepo.collectionName -> "createdAt"
   )
 
+  // the pass is repeated so that records written while a pass was running are converted by the next one
+  private val passes: Int = 3
+
   def run(): Future[Long] = ProcessInSequence
-    .processInSequence(fieldNamesByCollectionName):
-      (
-        collectionName,
-        fieldName
-      ) =>
-        convertToBsonDate(collectionName, fieldName)
+    .processInSequence(1 to passes)(runPass)
     .map(_.sum)
     .map: modifiedCount =>
-      logger.warn(s"$logPrefix migration run completed, modified $modifiedCount values")
+      logger.warn(s"$logPrefix migration run completed after $passes passes, modified $modifiedCount values")
       modifiedCount
+
+  private def runPass(passNumber: Int): Future[Long] =
+    logger.warn(s"$logPrefix migration pass $passNumber of $passes started")
+    ProcessInSequence
+      .processInSequence(fieldNamesByCollectionName):
+        (
+          collectionName,
+          fieldName
+        ) =>
+          convertToBsonDate(collectionName, fieldName)
+      .map(_.sum)
+      .map: modifiedCount =>
+        logger.warn(s"$logPrefix migration pass $passNumber of $passes completed, modified $modifiedCount values")
+        modifiedCount
 
   private def convertToBsonDate(
     collectionName: String,
