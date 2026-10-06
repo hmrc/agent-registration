@@ -118,14 +118,14 @@ extends Logging:
             .unit
             .flatMap: _ =>
               lockServiceFor(name).withLock {
-                logger.info(s"Starting scheduled task: $name at ${ZonedDateTime.now(clock).toString}")
+                logger.info(s"Running $name...")
                 job()
               }
             .onComplete { result =>
               result match
-                case Success(Some(_)) => logger.info(s"Scheduled task completed successfully: $name")
-                case Success(None) => logger.debug(s"Scheduled task skipped - already running on another instance: $name")
-                case Failure(e) => logger.error(s"Scheduled task failed: $name, ${e.getMessage}", e)
+                case Success(Some(_)) => logger.info(s"Running $name DONE")
+                case Success(None) => logger.debug(s"Skipped $name: already running on another instance")
+                case Failure(e) => logger.error(s"Running $name FAILED", e)
               reschedule
             }
         ,
