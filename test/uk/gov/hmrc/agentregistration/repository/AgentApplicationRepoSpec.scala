@@ -28,6 +28,7 @@ import play.api.libs.json.JsLookupResult
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
@@ -105,7 +106,7 @@ extends ISpec:
   private def restJsonValue(
     record: AgentApplication,
     fieldName: String
-  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplication.restFormat.writes(record)))(_ \ _).asOpt[String]
+  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplicationFormat.restFormat.writes(record)))(_ \ _).asOpt[String]
 
   private def storedBsonDateFieldNames(record: AgentApplication): Seq[String] =
     val document: BsonDocument = rawDocument(record)

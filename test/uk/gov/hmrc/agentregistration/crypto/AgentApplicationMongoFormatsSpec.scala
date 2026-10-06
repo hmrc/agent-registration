@@ -22,6 +22,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedPartnership
@@ -51,7 +52,7 @@ extends UnitSpec:
     "deserialize AgentApplication stored before its dates were migrated to BSON dates" in:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
       // before the migration, applications were stored in the REST shape
-      val storedBeforeMigration: JsValue = Json.toJson(agentApplication)(using AgentApplication.restFormat)
+      val storedBeforeMigration: JsValue = Json.toJson(agentApplication)(using AgentApplicationFormat.restFormat)
       storedBeforeMigration.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
   }
 

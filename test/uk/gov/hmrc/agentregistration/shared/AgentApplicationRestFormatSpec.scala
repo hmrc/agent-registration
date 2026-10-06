@@ -23,13 +23,13 @@ import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
 import java.time.LocalDate
 
-class AgentApplicationFormatSpec
+class AgentApplicationRestFormatSpec
 extends UnitSpec:
 
   "serialize and deserialize AgentApplication" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
-    Json.toJson[AgentApplication](agentApplication) shouldBe afterResubmittedRestJson
-    afterResubmittedRestJson.as[AgentApplication] shouldBe agentApplication
+    AgentApplicationFormat.restFormat.writes(agentApplication) shouldBe afterResubmittedRestJson
+    afterResubmittedRestJson.as[AgentApplication](using AgentApplicationFormat.restFormat) shouldBe agentApplication
 
   private val tdAll: TdAll =
     new TdAll:

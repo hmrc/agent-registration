@@ -409,8 +409,6 @@ extends AgentApplication:
 
 object AgentApplication:
 
-  export AgentApplicationFormat.restFormat
-
   type IsSoleTrader = AgentApplicationSoleTrader & AgentApplication
   type IsNotSoleTrader =
     (AgentApplicationLimitedCompany

@@ -21,7 +21,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
-class IndividualProvidedDetailsFormatSpec
+class IndividualProvidedDetailsRestFormatSpec
 extends UnitSpec:
 
   "serialize and deserialize IndividualProvidedDetails" in:
