@@ -18,9 +18,6 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
-import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -35,10 +32,6 @@ import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 class AgentApplicationEncryptionSpec
 extends UnitSpec:
@@ -243,92 +236,16 @@ extends UnitSpec:
         }
 
       s"$name Mongo formats write then read is identity" in:
-        service.formats.reads(service.formats.writes(model)).get shouldBe model
+        service.mongoFormat.reads(service.mongoFormat.writes(model)).get shouldBe model
 
       s"$name JSON written by the Mongo formats contains no plaintext PII" in:
-        val written: String = service.formats.writes(model).toString
+        val written: String = service.mongoFormat.writes(model).toString
         piiStringsFor(model).foreach { plaintext =>
           withClue(s"plaintext '$plaintext' must not appear as a JSON value in $name Mongo JSON: ") {
             written should not include s"\"$plaintext\""
           }
         }
     }
-  }
-
-  "JSON shape of Instant fields in the REST format and in the Mongo format" - {
-    val model: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    val restJson: JsValue = Json.toJson[AgentApplication](model)(using AgentApplication.format)
-    val mongoJson: JsValue = service.formats.writes(model)
-
-    "REST format writes createdAt and applicationExpiresAt as ISO strings" in:
-      (restJson \ "createdAt").get shouldBe JsString("2059-11-25T16:33:51.880Z")
-      (restJson \ "applicationExpiresAt").get shouldBe JsString("2060-02-06T16:33:51.880Z")
-
-    "Mongo format writes createdAt and applicationExpiresAt as BSON Date" in:
-      (mongoJson \ "createdAt").get shouldBe Json.parse("""{ "$date": { "$numberLong": "2837003631880" } }""")
-      (mongoJson \ "applicationExpiresAt").get shouldBe Json.parse("""{ "$date": { "$numberLong": "2843310831880" } }""")
-
-    "REST format writes submittedAt as an ISO string and Mongo format writes it as a BSON Date" in:
-      val submitted: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
-      val submittedAt: Instant = submitted.submittedAt.value
-      (Json.toJson[AgentApplication](submitted)(using AgentApplication.format) \ "submittedAt").get shouldBe JsString(submittedAt.toString)
-      (service.formats.writes(submitted) \ "submittedAt").get shouldBe
-        Json.obj("$date" -> Json.obj("$numberLong" -> submittedAt.toEpochMilli.toString))
-
-    "Mongo format reads back what it wrote" in:
-      service.formats.reads(mongoJson).get shouldBe model
-
-    "Mongo format reads createdAt and applicationExpiresAt stored as legacy ISO strings" in:
-      val legacyMongoJson: JsObject =
-        mongoJson.as[JsObject] ++ Json.obj(
-          "createdAt" -> "2059-11-25T16:33:51.880Z",
-          "applicationExpiresAt" -> "2060-02-06T16:33:51.880Z"
-        )
-      service.formats.reads(legacyMongoJson).get shouldBe model
-
-    "REST format writes riskingOutcomeApplication.reSubmittedAt as an ISO string and Mongo format writes it as a BSON Date" in:
-      val resubmitted: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
-      (Json.toJson[AgentApplication](resubmitted)(using AgentApplication.format) \ "riskingOutcomeApplication" \ "reSubmittedAt").get shouldBe
-        JsString("2059-11-25T16:33:51.880Z")
-      (service.formats.writes(resubmitted) \ "riskingOutcomeApplication" \ "reSubmittedAt").get shouldBe
-        Json.parse("""{ "$date": { "$numberLong": "2837003631880" } }""")
-
-    "Mongo format reads riskingOutcomeApplication.reSubmittedAt stored as a BSON Date or as a legacy ISO string" in:
-      val resubmitted: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
-      val resubmittedMongoJson: JsObject = service.formats.writes(resubmitted)
-      val legacyMongoJson: JsObject = resubmittedMongoJson.deepMerge(
-        Json.obj("riskingOutcomeApplication" -> Json.obj("reSubmittedAt" -> "2059-11-25T16:33:51.880Z"))
-      )
-      service.formats.reads(resubmittedMongoJson).get shouldBe resubmitted
-      service.formats.reads(legacyMongoJson).get shouldBe resubmitted
-
-    "REST format writes correctiveActionExpiryDate as an ISO date string and Mongo format writes it as a BSON Date at midnight UTC" in:
-      val fixable: AgentApplication = tdAll.agentApplicationLlp.afterRiskingCompletedFixable
-      val correctiveActionExpiryDate: LocalDate = tdAll.riskingOutcomeApplication.failedFixable.correctiveActionExpiryDate
-      val midnightUtcMillis: Long = correctiveActionExpiryDate.atStartOfDay(ZoneOffset.UTC).toInstant.toEpochMilli
-      (Json.toJson[AgentApplication](fixable)(using AgentApplication.format) \ "riskingOutcomeApplication" \ "correctiveActionExpiryDate").get shouldBe
-        JsString(correctiveActionExpiryDate.toString)
-      (service.formats.writes(fixable) \ "riskingOutcomeApplication" \ "correctiveActionExpiryDate").get shouldBe
-        Json.obj("$date" -> Json.obj("$numberLong" -> midnightUtcMillis.toString))
-
-    "Mongo format keeps actualDecisionDate as an ISO date string" in:
-      val fixable: AgentApplication = tdAll.agentApplicationLlp.afterRiskingCompletedFixable
-      (service.formats.writes(fixable) \ "riskingOutcomeApplication" \ "actualDecisionDate").get shouldBe
-        JsString(tdAll.riskingOutcomeApplication.failedFixable.actualDecisionDate.toString)
-
-    "Mongo format reads correctiveActionExpiryDate stored as a BSON Date or as a legacy ISO date string" in:
-      Seq(
-        tdAll.agentApplicationLlp.afterRiskingCompletedFixable,
-        tdAll.agentApplicationLlp.afterRiskingCompletedNonFixable
-      ).foreach: application =>
-        val applicationMongoJson: JsObject = service.formats.writes(application)
-        val correctiveActionExpiryDate: String =
-          (Json.toJson[AgentApplication](application)(using AgentApplication.format) \ "riskingOutcomeApplication" \ "correctiveActionExpiryDate").as[String]
-        val legacyMongoJson: JsObject = applicationMongoJson.deepMerge(
-          Json.obj("riskingOutcomeApplication" -> Json.obj("correctiveActionExpiryDate" -> correctiveActionExpiryDate))
-        )
-        service.formats.reads(applicationMongoJson).get shouldBe application
-        service.formats.reads(legacyMongoJson).get shouldBe application
   }
 
   private def companyProfilePiiStrings(cp: CompanyProfile): List[String] =

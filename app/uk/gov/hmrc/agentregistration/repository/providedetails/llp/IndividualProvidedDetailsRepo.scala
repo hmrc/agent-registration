@@ -52,9 +52,9 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.formats)),
+  extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.mongoFormat)),
   replaceIndexes = true
-)(using domainFormat = individualProvidedDetailsEncryption.formats):
+)(using domainFormat = individualProvidedDetailsEncryption.mongoFormat):
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(

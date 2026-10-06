@@ -41,7 +41,7 @@ class AgentApplicationEncryption @Inject() (fieldLevelEncryption: FieldLevelEncr
   /** Mongo Format that encrypts on write and decrypts on read. Wired into the repo as `domainFormat` so PII can never be persisted in plaintext, no matter what
     * code path performs the write.
     */
-  val formats: OFormat[AgentApplication] = OFormat[AgentApplication](
+  val mongoFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
     r = AgentApplicationMongoFormat.format.map[AgentApplication](decrypt),
     w = AgentApplicationMongoFormat.format.contramap[AgentApplication](encrypt)
   )

@@ -52,9 +52,9 @@ extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
   mongoComponent = mongoComponent,
   indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
-  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.formats)),
+  extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.mongoFormat)),
   replaceIndexes = true
-)(using domainFormat = agentApplicationEncryption.formats):
+)(using domainFormat = agentApplicationEncryption.mongoFormat):
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
