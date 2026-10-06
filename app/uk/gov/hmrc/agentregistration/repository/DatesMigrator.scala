@@ -50,11 +50,11 @@ extends Logging:
         update = applicationDatesConverted
       )
         .map: converted =>
-          logger.info(s"Migrating ${AgentApplicationRepo.collectionName}: converted $converted documents DONE")
+          logger.info(s"Migrating '${AgentApplicationRepo.collectionName}': converted $converted documents in total DONE")
           converted
         .recover:
           case ex =>
-            logger.error(s"Migrating ${AgentApplicationRepo.collectionName} FAILED", ex)
+            logger.error(s"Migrating '${AgentApplicationRepo.collectionName}': FAILED", ex)
             0L
       individuals <- runUntilTwoQuietRuns(
         collection = individualProvidedDetailsRepo.collection,
@@ -62,11 +62,11 @@ extends Logging:
         update = individualDatesConverted
       )
         .map: converted =>
-          logger.info(s"Migrating ${IndividualProvidedDetailsRepo.collectionName}: converted $converted documents DONE")
+          logger.info(s"Migrating '${IndividualProvidedDetailsRepo.collectionName}': converted $converted documents in total DONE")
           converted
         .recover:
           case ex =>
-            logger.error(s"Migrating ${IndividualProvidedDetailsRepo.collectionName} FAILED", ex)
+            logger.error(s"Migrating '${IndividualProvidedDetailsRepo.collectionName}': FAILED", ex)
             0L
     yield applications + individuals
 
@@ -76,10 +76,11 @@ extends Logging:
     update: Bson
   ): Future[Long] =
     val collectionName: String = collection.namespace.getCollectionName
-    logger.info(s"Migrating $collectionName...")
+    logger.info(s"Migrating '$collectionName': Started...")
 
     @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
     def run(
+      runNumber: Int,
       quietRuns: Int,
       converted: Long
     ): Future[Long] = collection
@@ -87,13 +88,22 @@ extends Logging:
       .toFuture()
       .map(_.getModifiedCount)
       .flatMap: convertedInRun =>
-        logger.info(s"Converted $convertedInRun documents in $collectionName")
+        logger.info(s"Migrating '$collectionName': converted $convertedInRun documents in run $runNumber")
         val quietRunsNow: Int = if convertedInRun === 0L then quietRuns + 1 else 0
         if quietRunsNow === 2
         then Future.successful(converted)
-        else run(quietRuns = quietRunsNow, converted = converted + convertedInRun)
+        else
+          run(
+            runNumber = runNumber + 1,
+            quietRuns = quietRunsNow,
+            converted = converted + convertedInRun
+          )
 
-    run(quietRuns = 0, converted = 0L)
+    run(
+      runNumber = 1,
+      quietRuns = 0,
+      converted = 0L
+    )
 
 object DatesMigrator:
 
