@@ -45,7 +45,7 @@ extends AnyFreeSpecLike,
   RichMatchers,
   MongoSupport:
 
-  // the service prefix keeps it apart from a same-named spec's database in the sibling services, whose suites may run at the same time
+  // Specs in other services can have the same name (e.g. DatesMigratorSpec), so the prefix keeps their test databases apart.
   override protected def databaseName: String = s"test-be-${getClass.getSimpleName}"
 
   given ExecutionContext = app.injector.instanceOf[ExecutionContext]

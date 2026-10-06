@@ -45,4 +45,4 @@ class DatesMigratorStarter @Inject() (
   def start(): Future[Option[Long]] = lockService.withLock(datesMigrator.migrate())
 
 object DatesMigratorStarter:
-  val lockId: String = "dates-migrator"
+  val lockId: String = "agent-registration-dates-migrator"
