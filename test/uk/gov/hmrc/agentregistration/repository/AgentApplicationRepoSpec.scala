@@ -34,6 +34,9 @@ import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
+import java.time.Instant
+import java.time.ZoneOffset
+
 class AgentApplicationRepoSpec
 extends ISpec:
 
@@ -139,3 +142,63 @@ extends ISpec:
       .toSet
 
     storedFieldNames shouldBe bsonDateFieldNames.toSet
+
+  private final case class DateQueryCase(
+    description: String,
+    record: AgentApplication,
+    fieldName: String,
+    storedInstant: Instant
+  )
+
+  private val dateQueryCases: Seq[DateQueryCase] = Seq(
+    DateQueryCase(
+      description = "a started application",
+      record = tdAll.agentApplicationLlp.afterStarted,
+      fieldName = "createdAt",
+      storedInstant = tdAll.nowAsInstant
+    ),
+    DateQueryCase(
+      description = "a started application",
+      record = tdAll.agentApplicationLlp.afterStarted,
+      fieldName = "applicationExpiresAt",
+      storedInstant = tdAll.applicationExpiresAtAsInstant
+    ),
+    DateQueryCase(
+      description = "a submitted application",
+      record = tdAll.agentApplicationLlp.afterSentForRisking,
+      fieldName = "submittedAt",
+      storedInstant = tdAll.nowAsInstant
+    ),
+    DateQueryCase(
+      description = "an application with a fixable outcome",
+      record = tdAll.agentApplicationLlp.afterRiskingCompletedFixable,
+      fieldName = "riskingOutcomeApplication.actualDecisionDate",
+      storedInstant = tdAll.riskingCompletedDate.atStartOfDay(ZoneOffset.UTC).toInstant
+    ),
+    DateQueryCase(
+      description = "an application with a fixable outcome",
+      record = tdAll.agentApplicationLlp.afterRiskingCompletedFixable,
+      fieldName = "riskingOutcomeApplication.correctiveActionExpiryDate",
+      storedInstant = tdAll.correctiveActionExpiryDate.atStartOfDay(ZoneOffset.UTC).toInstant
+    ),
+    DateQueryCase(
+      description = "a resubmitted application",
+      record = tdAll.agentApplicationLlp.afterResubmitted,
+      fieldName = "riskingOutcomeApplication.reSubmittedAt",
+      storedInstant = tdAll.nowAsInstant
+    )
+  )
+
+  private def countWhere(filter: Bson): Long =
+    repo
+      .collection
+      .countDocuments(filter)
+      .toFuture()
+      .futureValue
+
+  dateQueryCases.foreach: dateQueryCase =>
+    s"${dateQueryCase.fieldName} of ${dateQueryCase.description} can be queried with Mongo date operators" in:
+      repo.upsert(dateQueryCase.record).futureValue
+
+      countWhere(Filters.lt(dateQueryCase.fieldName, dateQueryCase.storedInstant.plusMillis(1))) shouldBe 1L withClue "a later date matches"
+      countWhere(Filters.lt(dateQueryCase.fieldName, dateQueryCase.storedInstant)) shouldBe 0L withClue "the stored date itself is not less than itself"

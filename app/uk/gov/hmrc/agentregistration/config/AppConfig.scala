@@ -44,12 +44,6 @@ class AppConfig @Inject() (
   val hipBaseUrl: String = servicesConfig.baseUrl("hip")
   val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
 
-  object AgentApplicationRepo:
-    val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.application-repo-ttl", servicesConfig)
-
-  object ProvideDetailsRepo:
-    val ttl: FiniteDuration = ConfigHelper.readFiniteDuration("mongodb.providedetails-repo-ttl", servicesConfig)
-
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 

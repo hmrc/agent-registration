@@ -21,7 +21,6 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.model.Updates
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -34,27 +33,26 @@ import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 import AgentApplicationRepoHelp.given
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig,
   agentApplicationEncryption: AgentApplicationEncryption
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
   mongoComponent = mongoComponent,
-  indexes = AgentApplicationRepoHelp.indexes(appConfig.AgentApplicationRepo.ttl),
+  indexes = AgentApplicationRepoHelp.indexes,
   extraCodecs = Seq(Codecs.playFormatCodec(agentApplicationEncryption.mongoFormat)),
   replaceIndexes = true
 )(using domainFormat = agentApplicationEncryption.mongoFormat):
+
+  override lazy val requiresTtlIndex: Boolean = false
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
@@ -100,11 +98,7 @@ object AgentApplicationRepoHelp:
     new IdExtractor[AgentApplication, AgentApplicationId]:
       override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
 
-  def indexes(cacheTtl: FiniteDuration): Seq[IndexModel] = Seq(
-    IndexModel(
-      keys = Indexes.ascending("lastUpdated"),
-      indexOptions = IndexOptions().expireAfter(cacheTtl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
-    ),
+  val indexes: Seq[IndexModel] = Seq(
     IndexModel(
       keys = Indexes.ascending("internalUserId"),
       IndexOptions()

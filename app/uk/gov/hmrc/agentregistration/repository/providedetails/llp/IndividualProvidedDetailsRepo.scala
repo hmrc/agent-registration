@@ -21,7 +21,6 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsEncryption
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
@@ -35,26 +34,25 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  appConfig: AppConfig,
   individualProvidedDetailsEncryption: IndividualProvidedDetailsEncryption
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = IndividualProvidedDetailsRepo.collectionName,
   mongoComponent = mongoComponent,
-  indexes = ProvidedDetailsRepoHelp.indexes(appConfig.ProvideDetailsRepo.ttl),
+  indexes = ProvidedDetailsRepoHelp.indexes,
   extraCodecs = Seq(Codecs.playFormatCodec(individualProvidedDetailsEncryption.mongoFormat)),
   replaceIndexes = true
 )(using domainFormat = individualProvidedDetailsEncryption.mongoFormat):
+
+  override lazy val requiresTtlIndex: Boolean = false
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
@@ -120,11 +118,7 @@ object ProvidedDetailsRepoHelp:
     new IdExtractor[IndividualProvidedDetails, IndividualProvidedDetailsId]:
       override def id(memberProvidedDetails: IndividualProvidedDetails): IndividualProvidedDetailsId = memberProvidedDetails.individualProvidedDetailsId
 
-  def indexes(ttl: FiniteDuration): Seq[IndexModel] = Seq(
-    IndexModel(
-      Indexes.ascending("lastUpdated"),
-      IndexOptions().expireAfter(ttl.toSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
-    ),
+  val indexes: Seq[IndexModel] = Seq(
     IndexModel(
       Indexes.ascending("agentApplicationId")
     ),
