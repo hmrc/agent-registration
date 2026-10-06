@@ -18,9 +18,13 @@ package uk.gov.hmrc.agentregistration.repository
 
 import org.bson.BsonDocument
 import org.bson.BsonType
+import org.bson.BsonValue
+import org.bson.conversions.Bson
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Updates
+import play.api.libs.json.JsDefined
+import play.api.libs.json.JsLookupResult
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -64,57 +68,73 @@ extends ISpec:
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
 
-  "applicationExpiresAt round-trips through the repository for pre-submission applications" in:
-    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    record.applicationExpiresAt shouldBe defined withClue "sanity: pre-submission applications must carry applicationExpiresAt"
-    repo.upsert(record).futureValue
+  // the fields the Mongo format stores as BSON Date and the migration converts; afterStarted and afterResubmitted between them carry all of them
+  private val bsonDateFieldNames: Seq[String] = Seq(
+    "createdAt",
+    "applicationExpiresAt",
+    "submittedAt",
+    "riskingOutcomeApplication.reSubmittedAt",
+    "riskingOutcomeApplication.correctiveActionExpiryDate"
+  )
 
-    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+  private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
+    "afterStarted" -> tdAll.agentApplicationLlp.afterStarted,
+    "afterResubmitted" -> tdAll.agentApplicationLlp.afterResubmitted
+  )
 
-  "upsert stores createdAt and applicationExpiresAt as BSON Date, not as strings" in:
-    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    repo.upsert(record).futureValue
-
-    val rawDocument: BsonDocument =
-      repo
-        .collection
-        .withDocumentClass[BsonDocument]()
-        .find(Filters.eq("_id", record.agentApplicationId.value))
-        .headOption()
-        .futureValue
-        .value
-
-    rawDocument.get("createdAt").getBsonType shouldBe BsonType.DATE_TIME
-    rawDocument.get("applicationExpiresAt").getBsonType shouldBe BsonType.DATE_TIME
-
-  "upsert stores submittedAt as BSON Date, not as a string" in:
-    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
-    repo.upsert(record).futureValue
-
-    val rawDocument: BsonDocument =
-      repo
-        .collection
-        .withDocumentClass[BsonDocument]()
-        .find(Filters.eq("_id", record.agentApplicationId.value))
-        .headOption()
-        .futureValue
-        .value
-
-    rawDocument.get("submittedAt").getBsonType shouldBe BsonType.DATE_TIME
-
-  "findById reconstructs createdAt and applicationExpiresAt when they are still stored as legacy ISO strings (pre-migration shape)" in:
-    val record: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    repo.upsert(record).futureValue
+  private def rawDocument(record: AgentApplication): BsonDocument =
     repo
       .collection
-      .updateOne(
-        filter = Filters.eq("_id", record.agentApplicationId.value),
-        update = Updates.combine(
-          Updates.set("createdAt", record.createdAt.toString),
-          Updates.set("applicationExpiresAt", record.applicationExpiresAt.value.toString)
-        )
-      )
-      .toFuture()
+      .withDocumentClass[BsonDocument]()
+      .find(Filters.eq("_id", record.agentApplicationId.value))
+      .headOption()
       .futureValue
+      .value
 
-    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+  private def rawValue(
+    document: BsonDocument,
+    fieldName: String
+  ): Option[BsonValue] =
+    fieldName.split('.').foldLeft(Option[BsonValue](document)): (value, name) =>
+      value.filter(_.isDocument).flatMap(parent => Option(parent.asDocument().get(name)))
+
+  private def restJsonValue(
+    record: AgentApplication,
+    fieldName: String
+  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplication.format.writes(record)))(_ \ _).asOpt[String]
+
+  private def storedBsonDateFieldNames(record: AgentApplication): Seq[String] =
+    val document: BsonDocument = rawDocument(record)
+    bsonDateFieldNames.filter(fieldName => rawValue(document, fieldName).isDefined)
+
+  recordsWithDates.foreach: (name, record) =>
+    s"upsert stores every date field of $name that the migration covers as BSON Date, not as a string" in:
+      repo.upsert(record).futureValue
+      val document: BsonDocument = rawDocument(record)
+      val storedFieldNames: Seq[String] = storedBsonDateFieldNames(record)
+
+      storedFieldNames should not be empty
+      storedFieldNames.foreach: fieldName =>
+        withClue(s"$fieldName: "):
+          rawValue(document, fieldName).value.getBsonType shouldBe BsonType.DATE_TIME
+
+    s"findById reads every date field of $name that the migration covers when it is still stored as a legacy ISO string" in:
+      repo.upsert(record).futureValue
+      val legacyStrings: Seq[Bson] = storedBsonDateFieldNames(record).map(fieldName => Updates.set(fieldName, restJsonValue(record, fieldName).value))
+      repo
+        .collection
+        .updateOne(Filters.eq("_id", record.agentApplicationId.value), Updates.combine(legacyStrings*))
+        .toFuture()
+        .futureValue
+
+      repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "afterStarted and afterResubmitted between them store every date field the migration covers" in:
+    // both states share an _id, so each is upserted and inspected in turn
+    val storedFieldNames: Set[String] =
+      recordsWithDates.flatMap: (_, record) =>
+        repo.upsert(record).futureValue
+        storedBsonDateFieldNames(record)
+      .toSet
+
+    storedFieldNames shouldBe bsonDateFieldNames.toSet
