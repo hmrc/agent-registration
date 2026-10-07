@@ -129,6 +129,12 @@ class HipConnector @Inject() (
               INTERNAL_SERVER_ERROR
             )
 
+  /** ETMP Registration Services - Allows retrieval of a taxpayer registration (Business Partner Record) from ETMP.
+    *
+    * @see
+    *   https://admin.tax.service.gov.uk/integration-hub/apis/view-specification/48aa1b50-b9a9-43e0-994b-586eec1b524a/preprod
+    */
+
   def getBusinessPartnerRecord(
     utr: Utr
   )(implicit

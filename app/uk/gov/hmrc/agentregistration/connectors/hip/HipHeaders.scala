@@ -59,7 +59,7 @@ extends RequestAwareLogging:
     CommonHeaders() ++ Seq(
       HeaderNames.AUTHORIZATION -> s"Basic ${appConfig.hipAuthToken}",
       correlationIdHeader -> correlationId.value,
-      xOriginatingSystemHeader -> "MDTP-AgentRegistration",
+      xOriginatingSystemHeader -> "MDTP",
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP"
     )
