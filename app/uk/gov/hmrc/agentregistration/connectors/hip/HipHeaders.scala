@@ -53,12 +53,14 @@ extends RequestAwareLogging:
       "system-id" -> "agent-registration"
     )
 
+  private val correlationIdHeaderBpr = "correlationid"
+
   def makeHeadersForBusinessPartnerRecord()(implicit requestHeader: RequestHeader): Seq[(String, String)] =
     val correlationId: CorrelationId = correlationIdGenerator.nextCorrelationId
     logger.info(s"Generated correlationId: ${correlationId.value}")
     CommonHeaders() ++ Seq(
       HeaderNames.AUTHORIZATION -> s"Basic ${appConfig.hipAuthToken}",
-      correlationIdHeader -> correlationId.value,
+      correlationIdHeaderBpr -> correlationId.value,
       xOriginatingSystemHeader -> "MDTP",
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP"
