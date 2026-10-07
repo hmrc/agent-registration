@@ -69,6 +69,7 @@ extends AnyFreeSpecLike,
       "microservice.services.internal-auth.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
       "dates-migrator.enabled" -> false,
+      "dates-migrator.delay-between-runs" -> "100 milliseconds",
       "mongodb.uri" -> mongoUri
     ) ++ configOverrides
 

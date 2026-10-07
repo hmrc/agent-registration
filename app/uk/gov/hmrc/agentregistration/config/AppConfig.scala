@@ -23,6 +23,7 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.ZoneId
+import scala.concurrent.duration.FiniteDuration
 
 object AppConfig:
   val zoneId: ZoneId = ZoneId.of("UTC")
@@ -47,7 +48,9 @@ class AppConfig @Inject() (
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 
   object DatesMigrator:
+
     val enabled: Boolean = configuration.get[Boolean]("dates-migrator.enabled")
+    val delayBetweenRuns: FiniteDuration = configuration.get[FiniteDuration]("dates-migrator.delay-between-runs")
 
   object FieldLevelEncryption:
 

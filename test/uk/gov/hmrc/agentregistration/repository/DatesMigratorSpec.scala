@@ -27,12 +27,15 @@ import org.mongodb.scala.model.Updates
 import play.api.libs.json.JsDefined
 import play.api.libs.json.JsLookupResult
 import play.api.libs.json.JsObject
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+
+import scala.concurrent.duration.*
 
 class DatesMigratorSpec
 extends ISpec:
@@ -141,9 +144,19 @@ extends ISpec:
       "applicationExpiresAt" -> BsonType.STRING
     )
 
+  "migrate pauses between the runs on a collection" in:
+    val startedAt: Long = System.nanoTime()
+
+    migrator.migrate().futureValue shouldBe 0L
+
+    val elapsed: FiniteDuration = (System.nanoTime() - startedAt).nanos
+    // both collections are empty: two quiet runs each, so one pause each
+    elapsed should be >= appConfig.DatesMigrator.delayBetweenRuns * 2
+
   private lazy val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   private lazy val individualRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
   private lazy val migrator: DatesMigrator = app.injector.instanceOf[DatesMigrator]
+  private lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   private val applicationDateFields: Seq[String] = Seq(
     "createdAt",
