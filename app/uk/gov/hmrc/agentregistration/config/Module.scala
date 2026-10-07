@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentregistration.config
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import uk.gov.hmrc.agentregistration.repository.DatesMigratorStarter
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
@@ -29,9 +28,7 @@ import java.time.ZoneOffset
 class Module
 extends AbstractModule:
 
-  override def configure(): Unit =
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[DatesMigratorStarter]).asEagerSingleton()
+  override def configure(): Unit = bind(classOf[AppConfig]).asEagerSingleton()
 
   @Provides
   @Singleton
