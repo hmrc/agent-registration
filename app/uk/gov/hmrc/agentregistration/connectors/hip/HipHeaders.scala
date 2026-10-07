@@ -52,15 +52,13 @@ extends RequestAwareLogging:
       xTransmittingSystemHeader -> "HIP",
       "system-id" -> "agent-registration"
     )
-  // NB: this is specifically to accommodate the lower case correlation id used in the BPR API as apposed to the camel case version in the UCR API
-  private val correlationIdHeaderBpr = "correlationid"
 
   def makeHeadersForBusinessPartnerRecord()(implicit requestHeader: RequestHeader): Seq[(String, String)] =
     val correlationId: CorrelationId = correlationIdGenerator.nextCorrelationId
-    logger.info(s"Generated correlationid: ${correlationId.value}")
+    logger.info(s"Generated correlationId: ${correlationId.value}")
     CommonHeaders() ++ Seq(
       HeaderNames.AUTHORIZATION -> s"Basic ${appConfig.hipAuthToken}",
-      correlationIdHeaderBpr -> correlationId.value,
+      correlationIdHeader -> correlationId.value,
       xOriginatingSystemHeader -> "MDTP",
       xReceiptDateHeader -> formatISOInstantSeconds(Instant.now(clock)),
       xTransmittingSystemHeader -> "HIP"
