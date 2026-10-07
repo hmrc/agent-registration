@@ -16,18 +16,30 @@
 
 package uk.gov.hmrc.agentregistration.shared
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplicationFormats
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
+import uk.gov.hmrc.agentregistration.shared.util.RestDateFormats
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 
+import java.time.Instant
+import java.time.LocalDate
 import scala.annotation.nowarn
 
-object AgentApplicationFormats:
+object AgentApplicationFormat:
+
+  given restFormat: OFormat[AgentApplication] = makeFormat(using RestDateFormats.instantFormat, RestDateFormats.localDateFormat)
 
   @nowarn()
-  given format: OFormat[AgentApplication] =
+  def makeFormat(using
+    Format[Instant],
+    Format[LocalDate]
+  ): OFormat[AgentApplication] =
+    given OFormat[RiskingOutcomeApplication] = RiskingOutcomeApplicationFormats.makeFormat
     given OFormat[AgentApplicationSoleTrader] = Json.format[AgentApplicationSoleTrader]
     given OFormat[AgentApplicationLlp] = Json.format[AgentApplicationLlp]
     given OFormat[AgentApplicationLimitedCompany] = Json.format[AgentApplicationLimitedCompany]

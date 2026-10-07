@@ -26,6 +26,7 @@ import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualPro
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.PersonReference
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 
 import javax.inject.Inject
