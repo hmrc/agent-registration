@@ -22,7 +22,6 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedPartnership
@@ -47,13 +46,6 @@ extends UnitSpec:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
       AgentApplicationMongoFormats.plaintextFormat.writes(agentApplication) shouldBe afterResubmittedJson
       afterResubmittedJson.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
-
-    // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
-    "deserialize AgentApplication stored before its dates were migrated to BSON dates" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
-      // before the migration, applications were stored in the REST shape
-      val storedBeforeMigration: JsValue = Json.toJson(agentApplication)(using AgentApplicationFormat.restFormat)
-      storedBeforeMigration.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
   }
 
   "encryptingFormat" - {

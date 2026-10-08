@@ -18,12 +18,12 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.repository.MongoDateFormats
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +31,10 @@ import javax.inject.Singleton
 object AgentApplicationMongoFormats:
 
   /** Dates as BSON dates, PII as it is. */
-  val plaintextFormat: OFormat[AgentApplication] = AgentApplicationFormat.makeFormat(using MongoDateFormats.instantFormat, MongoDateFormats.localDateFormat)
+  val plaintextFormat: OFormat[AgentApplication] = AgentApplicationFormat.makeFormat(using
+    MongoJavatimeFormats.instantFormat,
+    MongoJavatimeFormats.localDateFormat
+  )
 
 /** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */

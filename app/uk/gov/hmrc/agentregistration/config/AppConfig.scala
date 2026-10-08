@@ -46,9 +46,6 @@ class AppConfig @Inject() (
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 
-  object DatesMigrator:
-    val enabled: Boolean = configuration.get[Boolean]("dates-migrator.enabled")
-
   object FieldLevelEncryption:
 
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")

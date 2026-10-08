@@ -23,7 +23,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
-import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsFormat
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
@@ -38,13 +37,6 @@ extends UnitSpec:
       val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
       IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(individualProvidedDetails) shouldBe afterRiskedFixableJson
       afterRiskedFixableJson.as[IndividualProvidedDetails](using IndividualProvidedDetailsMongoFormats.plaintextFormat) shouldBe individualProvidedDetails
-
-    // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
-    "deserialize IndividualProvidedDetails stored before its dates were migrated to BSON dates" in:
-      val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
-      // before the migration, individuals were stored in the REST shape
-      val storedBeforeMigration: JsValue = Json.toJson(individualProvidedDetails)(using IndividualProvidedDetailsFormat.restFormat)
-      storedBeforeMigration.as[IndividualProvidedDetails](using IndividualProvidedDetailsMongoFormats.plaintextFormat) shouldBe individualProvidedDetails
   }
 
   "encryptingFormat" - {

@@ -22,13 +22,9 @@ import org.bson.BsonValue
 import org.bson.conversions.Bson
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Updates
-import play.api.libs.json.JsDefined
-import play.api.libs.json.JsLookupResult
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
@@ -72,7 +68,7 @@ extends ISpec:
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
 
-  // the fields the Mongo format stores as BSON Date and the migration converts; afterStarted and afterResubmitted between them carry all of them
+  // the fields the Mongo format stores as BSON Date; afterStarted and afterResubmitted between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
     "createdAt",
     "applicationExpiresAt",
@@ -103,17 +99,12 @@ extends ISpec:
     fieldName.split('.').foldLeft(Option[BsonValue](document)): (value, name) =>
       value.filter(_.isDocument).flatMap(parent => Option(parent.asDocument().get(name)))
 
-  private def restJsonValue(
-    record: AgentApplication,
-    fieldName: String
-  ): Option[String] = fieldName.split('.').foldLeft[JsLookupResult](JsDefined(AgentApplicationFormat.restFormat.writes(record)))(_ \ _).asOpt[String]
-
   private def storedBsonDateFieldNames(record: AgentApplication): Seq[String] =
     val document: BsonDocument = rawDocument(record)
     bsonDateFieldNames.filter(fieldName => rawValue(document, fieldName).isDefined)
 
   recordsWithDates.foreach: (name, record) =>
-    s"upsert stores every date field of $name that the migration covers as BSON Date, not as a string" in:
+    s"upsert stores every date field of $name as BSON Date, not as a string" in:
       repo.upsert(record).futureValue
       val document: BsonDocument = rawDocument(record)
       val storedFieldNames: Seq[String] = storedBsonDateFieldNames(record)
@@ -123,19 +114,7 @@ extends ISpec:
         withClue(s"$fieldName: "):
           rawValue(document, fieldName).value.getBsonType shouldBe BsonType.DATE_TIME
 
-    // TODO: remove with the ISO-string fallback in MongoDateFormats once the dates migration has run in every environment
-    s"findById reads every date field of $name that the migration covers when it is still stored as a legacy ISO string" in:
-      repo.upsert(record).futureValue
-      val legacyStrings: Seq[Bson] = storedBsonDateFieldNames(record).map(fieldName => Updates.set(fieldName, restJsonValue(record, fieldName).value))
-      repo
-        .collection
-        .updateOne(Filters.eq("_id", record.agentApplicationId.value), Updates.combine(legacyStrings*))
-        .toFuture()
-        .futureValue
-
-      repo.findById(record.agentApplicationId).futureValue.value shouldBe record
-
-  "afterStarted and afterResubmitted between them store every date field the migration covers" in:
+  "afterStarted and afterResubmitted between them store every date field" in:
     // both states share an _id, so each is upserted and inspected in turn
     val storedFieldNames: Set[String] =
       recordsWithDates.flatMap: (_, record) =>
