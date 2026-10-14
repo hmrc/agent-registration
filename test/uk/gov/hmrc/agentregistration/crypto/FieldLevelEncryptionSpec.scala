@@ -48,6 +48,7 @@ extends UnitSpec:
       s"$baseConfigString\nfield-level-encryption.enabled = $enabled"
     ))
     val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
+
     new FieldLevelEncryption(appConfig)
   }
 

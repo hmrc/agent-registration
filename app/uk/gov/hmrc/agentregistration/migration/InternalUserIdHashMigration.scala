@@ -24,7 +24,7 @@ import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
 import play.api.Logging
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.crypto.FieldLevelEncryption
+import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.mongo.MongoComponent
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 @Singleton
 class InternalUserIdHashMigration @Inject() (
   mongoComponent: MongoComponent,
-  fieldLevelEncryption: FieldLevelEncryption,
+  legacyValueHasher: LegacyValueHasher,
   appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Logging:
@@ -78,7 +78,7 @@ extends Logging:
           acc.flatMap(_ =>
             Future.traverse(batch): doc =>
               val encrypted = doc.getString(field)
-              val hashed = fieldLevelEncryption.decryptThenHash(encrypted)
+              val hashed = legacyValueHasher.decryptThenHash(encrypted)
               collection
                 .updateOne(
                   Filters.eq("_id", doc.get("_id")),

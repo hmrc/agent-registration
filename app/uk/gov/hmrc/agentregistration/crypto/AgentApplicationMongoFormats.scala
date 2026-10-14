@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
@@ -39,7 +40,11 @@ object AgentApplicationMongoFormats:
 /** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class AgentApplicationMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class AgentApplicationMongoFormats @Inject() (
+  fieldLevelEncryption: FieldLevelEncryption,
+  fieldHasher: FieldHasher,
+  legacyValueHasher: LegacyValueHasher
+):
 
   /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
   val encryptingFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
@@ -80,7 +85,7 @@ class AgentApplicationMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEn
 
   // Single-value helpers, for use in Mongo filters.
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
-  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.hash)
+  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldHasher.hash)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
 
   def encrypt(groupId: GroupId): GroupId = groupId.modify(_.value).using(fieldLevelEncryption.encrypt)
@@ -102,10 +107,10 @@ class AgentApplicationMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEn
   def decrypt(crn: Crn): Crn = crn.modify(_.value).using(fieldLevelEncryption.decrypt)
 
   private def encryptForWrite(d: AgentApplication): AgentApplication = transform(d, fieldLevelEncryption.encrypt)
-    .modify(_.internalUserId.value).using(fieldLevelEncryption.hash)
+    .modify(_.internalUserId.value).using(fieldHasher.hash)
 
   private def decryptForRead(d: AgentApplication): AgentApplication = transform(d, fieldLevelEncryption.decrypt)
-    .modify(_.internalUserId.value).using(fieldLevelEncryption.decryptThenHash)
+    .modify(_.internalUserId.value).using(legacyValueHasher.decryptThenHash)
 
   private def transform(
     app: AgentApplication,

@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.migration
 
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.crypto.FieldHasher
 import uk.gov.hmrc.agentregistration.crypto.FieldLevelEncryption
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
@@ -34,7 +35,8 @@ extends ISpec:
 
   private lazy val migration = app.injector.instanceOf[InternalUserIdHashMigration]
   private lazy val repo = app.injector.instanceOf[AgentApplicationRepo]
-  private lazy val fle = app.injector.instanceOf[FieldLevelEncryption]
+  private lazy val fieldHasher = app.injector.instanceOf[FieldHasher]
+  private lazy val fieldLevelEncryption = app.injector.instanceOf[FieldLevelEncryption]
   private lazy val appMongoComponent = app.injector.instanceOf[MongoComponent]
   private lazy val rawCollection = appMongoComponent.database.getCollection[org.bson.Document](AgentApplicationRepo.collectionName)
 
@@ -49,7 +51,7 @@ extends ISpec:
     val internalUserId = InternalUserId("pre-migration-123")
     val record = tdAll.agentApplicationLlp.afterAgentDetailsComplete.copy(internalUserId = internalUserId)
     repo.upsert(record).futureValue
-    val encrypted = fle.encrypt(internalUserId.value)
+    val encrypted = fieldLevelEncryption.encrypt(internalUserId.value)
     rawCollection
       .updateOne(
         Filters.eq("_id", record._id.value),
@@ -57,41 +59,39 @@ extends ISpec:
       )
       .toFuture()
       .futureValue
-    
+
     rawInternalUserId(record._id.value) shouldBe encrypted
     rawInternalUserId(record._id.value) should not startWith "hash:"
 
     migration.run.futureValue
-    
+
     val storedAfter = rawInternalUserId(record._id.value)
     storedAfter should startWith("hash:")
-    storedAfter shouldBe fle.hash(record.internalUserId.value)
+    storedAfter shouldBe fieldHasher.hash(record.internalUserId.value)
 
   "InternalUserIdHashMigration should not re-migrate an already hashed internalUserId" in:
     val record = tdAll.agentApplicationLlp.afterAgentDetailsComplete
     repo.upsert(record).futureValue
 
     val storedBefore = rawInternalUserId(record._id.value)
-    storedBefore should startWith("hash:") // already migrated by encryptForWrite
+    storedBefore should startWith("hash:")
 
     migration.run.futureValue
-
-    // value must be identical — no double-hashing
+    
     rawInternalUserId(record._id.value) shouldBe storedBefore
 
   "InternalUserIdHashMigration should allow findByInternalUserId to succeed on an encrypted document during migration" in:
     val record = tdAll.agentApplicationLlp.afterAgentDetailsComplete
     repo.upsert(record).futureValue
-    // backdoor an encrypted value to simulate mid-migration state
+
     rawCollection
       .updateOne(
         Filters.eq("_id", record._id.value),
-        org.mongodb.scala.model.Updates.set("internalUserId", fle.encrypt(record.internalUserId.value))
+        org.mongodb.scala.model.Updates.set("internalUserId", fieldLevelEncryption.encrypt(record.internalUserId.value))
       )
       .toFuture()
       .futureValue
-
-    // should still find the record via the OR filter (encrypted form)
+    
     val found = repo.findByInternalUserId(record.internalUserId).futureValue
     found.value._id shouldBe record._id
 
@@ -110,7 +110,7 @@ extends ISpec:
     rawCollection
       .updateOne(
         Filters.eq("_id", record._id.value),
-        org.mongodb.scala.model.Updates.set("internalUserId", fle.encrypt(record.internalUserId.value))
+        org.mongodb.scala.model.Updates.set("internalUserId", fieldLevelEncryption.encrypt(record.internalUserId.value))
       )
       .toFuture()
       .futureValue

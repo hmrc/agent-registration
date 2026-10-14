@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -36,7 +37,11 @@ object IndividualProvidedDetailsMongoFormats:
 /** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class IndividualProvidedDetailsMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class IndividualProvidedDetailsMongoFormats @Inject() (
+  fieldLevelEncryption: FieldLevelEncryption,
+  fieldHasher: FieldHasher,
+  legacyValueHasher: LegacyValueHasher
+):
 
   /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
   val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
@@ -49,14 +54,14 @@ class IndividualProvidedDetailsMongoFormats @Inject() (fieldLevelEncryption: Fie
 
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
 
-  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.hash)
+  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldHasher.hash)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
 
   private def encryptForWrite(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
-    .modify(_.internalUserId.each.value).using(fieldLevelEncryption.hash)
+    .modify(_.internalUserId.each.value).using(fieldHasher.hash)
 
   private def decryptForRead(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
-    .modify(_.internalUserId.each.value).using(fieldLevelEncryption.decryptThenHash)
+    .modify(_.internalUserId.each.value).using(legacyValueHasher.decryptThenHash)
 
   private def transform(
     d: IndividualProvidedDetails,

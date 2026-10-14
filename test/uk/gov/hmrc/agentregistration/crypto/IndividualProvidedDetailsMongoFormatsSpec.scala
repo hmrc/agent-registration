@@ -21,6 +21,7 @@ import play.api.Configuration
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
@@ -156,8 +157,10 @@ extends UnitSpec:
       |""".stripMargin
   ))
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
+  private val fh: FieldHasher = new FieldHasher(appConfig)
   private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle)
+  private val lvh: LegacyValueHasher = new LegacyValueHasher(fle, fh)
+  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle, fh, lvh)
 
   private def enc(plain: String): String = fle.encrypt(plain)
 
