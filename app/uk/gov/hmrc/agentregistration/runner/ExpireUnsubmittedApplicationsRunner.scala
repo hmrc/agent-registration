@@ -38,8 +38,8 @@ extends Logging:
 
   def run(): Future[Unit] =
     val now: Instant = Instant.now(clock)
-    val gracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
-    logger.info(s"Marking unsubmitted applications with applicationExpiresAt < $now as Expired, gracePeriodEndsAt = $gracePeriodEndsAt")
-    agentApplicationRepo.updateManyToExpiredForUnsubmitted(now, gracePeriodEndsAt).map { modifiedCount =>
+    val postExpiryGracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
+    logger.info(s"Marking unsubmitted applications with applicationExpiresAt < $now as Expired, postExpiryGracePeriodEndsAt = $postExpiryGracePeriodEndsAt")
+    agentApplicationRepo.updateManyToExpiredForUnsubmitted(now, postExpiryGracePeriodEndsAt).map { modifiedCount =>
       logger.info(s"Marked $modifiedCount unsubmitted applications as Expired")
     }

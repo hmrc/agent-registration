@@ -87,7 +87,7 @@ extends Repo[AgentApplicationId, AgentApplication](
 
   def updateManyToExpiredForUnsubmitted(
     now: Instant,
-    gracePeriodEndsAt: Instant
+    postExpiryGracePeriodEndsAt: Instant
   ): Future[Long] = collection
     .updateMany(
       filter = Filters.and(
@@ -100,7 +100,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       ),
       update = Updates.combine(
         Updates.set("applicationState", ApplicationState.Expired.toString),
-        Updates.set("gracePeriodEndsAt", BsonDateTime(gracePeriodEndsAt.toEpochMilli)),
+        Updates.set("postExpiryGracePeriodEndsAt", BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
         Updates.unset("applicationExpiresAt")
       )
     )

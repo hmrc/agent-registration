@@ -52,7 +52,7 @@ class AppConfig @Inject() (
 
   object Scheduler:
 
-    val expiryEnabled: Boolean = configuration.getOptional[Boolean]("scheduler.expiry.enabled").getOrElse(false)
+    val expiryEnabled: Boolean = configuration.get[Boolean]("scheduler.expiry.enabled")
     val expiryTime: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.expiry.time"))
 
   object FieldLevelEncryption:

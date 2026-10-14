@@ -89,7 +89,7 @@ object DataIntegrity:
         requireThat(agentApplication.submittedAt.isEmpty, s"submittedAt should not be defined in $state state"),
         requireThat(agentApplication.riskingOutcomeApplication.isEmpty, s"riskingOutcomeApplication should not be defined in $state state"),
         requireThat(agentApplication.riskingOutcomeEntity.isEmpty, s"riskingOutcomeEntity should not be defined in $state state"),
-        requireThat(agentApplication.gracePeriodEndsAt.isDefined, s"gracePeriodEndsAt should be defined in $state state")
+        requireThat(agentApplication.postExpiryGracePeriodEndsAt.isDefined, s"postExpiryGracePeriodEndsAt should be defined in $state state")
       ).flatten
 
     private def whenGrsDataReceived(agentApplication: AgentApplication): Seq[String] =
