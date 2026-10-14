@@ -23,6 +23,7 @@ import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
 import play.api.Logging
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.FieldLevelEncryption
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
@@ -36,13 +37,19 @@ import scala.concurrent.Future
 @Singleton
 class InternalUserIdHashMigration @Inject() (
   mongoComponent: MongoComponent,
-  fieldLevelEncryption: FieldLevelEncryption
+  fieldLevelEncryption: FieldLevelEncryption,
+  appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Logging:
 
   private val field = "internalUserId"
 
-  val run: Future[Unit] =
+  val startupRun: Future[Unit] =
+    if appConfig.Migration.HashInternalUserId.runOnStartup
+    then run
+    else Future.unit
+
+  def run: Future[Unit] =
     for
       _ <- migrateCollection(rawCollection(AgentApplicationRepo.collectionName), field)
       _ <- migrateCollection(rawCollection(IndividualProvidedDetailsRepo.collectionName), field)

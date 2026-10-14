@@ -67,3 +67,7 @@ class AppConfig @Inject() (
 
   object HipBusinessPartnerRecord:
     val isEnabled: Boolean = configuration.get[Boolean]("hip-business-partner-record.enabled")
+
+  object Migration:
+    object HashInternalUserId:
+      val runOnStartup: Boolean = configuration.get[Boolean]("migration.hashInternalUserId.runOnStartup")

@@ -56,9 +56,6 @@ extends UnitSpec:
     "individualName is encrypted" in:
       encrypted.individualName.value shouldBe enc(model.individualName.value)
 
-    "internalUserId is encrypted" in:
-      encrypted.getInternalUserId.value shouldBe enc(model.getInternalUserId.value)
-
     "telephoneNumber is encrypted" in:
       encrypted.getTelephoneNumber.value shouldBe enc(model.getTelephoneNumber.value)
 
@@ -155,6 +152,7 @@ extends UnitSpec:
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
       |post-expiry-grace-period = 45 days
+      |field-level-encryption.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
       |""".stripMargin
   ))
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
@@ -169,7 +167,6 @@ extends UnitSpec:
   private val plaintextPii: List[String] =
     List(
       model.individualName.value,
-      model.getInternalUserId.value,
       model.getTelephoneNumber.value,
       model.getEmailAddress.emailAddress.value
     ) ++
@@ -186,7 +183,7 @@ extends UnitSpec:
       |  "personReference": "1234567890",
       |  "individualName": "Test Name",
       |  "isPersonOfControl": true,
-      |  "internalUserId": "internal-user-id-12345",
+      |  "internalUserId": "hash:iRGKF9SU4ftOBe8VJ8i+famfrXWuHB/tS4z4O4K4hUI=",
       |  "createdAt": {
       |    "$date": {
       |      "$numberLong": "2837003631880"

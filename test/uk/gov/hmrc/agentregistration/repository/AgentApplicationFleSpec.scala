@@ -45,7 +45,6 @@ extends ISpec:
 
     val rawJson: String = rawDocumentFor(record).toJson()
 
-    rawJson should not include record.internalUserId.value withClue "internalUserId is encrypted"
     rawJson should not include record.groupId.value withClue "groupId is encrypted"
     rawJson should not include record.applicantCredentials.providerId withClue "applicantCredentials.providerId is encrypted"
     rawJson should not include record.getBusinessDetails.saUtr.value withClue "saUtr is encrypted"

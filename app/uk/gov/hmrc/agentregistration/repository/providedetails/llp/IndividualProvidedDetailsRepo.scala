@@ -84,7 +84,10 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
+        Filters.or(
+          Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
+          Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.hashInternalUserId(internalUserId).value)
+        ),
         Filters.eq("agentApplicationId", agentApplicationId.value)
       )
     )

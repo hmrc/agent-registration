@@ -68,9 +68,6 @@ extends UnitSpec:
 
   "encrypt sets ciphertext on every PII field of an LLP application" - {
 
-    "internalUserId is encrypted" in:
-      llpEncrypted.internalUserId.value shouldBe enc(llpModel.internalUserId.value)
-
     "groupId is encrypted" in:
       llpEncrypted.groupId.value shouldBe enc(llpModel.groupId.value)
 
@@ -198,11 +195,6 @@ extends UnitSpec:
   }
 
   "encrypt and decrypt single values" - {
-    "encrypt(InternalUserId) -> decrypt round-trips" in:
-      mongoFormats.decrypt(mongoFormats.encrypt(tdAll.internalUserId)) shouldBe tdAll.internalUserId
-
-    "encrypt(InternalUserId) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.internalUserId).value shouldBe enc(tdAll.internalUserId.value)
 
     "encrypt(GroupId) produces ciphertext" in:
       mongoFormats.encrypt(tdAll.groupId).value shouldBe enc(tdAll.groupId.value)
@@ -247,6 +239,7 @@ extends UnitSpec:
       |field-level-encryption.enabled = true
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
+      |field-level-encryption.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
       |post-expiry-grace-period = 45 days
       |""".stripMargin
   ))
@@ -272,7 +265,6 @@ extends UnitSpec:
   private def piiStringsFor(application: AgentApplication): List[String] = {
     val common: List[String] =
       List(
-        application.internalUserId.value,
         application.groupId.value,
         application.applicantCredentials.providerId
       ) ++
@@ -333,7 +325,7 @@ extends UnitSpec:
       |  "_id": "agent-application-id-12345",
       |  "cachedSessionId": "session-id-123",
       |  "applicationReference": "APPREF123",
-      |  "internalUserId": "internal-user-id-12345",
+      |  "internalUserId": "hash:iRGKF9SU4ftOBe8VJ8i+famfrXWuHB/tS4z4O4K4hUI=",
       |  "applicantCredentials": {
       |    "providerId": "cred-id-12345",
       |    "providerType": "GovernmentGateway"

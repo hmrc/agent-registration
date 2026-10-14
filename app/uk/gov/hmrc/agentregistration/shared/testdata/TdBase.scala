@@ -79,7 +79,7 @@ trait TdBase:
   def cachedSessionId: SessionId = SessionId("session-id-123")
   def saUtr: SaUtr = SaUtr("1234567895")
   def ctUtr: CtUtr = CtUtr("2202108031")
-  def internalUserId: InternalUserId = InternalUserId("internal-user-id-12345")
+  def internalUserId: InternalUserId = InternalUserId("hash:iRGKF9SU4ftOBe8VJ8i+famfrXWuHB/tS4z4O4K4hUI=")
   def linkId: LinkId = LinkId("link-id-12345")
   def groupId: GroupId = GroupId("group-id-12345")
   def credentials: Credentials = Credentials(
