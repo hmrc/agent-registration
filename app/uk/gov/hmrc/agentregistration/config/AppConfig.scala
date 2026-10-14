@@ -22,7 +22,9 @@ import play.api.Configuration
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.time.LocalTime
 import java.time.ZoneId
+import scala.concurrent.duration.FiniteDuration
 
 object AppConfig:
   val zoneId: ZoneId = ZoneId.of("UTC")
@@ -45,6 +47,13 @@ class AppConfig @Inject() (
 
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
+
+  val postExpiryGracePeriod: FiniteDuration = configuration.get[FiniteDuration]("post-expiry-grace-period")
+
+  object Scheduler:
+
+    val expiryEnabled: Boolean = configuration.get[Boolean]("scheduler.expiry.enabled")
+    val expiryTime: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.expiry.time"))
 
   object FieldLevelEncryption:
 

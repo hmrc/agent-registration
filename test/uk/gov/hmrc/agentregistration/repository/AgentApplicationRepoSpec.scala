@@ -22,11 +22,16 @@ import org.bson.BsonValue
 import org.bson.conversions.Bson
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.Expired
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.RiskingCompleted
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
+import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
+import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
@@ -68,19 +73,87 @@ extends ISpec:
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
 
-  // the fields the Mongo format stores as BSON Date; afterStarted and afterResubmitted between them carry all of them
+  private def expiredApplicationInState(state: ApplicationState): AgentApplication =
+    state match
+      case Started => tdAll.agentApplicationLlp.afterStartedExpired
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceivedExpired
+      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
+      case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
+      case Expired => tdAll.agentApplicationLlp.afterExpired
+
+  private def notYetExpiredApplicationInState(state: ApplicationState): AgentApplication =
+    state match
+      case Started => tdAll.agentApplicationLlp.afterStarted
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
+      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
+      case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
+      case Expired => tdAll.agentApplicationLlp.afterExpired
+
+  "updateManyToExpiredForUnsubmitted has an explicitly defined outcome for every ApplicationState whose applicationExpiresAt has passed — a new state MUST update all pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = expiredApplicationInState(state)
+
+      state match
+        case Started | GrsDataReceived =>
+          agentApplication.applicationExpiresAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have applicationExpiresAt in the past"
+        case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
+          agentApplication.applicationExpiresAt shouldBe None withClue
+            s"precondition: state=$state cannot have applicationExpiresAt"
+
+      repo.upsert(agentApplication).futureValue
+      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.nowAsInstant, tdAll.postExpiryGracePeriodEndsAtAsInstant).futureValue
+
+      state match
+        case Started | GrsDataReceived =>
+          modifiedCount shouldBe 1L withClue s"state=$state should have been moved to Expired"
+          val expiredAgentApplication: AgentApplication = repo.findById(agentApplication.agentApplicationId).futureValue.value
+          expiredAgentApplication.applicationState shouldBe Expired
+          expiredAgentApplication.postExpiryGracePeriodEndsAt shouldBe Some(tdAll.postExpiryGracePeriodEndsAtAsInstant)
+          expiredAgentApplication.applicationExpiresAt shouldBe None
+        case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
+          modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
+          repo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication withClue
+            s"state=$state record must be untouched"
+
+  "updateManyToExpiredForUnsubmitted leaves every ApplicationState whose applicationExpiresAt is in the future or absent unchanged — a new state MUST update the pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = notYetExpiredApplicationInState(state)
+
+      state match
+        case Started | GrsDataReceived =>
+          agentApplication.applicationExpiresAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have applicationExpiresAt in the future"
+        case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
+          agentApplication.applicationExpiresAt shouldBe None withClue
+            s"precondition: state=$state cannot have applicationExpiresAt"
+
+      repo.upsert(agentApplication).futureValue
+      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.nowAsInstant, tdAll.postExpiryGracePeriodEndsAtAsInstant).futureValue
+
+      modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
+      repo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication withClue
+        s"state=$state record must be untouched"
+
+  // the fields the Mongo format stores as BSON Date; afterStarted, afterResubmitted and afterExpired between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
     "createdAt",
     "applicationExpiresAt",
     "submittedAt",
     "riskingOutcomeApplication.actualDecisionDate",
     "riskingOutcomeApplication.reSubmittedAt",
-    "riskingOutcomeApplication.correctiveActionExpiryDate"
+    "riskingOutcomeApplication.correctiveActionExpiryDate",
+    "postExpiryGracePeriodEndsAt"
   )
 
   private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
     "afterStarted" -> tdAll.agentApplicationLlp.afterStarted,
-    "afterResubmitted" -> tdAll.agentApplicationLlp.afterResubmitted
+    "afterResubmitted" -> tdAll.agentApplicationLlp.afterResubmitted,
+    "afterExpired" -> tdAll.agentApplicationLlp.afterExpired
   )
 
   private def rawDocument(record: AgentApplication): BsonDocument =
@@ -114,8 +187,8 @@ extends ISpec:
         withClue(s"$fieldName: "):
           rawValue(document, fieldName).value.getBsonType shouldBe BsonType.DATE_TIME
 
-  "afterStarted and afterResubmitted between them store every date field" in:
-    // both states share an _id, so each is upserted and inspected in turn
+  "afterStarted, afterResubmitted and afterExpired between them store every date field" in:
+    // the states share an _id, so each is upserted and inspected in turn
     val storedFieldNames: Set[String] =
       recordsWithDates.flatMap: (_, record) =>
         repo.upsert(record).futureValue
@@ -167,6 +240,12 @@ extends ISpec:
       record = tdAll.agentApplicationLlp.afterResubmitted,
       fieldName = "riskingOutcomeApplication.reSubmittedAt",
       storedInstant = tdAll.nowAsInstant
+    ),
+    DateQueryCase(
+      description = "an expired application",
+      record = tdAll.agentApplicationLlp.afterExpired,
+      fieldName = "postExpiryGracePeriodEndsAt",
+      storedInstant = tdAll.postExpiryGracePeriodEndsAtAsInstant
     )
   )
 
