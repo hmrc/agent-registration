@@ -56,7 +56,10 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value)
+      filter = Filters.or(
+        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
+        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.hashInternalUserId(internalUserId).value)
+      )
     )
     .toFuture()
     .map(_.toList)

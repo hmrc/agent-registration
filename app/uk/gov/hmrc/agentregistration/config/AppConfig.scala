@@ -60,6 +60,7 @@ class AppConfig @Inject() (
     val enabled: Boolean = configuration.get[Boolean]("field-level-encryption.enabled")
     val key: String = configuration.get[String]("field-level-encryption.key")
     val previousKeys: Seq[String] = configuration.get[Seq[String]]("field-level-encryption.previousKeys")
+    val hasherKey: String = configuration.get[String]("field-level-encryption.hasherKey")
 
   object InternalAuth:
     val isEnabled: Boolean = configuration.get[Boolean]("internal-auth.enabled")

@@ -40,22 +40,30 @@ class IndividualProvidedDetailsMongoFormats @Inject() (fieldLevelEncryption: Fie
 
   /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
   val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
-    r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
-    w = IndividualProvidedDetailsMongoFormats.plaintextFormat.contramap[IndividualProvidedDetails](encrypt)
+    r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decryptForRead),
+    w = IndividualProvidedDetailsMongoFormats.plaintextFormat.contramap[IndividualProvidedDetails](encryptForWrite)
   )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
   def decrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
 
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
+
+  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.hash)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
+
+  private def encryptForWrite(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
+    .modify(_.internalUserId.each.value).using(fieldLevelEncryption.hash)
+
+  private def decryptForRead(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
+    .modify(_.internalUserId.each.value).using(fieldLevelEncryption.decryptThenHash)
 
   private def transform(
     d: IndividualProvidedDetails,
     cryptoOp: String => String
   ): IndividualProvidedDetails = d
     .modify(_.individualName.value).using(cryptoOp)
-    .modify(_.internalUserId.each.value).using(cryptoOp)
+    // removed internal user id to handle seperately during migration
     .modify(_.telephoneNumber.each.value).using(cryptoOp)
     .modify(_.emailAddress.each.emailAddress.value).using(cryptoOp)
     .modify(_.individualNino.each).using(transformIndividualNino(_, cryptoOp))

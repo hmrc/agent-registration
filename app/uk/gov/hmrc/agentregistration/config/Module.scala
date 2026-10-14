@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
 import uk.gov.hmrc.agentregistration.scheduler.AgentRegistrationSchedulerInitializer
+import uk.gov.hmrc.agentregistration.migration.InternalUserIdHashMigration
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
@@ -32,6 +33,7 @@ extends AbstractModule:
   override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[AgentRegistrationSchedulerInitializer]).asEagerSingleton()
+    bind(classOf[InternalUserIdHashMigration]).asEagerSingleton()
 
   @Provides
   @Singleton
