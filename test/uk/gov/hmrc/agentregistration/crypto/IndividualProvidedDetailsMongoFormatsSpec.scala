@@ -186,7 +186,7 @@ extends UnitSpec:
       |  "personReference": "1234567890",
       |  "individualName": "Test Name",
       |  "isPersonOfControl": true,
-      |  "internalUserId": "hash:iRGKF9SU4ftOBe8VJ8i+famfrXWuHB/tS4z4O4K4hUI=",
+      |  "internalUserId": "hash:internal-user-id-12345",
       |  "createdAt": {
       |    "$date": {
       |      "$numberLong": "2837003631880"

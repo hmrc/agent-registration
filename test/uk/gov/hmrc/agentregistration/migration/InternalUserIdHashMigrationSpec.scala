@@ -77,7 +77,7 @@ extends ISpec:
     storedBefore should startWith("hash:")
 
     migration.run.futureValue
-    
+
     rawInternalUserId(record._id.value) shouldBe storedBefore
 
   "InternalUserIdHashMigration should allow findByInternalUserId to succeed on an encrypted document during migration" in:
@@ -91,7 +91,7 @@ extends ISpec:
       )
       .toFuture()
       .futureValue
-    
+
     val found = repo.findByInternalUserId(record.internalUserId).futureValue
     found.value._id shouldBe record._id
 
