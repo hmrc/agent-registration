@@ -28,3 +28,4 @@ POST          /agent-registration/test-only/applications/cleanup                
 DELETE        /agent-registration/test-only/applications                                                      uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.deleteAllApplications
 
 POST          /agent-registration/test-only/run-expiry-scheduler                                              uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.runExpiryScheduler
+POST          /agent-registration/test-only/run-deletion-scheduler                                            uk.gov.hmrc.agentregistration.testonly.controllers.TestApplicationController.runDeletionScheduler

@@ -23,7 +23,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.AuthorisedRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
-import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
@@ -41,7 +41,7 @@ class ApplicationController @Inject() (
   cc: ControllerComponents,
   actions: Actions,
   agentApplicationRepo: AgentApplicationRepo,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
+  agentApplicationDeletionService: AgentApplicationDeletionService
 )
 extends BackendController(cc):
 
@@ -68,11 +68,9 @@ extends BackendController(cc):
       .findByInternalUserId(request.internalUserId)
       .flatMap:
         case Some(agentApplication) =>
-          // clean up orphaned individual provided details records before we lose the application id as well
-          for
-            _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
-            _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
-          yield NoContent
+          agentApplicationDeletionService
+            .deleteWithIndividuals(agentApplication.agentApplicationId)
+            .map(_ => NoContent)
         case None => Future.successful(NoContent)
 
   def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: _ =>

@@ -139,6 +139,63 @@ extends ISpec:
       repo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication withClue
         s"state=$state record must be untouched"
 
+  private def postExpiryGracePeriodEndedApplicationInState(state: ApplicationState): AgentApplication =
+    state match
+      case Started => tdAll.agentApplicationLlp.afterStarted
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
+      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
+      case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
+      case Expired => tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded
+
+  private def postExpiryGracePeriodNotEndedApplicationInState(state: ApplicationState): AgentApplication =
+    state match
+      case Started => tdAll.agentApplicationLlp.afterStarted
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
+      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
+      case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
+      case Expired => tdAll.agentApplicationLlp.afterExpired
+
+  "findIdsOfExpiredWithPostExpiryGracePeriodEnded has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
+
+      state match
+        case Expired =>
+          agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the past"
+        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
+          agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
+            s"precondition: state=$state cannot have postExpiryGracePeriodEndsAt"
+
+      repo.upsert(agentApplication).futureValue
+      val agentApplicationIds: Seq[AgentApplicationId] = repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue
+
+      state match
+        case Expired => agentApplicationIds shouldBe Seq(agentApplication.agentApplicationId) withClue s"state=$state should be found for deletion"
+        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
+          agentApplicationIds shouldBe empty withClue s"state=$state must NOT be found for deletion"
+
+  "findIdsOfExpiredWithPostExpiryGracePeriodEnded finds no ApplicationState whose postExpiryGracePeriodEndsAt is in the future or absent — a new state MUST update the pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = postExpiryGracePeriodNotEndedApplicationInState(state)
+
+      state match
+        case Expired =>
+          agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the future"
+        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
+          agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
+            s"precondition: state=$state cannot have postExpiryGracePeriodEndsAt"
+
+      repo.upsert(agentApplication).futureValue
+
+      repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue shouldBe empty withClue
+        s"state=$state must NOT be found for deletion"
+
   // the fields the Mongo format stores as BSON Date; afterStarted, afterResubmitted and afterExpired between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
     "createdAt",
