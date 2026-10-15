@@ -18,12 +18,19 @@ package uk.gov.hmrc.agentregistration.runner
 
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import play.api.http.Status
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 
 class DeleteExpiredApplicationsRunnerSpec
 extends ISpec:
+
+  override protected def configOverrides: Map[String, Any] = Map[String, Any](
+    "scheduler.deletion.enabled" -> true
+  )
 
   private lazy val runner: DeleteExpiredApplicationsRunner = app.injector.instanceOf[DeleteExpiredApplicationsRunner]
   private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
@@ -58,3 +65,62 @@ extends ISpec:
 
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
+
+  "run deletes the AMLS evidence of an Expired application whose postExpiryGracePeriodEndsAt has passed, together with the application and its individuals" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
+    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
+    agentApplicationRepo.upsert(agentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+    ObjectStoreStubs.stubListAmlsEvidence(amlsEvidence)
+    ObjectStoreStubs.stubDeleteAmlsEvidence(amlsEvidence)
+
+    runner.run().futureValue
+
+    ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence)
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
+    individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
+
+  "run deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when its AMLS evidence is already gone from object-store" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
+    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
+    agentApplicationRepo.upsert(agentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+    ObjectStoreStubs.stubListAmlsEvidenceNotFound(amlsEvidence)
+
+    runner.run().futureValue
+
+    ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence, count = 0)
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
+    individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
+
+  "run keeps an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when deleting its AMLS evidence fails, so the next run retries" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
+    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
+    agentApplicationRepo.upsert(agentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+    ObjectStoreStubs.stubListAmlsEvidence(amlsEvidence)
+    ObjectStoreStubs.stubDeleteAmlsEvidence(amlsEvidence, responseStatus = Status.INTERNAL_SERVER_ERROR)
+
+    runner.run().futureValue
+
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)
+    individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
+
+class DeleteExpiredApplicationsRunnerDeletionDisabledSpec
+extends ISpec:
+
+  private lazy val runner: DeleteExpiredApplicationsRunner = app.injector.instanceOf[DeleteExpiredApplicationsRunner]
+  private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+
+  "run does not touch object-store when scheduler.deletion.enabled is false, and still deletes the application" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
+    agentApplicationRepo.upsert(agentApplication).futureValue
+
+    runner.run().futureValue
+
+    ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence, count = 0)
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None

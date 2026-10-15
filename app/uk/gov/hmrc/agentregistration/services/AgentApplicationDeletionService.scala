@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.services
 
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,12 +30,20 @@ import scala.concurrent.Future
 @Singleton
 class AgentApplicationDeletionService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
-  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo
+  individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
+  objectStoreService: ObjectStoreService,
+  appConfig: AppConfig
 )(using ec: ExecutionContext):
 
-  def deleteWithIndividuals(agentApplicationId: AgentApplicationId): Future[Unit] =
-    // clean up orphaned individual provided details records before we lose the application id as well
+  def deleteWithIndividualsAndAmlsEvidence(agentApplication: AgentApplication)(using request: RequestHeader): Future[Unit] =
+    // clean up the AMLS evidence file and orphaned individual provided details records before we lose the application as well
     for
-      _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplicationId)
-      _ <- agentApplicationRepo.removeById(agentApplicationId)
+      _ <- deleteAmlsEvidence(agentApplication)
+      _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
+      _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
     yield ()
+
+  private def deleteAmlsEvidence(agentApplication: AgentApplication)(using request: RequestHeader): Future[Unit] =
+    agentApplication.amlsDetails.flatMap(_.amlsEvidence) match
+      case Some(amlsEvidence) if appConfig.Scheduler.deletionEnabled => objectStoreService.deleteAmlsEvidence(amlsEvidence)
+      case _ => Future.successful(())

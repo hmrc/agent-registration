@@ -17,10 +17,12 @@
 package uk.gov.hmrc.agentregistration.runner
 
 import play.api.Logging
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.util.RequestSupport
 
 import java.time.Clock
 import java.time.Instant
@@ -38,15 +40,22 @@ class DeleteExpiredApplicationsRunner @Inject() (
 extends Logging:
 
   def run(): Future[Unit] =
+    given RequestHeader = RequestSupport.thereIsNoRequest
     val now: Instant = Instant.now(clock)
-    logger.info(s"Deleting Expired applications with postExpiryGracePeriodEndsAt < $now and their individuals")
+    logger.info(s"Deleting Expired applications with postExpiryGracePeriodEndsAt < $now, their individuals and AMLS evidence")
     for
       agentApplicationIds <- agentApplicationRepo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(now)
       deletedCount <-
-        ProcessInSequence.processAllInSequence(agentApplicationIds)(agentApplicationDeletionService.deleteWithIndividuals):
+        ProcessInSequence.processAllInSequence(agentApplicationIds)(deleteExpiredApplication):
           (
             throwable: Throwable,
             agentApplicationId: AgentApplicationId
           ) =>
-            logger.error(s"Failed to delete Expired application ${agentApplicationId.value} and its individuals", throwable)
-    yield logger.info(s"Deleted $deletedCount of ${agentApplicationIds.size} Expired applications and their individuals")
+            logger.error(s"Failed to delete Expired application ${agentApplicationId.value}, its individuals and AMLS evidence", throwable)
+    yield logger.info(s"Deleted $deletedCount of ${agentApplicationIds.size} Expired applications, their individuals and AMLS evidence")
+
+  private def deleteExpiredApplication(agentApplicationId: AgentApplicationId)(using request: RequestHeader): Future[Unit] = agentApplicationRepo
+    .findById(agentApplicationId)
+    .flatMap:
+      case Some(agentApplication) => agentApplicationDeletionService.deleteWithIndividualsAndAmlsEvidence(agentApplication)
+      case None => Future.successful(())

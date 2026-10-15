@@ -30,3 +30,5 @@ object RequestSupport:
   private object HcProvider
   extends BackendHeaderCarrierProvider:
     def headerCarrier(implicit request: RequestHeader): HeaderCarrier = this.hc(using request)
+
+  val thereIsNoRequest: RequestHeader = NoRequest
