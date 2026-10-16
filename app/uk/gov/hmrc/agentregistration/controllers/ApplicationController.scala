@@ -63,16 +63,15 @@ extends BackendController(cc):
             .upsert(request.body)
             .map(_ => Ok(""))
 
-  def deleteApplication(): Action[AnyContent] = actions.authorised.async:
-    implicit request =>
-      agentApplicationRepo
-        .findByInternalUserId(request.internalUserId)
-        .flatMap:
-          case Some(agentApplication) =>
-            agentApplicationDeletionService
-              .deleteWithIndividualsAndAmlsEvidence(agentApplication)
-              .map(_ => NoContent)
-          case None => Future.successful(NoContent)
+  def deleteApplication(): Action[AnyContent] = actions.authorised.async: request =>
+    agentApplicationRepo
+      .findByInternalUserId(request.internalUserId)
+      .flatMap:
+        case Some(agentApplication) =>
+          agentApplicationDeletionService
+            .deleteWithIndividuals(agentApplication)
+            .map(_ => NoContent)
+        case None => Future.successful(NoContent)
 
   def findByLinkId(linkId: LinkId): Action[AnyContent] = Action.async: _ =>
     agentApplicationRepo

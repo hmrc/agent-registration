@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentregistration.services
 
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -31,19 +30,22 @@ import scala.concurrent.Future
 class AgentApplicationDeletionService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  objectStoreService: ObjectStoreService,
-  appConfig: AppConfig
+  objectStoreService: ObjectStoreService
 )(using ec: ExecutionContext):
 
-  def deleteWithIndividualsAndAmlsEvidence(agentApplication: AgentApplication)(using request: RequestHeader): Future[Unit] =
-    // clean up the AMLS evidence file and orphaned individual provided details records before we lose the application as well
+  def deleteWithIndividuals(agentApplication: AgentApplication): Future[Unit] =
     for
-      _ <- deleteAmlsEvidence(agentApplication)
       _ <- individualProvidedDetailsRepo.deleteByApplicationId(agentApplication.agentApplicationId)
       _ <- agentApplicationRepo.removeById(agentApplication.agentApplicationId)
     yield ()
 
+  def deleteWithIndividualsAndAmlsEvidence(agentApplication: AgentApplication)(using request: RequestHeader): Future[Unit] =
+    for
+      _ <- deleteAmlsEvidence(agentApplication)
+      _ <- deleteWithIndividuals(agentApplication)
+    yield ()
+
   private def deleteAmlsEvidence(agentApplication: AgentApplication)(using request: RequestHeader): Future[Unit] =
     agentApplication.amlsDetails.flatMap(_.amlsEvidence) match
-      case Some(amlsEvidence) if appConfig.Scheduler.deletionEnabled => objectStoreService.deleteAmlsEvidence(amlsEvidence)
-      case _ => Future.successful(())
+      case Some(amlsEvidence) => objectStoreService.deleteAmlsEvidence(amlsEvidence)
+      case None => Future.successful(())

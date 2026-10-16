@@ -28,10 +28,6 @@ import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 class DeleteExpiredApplicationsRunnerSpec
 extends ISpec:
 
-  override protected def configOverrides: Map[String, Any] = Map[String, Any](
-    "scheduler.deletion.enabled" -> true
-  )
-
   private lazy val runner: DeleteExpiredApplicationsRunner = app.injector.instanceOf[DeleteExpiredApplicationsRunner]
   private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   private lazy val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
@@ -108,19 +104,3 @@ extends ISpec:
 
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
-
-class DeleteExpiredApplicationsRunnerDeletionDisabledSpec
-extends ISpec:
-
-  private lazy val runner: DeleteExpiredApplicationsRunner = app.injector.instanceOf[DeleteExpiredApplicationsRunner]
-  private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-
-  "run does not touch object-store when scheduler.deletion.enabled is false, and still deletes the application" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
-    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
-    agentApplicationRepo.upsert(agentApplication).futureValue
-
-    runner.run().futureValue
-
-    ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence, count = 0)
-    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
