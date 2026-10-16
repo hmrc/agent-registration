@@ -20,10 +20,14 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
+import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
+import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.http.HttpReads.Implicits.given
 import uk.gov.hmrc.http.HttpResponse
@@ -146,4 +150,42 @@ extends ControllerSpec:
     response.status shouldBe Status.OK
     val agentApplication = response.json.as[AgentApplication]
     agentApplication shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
+
+  "delete application deletes the application and its individuals, leaves its AMLS evidence in object-store, and returns NO_CONTENT" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+    val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
+    val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
+    agentApplicationRepo.upsert(agentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+
+    val response: HttpResponse =
+      httpClient
+        .delete(url"$baseUrl/agent-registration/application")
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.NO_CONTENT
+    response.body shouldBe ""
+    ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence, count = 0)
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
+    individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
+    AuthStubs.verifyAuthorise()
+
+  "delete application returns NO_CONTENT when there is no application" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+
+    val response: HttpResponse =
+      httpClient
+        .delete(url"$baseUrl/agent-registration/application")
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.NO_CONTENT
+    response.body shouldBe ""
     AuthStubs.verifyAuthorise()

@@ -25,6 +25,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.runner.DeleteExpiredApplicationsRunner
 import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
@@ -46,6 +47,7 @@ class TestApplicationController @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
   expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner,
+  deleteExpiredApplicationsRunner: DeleteExpiredApplicationsRunner,
   testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
@@ -74,6 +76,11 @@ extends BackendController(cc):
     .default
     .async: _ =>
       expireUnsubmittedApplicationsRunner.run().map(_ => Ok(""))
+
+  def runDeletionScheduler: Action[AnyContent] = actions
+    .default
+    .async: _ =>
+      deleteExpiredApplicationsRunner.run().map(_ => Ok(""))
 
   def recentApplications(
     page: Int,

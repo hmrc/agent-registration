@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.scheduler
 
 import play.api.Logging
 import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.runner.DeleteExpiredApplicationsRunner
 import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
 
 import javax.inject.Inject
@@ -27,7 +28,8 @@ import javax.inject.Singleton
 class AgentRegistrationSchedulerInitializer @Inject() (
   scheduler: Scheduler,
   appConfig: AppConfig,
-  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner
+  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner,
+  deleteExpiredApplicationsRunner: DeleteExpiredApplicationsRunner
 )
 extends Logging:
 
@@ -43,3 +45,13 @@ extends Logging:
       )
     else
       logger.info("expiry scheduler not scheduled as it is not enabled")
+
+    if appConfig.Scheduler.deletionEnabled then
+      logger.info("Bootstrapping deletion scheduler")
+      scheduler.scheduleDaily(
+        "deleting expired applications",
+        appConfig.Scheduler.deletionTime,
+        () => deleteExpiredApplicationsRunner.run()
+      )
+    else
+      logger.info("deletion scheduler not scheduled as it is not enabled")

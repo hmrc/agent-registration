@@ -28,6 +28,11 @@ final case class AmlsEvidence(
 )
 
 object AmlsEvidence:
+
+  val objectStoreOwner: String = "agent-registration-frontend"
+
+  def objectStoreDirectory(fileUploadReference: FileUploadReference): Path.Directory = Path.Directory(fileUploadReference.value)
+
   given OFormat[AmlsEvidence] =
     given OFormat[Path.File] = Json.format[Path.File]
     given OFormat[Path.Directory] = Json.format[Path.Directory]
