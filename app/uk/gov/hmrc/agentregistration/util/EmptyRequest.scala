@@ -22,26 +22,26 @@ import play.api.mvc.RequestHeader
 import play.api.mvc.request.RemoteConnection
 import play.api.mvc.request.RequestTarget
 
-import java.net.URI
+object EmptyRequest:
 
-object NoRequest
-extends RequestHeader:
+  val emptyRequestHeader: RequestHeader =
+    new RequestHeader:
+      def target: RequestTarget = RequestTarget(
+        uriString = "/",
+        path = "runner/dummyPath",
+        queryString = Map.empty
+      )
 
-  override def method: String = ""
-  override def version: String = ""
-  override def headers: Headers = Headers.create()
+      def version: String = "HTTP/1.1"
 
-  override def connection: RemoteConnection = RemoteConnection(
-    "",
-    false,
-    None
-  )
+      def method: String = "GET"
 
-  override def target: RequestTarget =
-    new RequestTarget:
-      override def uri: URI = URI.create("")
-      override def uriString: String = ""
-      override def path: String = ""
-      override def queryMap: Map[String, Seq[String]] = Map.empty
+      def headers: Headers = Headers()
 
-  override def attrs: TypedMap = TypedMap.empty
+      def connection: RemoteConnection = RemoteConnection(
+        remoteAddress = java.net.InetAddress.getLoopbackAddress,
+        secure = false,
+        clientCertificateChain = None
+      )
+
+      def attrs: TypedMap = TypedMap.empty

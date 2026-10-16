@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
-import uk.gov.hmrc.agentregistration.util.RequestSupport
+import uk.gov.hmrc.agentregistration.util.EmptyRequest
 
 import java.time.Clock
 import java.time.Instant
@@ -40,7 +40,7 @@ class DeleteExpiredApplicationsRunner @Inject() (
 extends Logging:
 
   def run(): Future[Unit] =
-    given RequestHeader = RequestSupport.thereIsNoRequest
+    given RequestHeader = EmptyRequest.emptyRequestHeader
     val now: Instant = Instant.now(clock)
     logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
     for
