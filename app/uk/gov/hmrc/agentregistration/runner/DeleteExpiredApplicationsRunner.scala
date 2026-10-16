@@ -42,7 +42,7 @@ extends Logging:
   def run(): Future[Unit] =
     given RequestHeader = RequestSupport.thereIsNoRequest
     val now: Instant = Instant.now(clock)
-    logger.info(s"Deleting Expired applications with postExpiryGracePeriodEndsAt < $now, their individuals and AMLS evidence")
+    logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
     for
       agentApplicationIds <- agentApplicationRepo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(now)
       deletedCount <-
@@ -51,8 +51,8 @@ extends Logging:
             throwable: Throwable,
             agentApplicationId: AgentApplicationId
           ) =>
-            logger.error(s"Failed to delete Expired application ${agentApplicationId.value}, its individuals and AMLS evidence", throwable)
-    yield logger.info(s"Deleted $deletedCount of ${agentApplicationIds.size} Expired applications, their individuals and AMLS evidence")
+            logger.error(s"Deleting Expired applications: FAILED for ${agentApplicationId.value}", throwable)
+    yield logger.info(s"Deleting Expired applications: deleted $deletedCount of ${agentApplicationIds.size} DONE")
 
   private def deleteExpiredApplication(agentApplicationId: AgentApplicationId)(using request: RequestHeader): Future[Unit] = agentApplicationRepo
     .findById(agentApplicationId)
