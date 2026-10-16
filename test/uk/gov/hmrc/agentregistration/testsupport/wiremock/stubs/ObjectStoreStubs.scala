@@ -21,9 +21,8 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
+import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.StubMaker
-
-import java.time.Instant
 
 object ObjectStoreStubs:
 
@@ -37,13 +36,13 @@ object ObjectStoreStubs:
           Json.obj(
             "location" -> s"/object-store/object/agent-registration-frontend/${amlsEvidence.fileUploadReference.value}/${amlsEvidence.fileName}",
             "contentLength" -> 1234,
-            "lastModified" -> Instant.now()
+            "lastModified" -> TdAll.tdAll.nowAsInstant
           )
         )
       ).toString
   )
 
-  def stubListAmlsEvidenceNotFound(amlsEvidence: AmlsEvidence): StubMapping = StubMaker.make(
+  def stubListAmlsEvidenceEmpty(amlsEvidence: AmlsEvidence): StubMapping = StubMaker.make(
     httpMethod = StubMaker.HttpMethod.GET,
     urlPattern = wm.urlEqualTo(s"/object-store/list/agent-registration-frontend/${amlsEvidence.fileUploadReference.value}"),
     responseStatus = Status.OK,

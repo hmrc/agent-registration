@@ -87,7 +87,7 @@ extends ISpec:
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
     agentApplicationRepo.upsert(agentApplication).futureValue
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-    ObjectStoreStubs.stubListAmlsEvidenceNotFound(amlsEvidence)
+    ObjectStoreStubs.stubListAmlsEvidenceEmpty(amlsEvidence)
 
     runner.run().futureValue
 
