@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Client
+    participant IndividualProvidedDetailsController
+    participant HMRC_Auth as HMRC Auth
+    participant MongoDB as MongoDB (individual)
+
+    Client->>IndividualProvidedDetailsController: DELETE /individual-provided-details/delete-by-id/{individualProvidedDetailsId}
+    IndividualProvidedDetailsController->>HMRC_Auth: Authenticate (GG, Agent affinity)
+    alt Auth fails
+        HMRC_Auth-->>IndividualProvidedDetailsController: 401 Unauthorised
+        IndividualProvidedDetailsController-->>Client: 401 Unauthorised
+    else Auth succeeds
+        HMRC_Auth-->>IndividualProvidedDetailsController: Authenticated
+        IndividualProvidedDetailsController->>MongoDB: removeById(individualProvidedDetailsId)
+        MongoDB-->>IndividualProvidedDetailsController: Deleted (or not found — idempotent)
+        IndividualProvidedDetailsController-->>Client: 200 OK
+    end

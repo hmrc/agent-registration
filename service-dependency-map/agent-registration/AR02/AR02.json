@@ -1,0 +1,75 @@
+{
+  "apiId": "AR02",
+  "apiTitle": "Get Agent Application by Link ID",
+  "description": "Retrieves an agent application by its link ID. This endpoint is unauthenticated at the controller level, allowing lookup by link ID without a session.",
+  "method": "GET",
+  "path": "/application/linkId/{linkId}",
+  "pathParameters": [
+    {
+      "name": "linkId",
+      "type": "string",
+      "required": true,
+      "description": "The unique link ID associated with the agent application"
+    }
+  ],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Agent application found",
+      "body": "AgentApplication JSON object"
+    },
+    {
+      "status": 204,
+      "description": "No application found for the given link ID"
+    }
+  ],
+  "authentication": {
+    "required": false,
+    "type": "None",
+    "notes": "Uses Action.async (unauthenticated). No auth check performed."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.ApplicationController",
+  "controllerMethod": "findByLinkId",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "GET /application/linkId/{linkId}",
+      "target": "ApplicationController"
+    },
+    {
+      "step": 2,
+      "actor": "ApplicationController",
+      "action": "agentApplicationRepo.findByLinkId(linkId)",
+      "target": "MongoDB (agent-application)"
+    },
+    {
+      "step": 3,
+      "actor": "ApplicationController",
+      "action": "Return 200 Ok(agentApplication) or 204 NoContent",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [],
+  "databaseCollections": [
+    {
+      "name": "agent-application",
+      "operation": "findOne",
+      "filter": "linkId == linkId"
+    }
+  ],
+  "specialCases": [
+    "No authentication required",
+    "Returns 204 rather than 404 when not found"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}

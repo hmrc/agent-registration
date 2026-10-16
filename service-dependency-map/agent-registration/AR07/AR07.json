@@ -1,0 +1,98 @@
+{
+  "apiId": "AR07",
+  "apiTitle": "Create or Update Individual Provided Details for Application",
+  "description": "Creates or updates individual provided details linked to an agent application. Uses Agent affinity group auth. InternalUserId matching is intentionally NOT enforced, allowing an applicant (agent) to manage individual records before the individual authenticates.",
+  "method": "POST",
+  "path": "/individual-provided-details/for-application",
+  "pathParameters": [],
+  "queryParameters": [],
+  "responses": [
+    {
+      "status": 200,
+      "description": "Individual provided details created or updated"
+    },
+    {
+      "status": 400,
+      "description": "Bad request \u2013 invalid JSON body"
+    },
+    {
+      "status": 401,
+      "description": "Unauthorised"
+    },
+    {
+      "status": 403,
+      "description": "Forbidden \u2013 HMRC-AS-AGENT enrolment active or unsupported credential role"
+    }
+  ],
+  "authentication": {
+    "required": true,
+    "type": "Government Gateway",
+    "affinityGroup": "Agent",
+    "credentialRoles": [
+      "User",
+      "Admin"
+    ],
+    "notes": "InternalUserId guard intentionally removed to allow applicant management before individual sign-in."
+  },
+  "audience": [
+    "internal"
+  ],
+  "controller": "uk.gov.hmrc.agentregistration.controllers.providedetails.llp.IndividualProvidedDetailsController",
+  "controllerMethod": "upsertForApplication",
+  "services": [],
+  "interactions": [
+    {
+      "step": 1,
+      "actor": "Client",
+      "action": "POST /individual-provided-details/for-application with IndividualProvidedDetails body",
+      "target": "IndividualProvidedDetailsController"
+    },
+    {
+      "step": 2,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "authorised() \u2013 validate Agent affinity",
+      "target": "HMRC Auth"
+    },
+    {
+      "step": 3,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "Parse IndividualProvidedDetails from body"
+    },
+    {
+      "step": 4,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "individualProvidedDetailsRepo.upsert(individualProvidedDetails)",
+      "target": "MongoDB (individual)"
+    },
+    {
+      "step": 5,
+      "actor": "IndividualProvidedDetailsController",
+      "action": "Return 200 Ok",
+      "target": "Client"
+    }
+  ],
+  "externalDependencies": [
+    {
+      "service": "HMRC Auth",
+      "type": "HTTP/Auth",
+      "purpose": "Authenticate caller (Agent)"
+    }
+  ],
+  "databaseCollections": [
+    {
+      "name": "individual",
+      "operation": "upsert",
+      "filter": "_id == individualProvidedDetailsId"
+    }
+  ],
+  "specialCases": [
+    "InternalUserId is NOT validated against the auth session (differs from AR11)",
+    "Allows agent to pre-create individual records before individual authenticates",
+    "TTL index on lastUpdated; unique partial index on (internalUserId, agentApplicationId)"
+  ],
+  "metadata": {
+    "lastUpdated": "2026-03-27",
+    "gitCommitSha": "80d0452b1ed03094b02dbb594dcb24c1888fe8a4",
+    "analysisVersion": "1.0"
+  }
+}
