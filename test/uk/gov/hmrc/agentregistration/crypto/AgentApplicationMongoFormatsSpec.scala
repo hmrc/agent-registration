@@ -18,10 +18,10 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
@@ -47,6 +47,13 @@ extends UnitSpec:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
       AgentApplicationMongoFormats.plaintextFormat.writes(agentApplication) shouldBe afterResubmittedJson
       afterResubmittedJson.as[AgentApplication](using AgentApplicationMongoFormats.plaintextFormat) shouldBe agentApplication
+  }
+
+  "hashedInternalUserIdWrites" - {
+
+    "write only the hash of the plaintext internal user id" in:
+      AgentApplicationMongoFormats.hashedInternalUserIdWrites(stubHash).writes(llpModel) shouldBe
+        Json.obj("hashedInternalUserId" -> "hash:internal-user-id-12345")
   }
 
   "encryptingFormat" - {
@@ -149,6 +156,16 @@ extends UnitSpec:
 
     "linkId stays plaintext" in:
       llpEncrypted.linkId.value shouldBe llpModel.linkId.value
+
+    "store hash of the plaintext internalUserId, and the encrypted internalUserId" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      val written: JsObject = mongoFormats.encryptingFormat.writes(agentApplication)
+      (written \ "hashedInternalUserId").as[String] shouldBe fh.hash(agentApplication.internalUserId.value)
+      (written \ "internalUserId").as[String] shouldBe enc(agentApplication.internalUserId.value)
+
+    "ignore hashedInternalUserId when reading" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      mongoFormats.encryptingFormat.reads(mongoFormats.encryptingFormat.writes(agentApplication)).get shouldBe agentApplication
   }
 
   "encrypt sets ciphertext on subtype-specific PII fields" - {
@@ -247,8 +264,7 @@ extends UnitSpec:
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
   private val fh: FieldHasher = new FieldHasher(appConfig)
   private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val lvh: LegacyValueHasher = new LegacyValueHasher(fle, fh)
-  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle, fh, lvh)
+  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle, fh)
 
   private def enc(plain: String): String = fle.encrypt(plain)
 
@@ -328,7 +344,7 @@ extends UnitSpec:
       |  "_id": "agent-application-id-12345",
       |  "cachedSessionId": "session-id-123",
       |  "applicationReference": "APPREF123",
-      |  "internalUserId": "hash:internal-user-id-12345",
+      |  "internalUserId": "internal-user-id-12345",
       |  "applicantCredentials": {
       |    "providerId": "cred-id-12345",
       |    "providerType": "GovernmentGateway"
@@ -454,3 +470,5 @@ extends UnitSpec:
       |  "type": "AgentApplicationLlp"
       |}""".stripMargin
   )
+
+  private val stubHash: String => String = id => s"hash:$id"

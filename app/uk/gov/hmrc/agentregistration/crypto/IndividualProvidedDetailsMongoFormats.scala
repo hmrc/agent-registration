@@ -17,8 +17,9 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
+import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -34,41 +35,39 @@ object IndividualProvidedDetailsMongoFormats:
   /** Dates as BSON dates, PII as it is. */
   val plaintextFormat: OFormat[IndividualProvidedDetails] = IndividualProvidedDetailsFormat.makeFormat(using MongoJavatimeFormats.instantFormat)
 
+  /** Adds hashed internal user id as additional write only field. */
+  def hashedInternalUserIdWrites(hashInternalUserId: String => String): OWrites[IndividualProvidedDetails] = OWrites[IndividualProvidedDetails]: app =>
+    app.internalUserId.fold(Json.obj())(iui => Json.obj("hashedInternalUserId" -> hashInternalUserId(iui.value)))
+
 /** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
 class IndividualProvidedDetailsMongoFormats @Inject() (
   fieldLevelEncryption: FieldLevelEncryption,
-  fieldHasher: FieldHasher,
-  legacyValueHasher: LegacyValueHasher
+  fieldHasher: FieldHasher
 ):
 
   /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
-  val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
-    r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decryptForRead),
-    w = IndividualProvidedDetailsMongoFormats.plaintextFormat.contramap[IndividualProvidedDetails](encryptForWrite)
-  )
+  val encryptingFormat: OFormat[IndividualProvidedDetails] =
+    val hashedWrites = IndividualProvidedDetailsMongoFormats.hashedInternalUserIdWrites(fieldHasher.hash)
+    OFormat[IndividualProvidedDetails](
+      r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
+      w = OWrites[IndividualProvidedDetails]: ipd =>
+        IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(encrypt(ipd)) ++ hashedWrites.writes(ipd)
+    )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
   def decrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
 
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
-
-  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldHasher.hash)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
-
-  private def encryptForWrite(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
-    .modify(_.internalUserId.each.value).using(fieldHasher.hash)
-
-  private def decryptForRead(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
-    .modify(_.internalUserId.each.value).using(legacyValueHasher.decryptThenHash)
 
   private def transform(
     d: IndividualProvidedDetails,
     cryptoOp: String => String
   ): IndividualProvidedDetails = d
     .modify(_.individualName.value).using(cryptoOp)
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.each.value).using(cryptoOp)
     .modify(_.telephoneNumber.each.value).using(cryptoOp)
     .modify(_.emailAddress.each.emailAddress.value).using(cryptoOp)
     .modify(_.individualNino.each).using(transformIndividualNino(_, cryptoOp))

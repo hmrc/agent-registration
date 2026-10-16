@@ -45,7 +45,7 @@ extends UnitSpec:
       |  "_id": "agent-application-id-12345",
       |  "cachedSessionId": "session-id-123",
       |  "applicationReference": "APPREF123",
-      |  "internalUserId": "hash:internal-user-id-12345",
+      |  "internalUserId": "internal-user-id-12345",
       |  "applicantCredentials": {
       |    "providerId": "cred-id-12345",
       |    "providerType": "GovernmentGateway"

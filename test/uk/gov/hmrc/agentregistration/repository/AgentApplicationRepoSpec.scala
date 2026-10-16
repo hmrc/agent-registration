@@ -49,13 +49,13 @@ extends ISpec:
     val record2: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking.copy(
       _id = AgentApplicationId("agent-application-id-23456"),
       applicationReference = ApplicationReference("APPREF234"),
-      internalUserId = InternalUserId("hash:internal-user-id-23456"),
+      internalUserId = InternalUserId("internal-user-id-23456"),
       linkId = LinkId("link-id-23456")
     )
     val record3: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking.copy(
       _id = AgentApplicationId("agent-application-id-34567"),
       applicationReference = ApplicationReference("APPREF345"),
-      internalUserId = InternalUserId("hash:internal-user-id-34567"),
+      internalUserId = InternalUserId("internal-user-id-34567"),
       linkId = LinkId("link-id-34567")
     )
     repo.upsert(record).futureValue

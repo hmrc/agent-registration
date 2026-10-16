@@ -18,10 +18,10 @@ package uk.gov.hmrc.agentregistration.crypto
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
@@ -37,7 +37,21 @@ extends UnitSpec:
     "serialize and deserialize IndividualProvidedDetails" in:
       val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
       IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(individualProvidedDetails) shouldBe afterRiskedFixableJson
-      afterRiskedFixableJson.as[IndividualProvidedDetails](using IndividualProvidedDetailsMongoFormats.plaintextFormat) shouldBe individualProvidedDetails
+      afterRiskedFixableJson.as[IndividualProvidedDetails](using
+        IndividualProvidedDetailsMongoFormats.plaintextFormat
+      ) shouldBe individualProvidedDetails
+
+  }
+
+  "hashedInternalUserIdWrites" - {
+
+    "write the hash of the plaintext internal user id when present" in:
+      IndividualProvidedDetailsMongoFormats.hashedInternalUserIdWrites(stubHash).writes(model) shouldBe
+        Json.obj("hashedInternalUserId" -> "hash:internal-user-id-12345")
+
+    "write nothing when there is no internal user id" in:
+      IndividualProvidedDetailsMongoFormats.hashedInternalUserIdWrites(stubHash).writes(modelWithoutInternalUserId) shouldBe Json.obj()
+
   }
 
   "encryptingFormat" - {
@@ -50,6 +64,17 @@ extends UnitSpec:
       plaintextPii.foreach: plaintext =>
         withClue(s"plaintext '$plaintext' must not appear as a JSON value in Mongo JSON: "):
           written should not include s"\"$plaintext\""
+
+    "store the hash of the plaintext internal user id and the encrypted internal user id when present" in:
+      val written: JsObject = mongoFormats.encryptingFormat.writes(model)
+      val plainId = model.internalUserId.value.value
+      (written \ "hashedInternalUserId").as[String] shouldBe fh.hash(plainId)
+      (written \ "internalUserId").as[String] shouldBe enc(plainId)
+
+    "omit both internalUserId and hashedInternalUserId when there is no internal user id" in:
+      val written: JsObject = mongoFormats.encryptingFormat.writes(modelWithoutInternalUserId)
+      written.keys should not contain "internalUserId"
+      written.keys should not contain "hashedInternalUserId"
   }
 
   "encrypt sets ciphertext on every PII field" - {
@@ -159,12 +184,12 @@ extends UnitSpec:
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
   private val fh: FieldHasher = new FieldHasher(appConfig)
   private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val lvh: LegacyValueHasher = new LegacyValueHasher(fle, fh)
-  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle, fh, lvh)
+  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle, fh)
 
   private def enc(plain: String): String = fle.encrypt(plain)
 
   private val model: IndividualProvidedDetails = tdAll.providedDetails.afterFinished
+  private val modelWithoutInternalUserId = tdAll.providedDetails.precreated
   private val encrypted: IndividualProvidedDetails = mongoFormats.encrypt(model)
 
   private val plaintextPii: List[String] =
@@ -186,7 +211,7 @@ extends UnitSpec:
       |  "personReference": "1234567890",
       |  "individualName": "Test Name",
       |  "isPersonOfControl": true,
-      |  "internalUserId": "hash:internal-user-id-12345",
+      |  "internalUserId": "internal-user-id-12345",
       |  "createdAt": {
       |    "$date": {
       |      "$numberLong": "2837003631880"
@@ -232,3 +257,5 @@ extends UnitSpec:
       |  }
       |}""".stripMargin
   )
+
+  private val stubHash: String => String = id => s"hash:$id"

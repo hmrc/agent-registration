@@ -20,11 +20,11 @@ import org.bson.Document
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
 import play.api.Logging
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
+import uk.gov.hmrc.agentregistration.crypto.FieldHasher
+import uk.gov.hmrc.agentregistration.crypto.FieldLevelEncryption
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.mongo.MongoComponent
@@ -37,12 +37,11 @@ import scala.concurrent.Future
 @Singleton
 class InternalUserIdHashMigration @Inject() (
   mongoComponent: MongoComponent,
-  legacyValueHasher: LegacyValueHasher,
+  fieldLevelEncryption: FieldLevelEncryption,
+  fieldHasher: FieldHasher,
   appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Logging:
-
-  private val field = "internalUserId"
 
   val startupRun: Future[Unit] =
     if appConfig.Migration.HashInternalUserId.runOnStartup
@@ -51,38 +50,37 @@ extends Logging:
 
   def run: Future[Unit] =
     for
-      _ <- migrateCollection(rawCollection(AgentApplicationRepo.collectionName), field)
-      _ <- migrateCollection(rawCollection(IndividualProvidedDetailsRepo.collectionName), field)
+      _ <- migrateCollection(rawCollection(AgentApplicationRepo.collectionName))
+      _ <- migrateCollection(rawCollection(IndividualProvidedDetailsRepo.collectionName))
     yield ()
 
   private def rawCollection(name: String): MongoCollection[Document] = mongoComponent.database.getCollection(name)
 
+  /** Adds a new field to the collection "hashedInternalUserId" which can be used to query the collection.
+    */
   private def migrateCollection(
-    collection: org.mongodb.scala.MongoCollection[org.bson.Document],
-    field: String
+    collection: org.mongodb.scala.MongoCollection[org.bson.Document]
   ): Future[Unit] =
     val collectionName = collection.namespace.getCollectionName
     collection
       .find(
-        // Only documents that have NOT yet been migrated (no hash: prefix)
-        Filters.and(
-          Filters.exists(field, true),
-          Filters.not(Filters.regex(field, "^hash:"))
-        )
+        // hashedInternalUserId not exists
+        Filters.exists("hashedInternalUserId", false)
       )
-      .projection(Projections.include(field))
       .toFuture()
       .flatMap: docs =>
         logger.info(s"[$collectionName] Starting internalUserId hash migration for ${docs.size} documents")
         docs.grouped(500).toSeq.foldLeft(Future.unit): (acc, batch) =>
           acc.flatMap(_ =>
             Future.traverse(batch): doc =>
-              val encrypted = doc.getString(field)
-              val hashed = legacyValueHasher.decryptThenHash(encrypted)
+              val encrypted = doc.getString("internalUserId")
+              val decrypted = fieldLevelEncryption.decrypt(encrypted)
+              val hashed = fieldHasher.hash(decrypted)
               collection
                 .updateOne(
                   Filters.eq("_id", doc.get("_id")),
-                  Updates.set(field, hashed)
+                  // save to new field hashedInternalUserId
+                  Updates.set("hashedInternalUserId", hashed)
                 )
                 .toFuture()
                 .map(_ => ())

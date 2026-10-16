@@ -17,8 +17,9 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentregistration.migration.LegacyValueHasher
+import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
@@ -37,20 +38,28 @@ object AgentApplicationMongoFormats:
     MongoJavatimeFormats.localDateFormat
   )
 
+  /** Adds hashed internal user id as additional write only field. */
+  def hashedInternalUserIdWrites(hashInternalUserId: String => String): OWrites[AgentApplication] = OWrites[AgentApplication]: app =>
+    Json.obj("hashedInternalUserId" -> hashInternalUserId(app.internalUserId.value))
+
 /** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
 class AgentApplicationMongoFormats @Inject() (
   fieldLevelEncryption: FieldLevelEncryption,
-  fieldHasher: FieldHasher,
-  legacyValueHasher: LegacyValueHasher
+  fieldHasher: FieldHasher
 ):
 
-  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
-  val encryptingFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
-    r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decryptForRead),
-    w = AgentApplicationMongoFormats.plaintextFormat.contramap[AgentApplication](encryptForWrite)
-  )
+  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. The hashed internal user
+    * id is computed from the plaintext application before encryption and is write only.
+    */
+  val encryptingFormat: OFormat[AgentApplication] =
+    val hashedWrites = AgentApplicationMongoFormats.hashedInternalUserIdWrites(fieldHasher.hash)
+    OFormat[AgentApplication](
+      r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decrypt),
+      w = OWrites[AgentApplication]: app =>
+        AgentApplicationMongoFormats.plaintextFormat.writes(encrypt(app)) ++ hashedWrites.writes(app)
+    )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)
   def decrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.decrypt)
@@ -85,7 +94,6 @@ class AgentApplicationMongoFormats @Inject() (
 
   // Single-value helpers, for use in Mongo filters.
   def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
-  def hashInternalUserId(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldHasher.hash)
   def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
 
   def encrypt(groupId: GroupId): GroupId = groupId.modify(_.value).using(fieldLevelEncryption.encrypt)
@@ -106,12 +114,6 @@ class AgentApplicationMongoFormats @Inject() (
   def encrypt(crn: Crn): Crn = crn.modify(_.value).using(fieldLevelEncryption.encrypt)
   def decrypt(crn: Crn): Crn = crn.modify(_.value).using(fieldLevelEncryption.decrypt)
 
-  private def encryptForWrite(d: AgentApplication): AgentApplication = transform(d, fieldLevelEncryption.encrypt)
-    .modify(_.internalUserId.value).using(fieldHasher.hash)
-
-  private def decryptForRead(d: AgentApplication): AgentApplication = transform(d, fieldLevelEncryption.decrypt)
-    .modify(_.internalUserId.value).using(legacyValueHasher.decryptThenHash)
-
   private def transform(
     app: AgentApplication,
     cryptoOp: String => String
@@ -131,7 +133,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationLlp,
     cryptoOp: String => String
   ): AgentApplicationLlp = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -145,7 +147,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationSoleTrader,
     cryptoOp: String => String
   ): AgentApplicationSoleTrader = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -162,7 +164,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationLimitedCompany,
     cryptoOp: String => String
   ): AgentApplicationLimitedCompany = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -176,7 +178,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationGeneralPartnership,
     cryptoOp: String => String
   ): AgentApplicationGeneralPartnership = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -190,7 +192,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationLimitedPartnership,
     cryptoOp: String => String
   ): AgentApplicationLimitedPartnership = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -205,7 +207,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationScottishLimitedPartnership,
     cryptoOp: String => String
   ): AgentApplicationScottishLimitedPartnership = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))
@@ -220,7 +222,7 @@ class AgentApplicationMongoFormats @Inject() (
     app: AgentApplicationScottishPartnership,
     cryptoOp: String => String
   ): AgentApplicationScottishPartnership = app
-    // removed internal user id to handle seperately during migration
+    .modify(_.internalUserId.value).using(cryptoOp)
     .modify(_.groupId.value).using(cryptoOp)
     .modify(_.applicantCredentials.providerId).using(cryptoOp)
     .modify(_.applicantContactDetails.each).using(transformApplicantContactDetails(_, cryptoOp))

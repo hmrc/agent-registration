@@ -39,7 +39,7 @@ extends UnitSpec:
       |  "personReference": "1234567890",
       |  "individualName": "Test Name",
       |  "isPersonOfControl": true,
-      |  "internalUserId": "hash:internal-user-id-12345",
+      |  "internalUserId": "internal-user-id-12345",
       |  "createdAt": "2059-11-25T16:33:51.880Z",
       |  "providedDetailsState": "Finished",
       |  "agentApplicationId": "agent-application-id-12345",
