@@ -92,6 +92,14 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant)
     ).assertDataIntegrity()
 
+    val afterExpiredPostExpiryGracePeriodEnded: AgentApplicationLlp = afterExpired.copy(
+      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndedAtAsInstant)
+    ).assertDataIntegrity()
+
+    val afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded: AgentApplicationLlp = afterExpiredPostExpiryGracePeriodEnded.copy(
+      amlsDetails = Some(dependencies.completeAmlsDetailsAtt)
+    ).assertDataIntegrity()
+
     val afterRefusalToDealWithCheckPass: AgentApplicationLlp = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
     ).assertDataIntegrity()
