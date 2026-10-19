@@ -24,5 +24,4 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 final case class InternalUserId(value: String)
 
 object InternalUserId:
-
   given format: Format[InternalUserId] = JsonFormatsFactory.makeValueClassFormat

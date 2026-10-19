@@ -178,7 +178,7 @@ extends UnitSpec:
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
       |post-expiry-grace-period = 45 days
-      |field-level-encryption.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
+      |field-hasher.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
       |""".stripMargin
   ))
   private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
@@ -195,6 +195,7 @@ extends UnitSpec:
   private val plaintextPii: List[String] =
     List(
       model.individualName.value,
+      model.getInternalUserId.value,
       model.getTelephoneNumber.value,
       model.getEmailAddress.emailAddress.value
     ) ++

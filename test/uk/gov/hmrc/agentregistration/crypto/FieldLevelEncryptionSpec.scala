@@ -40,7 +40,7 @@ extends UnitSpec:
       |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
       |field-level-encryption.previousKeys = []
       |post-expiry-grace-period = 45 days
-      |field-level-encryption.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
+      |field-hasher.hasherKey = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
       |""".stripMargin
 
   private def fleWith(enabled: Boolean): FieldLevelEncryption = {
@@ -48,7 +48,6 @@ extends UnitSpec:
       s"$baseConfigString\nfield-level-encryption.enabled = $enabled"
     ))
     val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-
     new FieldLevelEncryption(appConfig)
   }
 

@@ -58,7 +58,7 @@ extends Repo[AgentApplicationId, AgentApplication](
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      Filters.eq("internalUserId", agentApplicationMongoFormats.encrypt(internalUserId).value)
+      filter = Filters.eq("internalUserId", agentApplicationMongoFormats.encrypt(internalUserId).value)
     )
     .headOption()
 

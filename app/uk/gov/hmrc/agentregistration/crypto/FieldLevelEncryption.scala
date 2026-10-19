@@ -27,9 +27,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FieldLevelEncryption @Inject() (
-  appConfig: AppConfig
-):
+class FieldLevelEncryption @Inject() (appConfig: AppConfig):
 
   def encrypt(plain: String): String =
     if appConfig.FieldLevelEncryption.enabled

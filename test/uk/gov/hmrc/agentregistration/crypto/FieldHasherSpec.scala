@@ -100,7 +100,7 @@ extends UnitSpec:
          |field-level-encryption.enabled = true
          |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
          |field-level-encryption.previousKeys = []
-         |field-level-encryption.hasherKey = "$key"
+         |field-hasher.hasherKey = "$key"
          |post-expiry-grace-period = 45 days
          |""".stripMargin
     ))
