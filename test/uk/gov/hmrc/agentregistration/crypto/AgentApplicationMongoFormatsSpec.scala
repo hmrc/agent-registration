@@ -76,6 +76,9 @@ extends UnitSpec:
 
   "encrypt sets ciphertext on every PII field of an LLP application" - {
 
+    "internalUserId is encrypted" in:
+      llpEncrypted.internalUserId.value shouldBe enc(llpModel.internalUserId.value)
+
     "groupId is encrypted" in:
       llpEncrypted.groupId.value shouldBe enc(llpModel.groupId.value)
 

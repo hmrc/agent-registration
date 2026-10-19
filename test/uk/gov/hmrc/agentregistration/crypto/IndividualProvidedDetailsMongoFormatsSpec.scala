@@ -82,6 +82,9 @@ extends UnitSpec:
     "individualName is encrypted" in:
       encrypted.individualName.value shouldBe enc(model.individualName.value)
 
+    "internalUserId is encrypted" in:
+      encrypted.getInternalUserId.value shouldBe enc(model.getInternalUserId.value)
+
     "telephoneNumber is encrypted" in:
       encrypted.getTelephoneNumber.value shouldBe enc(model.getTelephoneNumber.value)
 
