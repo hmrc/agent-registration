@@ -17,12 +17,14 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
+import uk.gov.hmrc.crypto.PlainText
+import uk.gov.hmrc.crypto.SymmetricCryptoFactory
 
 class FieldLevelEncryptionSpec
 extends UnitSpec:
 
-  "encrypt is deterministic, so an encrypted field can still be matched in a filter" in:
-    fieldLevelEncryption.encrypt("alice@example.com") shouldBe fieldLevelEncryption.encrypt("alice@example.com")
+  "encrypt gives a different ciphertext every time, so a stored value says nothing about repeats" in:
+    fieldLevelEncryption.encrypt("alice@example.com") should not be fieldLevelEncryption.encrypt("alice@example.com")
 
   "encrypt gives something other than the plaintext" in:
     fieldLevelEncryption.encrypt("alice@example.com") should not be "alice@example.com"
@@ -30,19 +32,24 @@ extends UnitSpec:
   "decrypt undoes encrypt" in:
     fieldLevelEncryption.decrypt(fieldLevelEncryption.encrypt("alice@example.com")) shouldBe "alice@example.com"
 
+  "decrypt reads a record written by the previous AES scheme" in:
+    val writtenBefore: String = SymmetricCryptoFactory.aesCrypto(key).encrypt(PlainText("alice@example.com")).value
+
+    fieldLevelEncryption.decrypt(writtenBefore) shouldBe "alice@example.com"
+
+  "decrypt reads a record written by the previous AES scheme under a previous key" in:
+    val writtenBefore: String = SymmetricCryptoFactory.aesCrypto(previousKey).encrypt(PlainText("alice@example.com")).value
+
+    fieldLevelEncryption.decrypt(writtenBefore) shouldBe "alice@example.com"
+
   "decrypt reads a value encrypted under a previous key" in:
     val beforeRotation: FieldLevelEncryption = FieldLevelEncryption(
       enabled = true,
       key = previousKey,
       previousKeys = Seq.empty
     )
-    val afterRotation: FieldLevelEncryption = FieldLevelEncryption(
-      enabled = true,
-      key = key,
-      previousKeys = Seq(previousKey)
-    )
 
-    afterRotation.decrypt(beforeRotation.encrypt("alice@example.com")) shouldBe "alice@example.com"
+    fieldLevelEncryption.decrypt(beforeRotation.encrypt("alice@example.com")) shouldBe "alice@example.com"
 
   "encrypt is identity when encryption is off" in:
     fieldLevelEncryptionDisabled.encrypt("alice@example.com") shouldBe "alice@example.com"
@@ -56,7 +63,7 @@ extends UnitSpec:
   private val fieldLevelEncryption: FieldLevelEncryption = FieldLevelEncryption(
     enabled = true,
     key = key,
-    previousKeys = Seq.empty
+    previousKeys = Seq(previousKey)
   )
 
   private val fieldLevelEncryptionDisabled: FieldLevelEncryption = FieldLevelEncryption(

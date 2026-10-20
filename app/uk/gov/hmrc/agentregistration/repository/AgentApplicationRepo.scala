@@ -25,6 +25,7 @@ import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
+import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -46,7 +47,8 @@ import AgentApplicationRepoHelp.given
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
-  agentApplicationMongoFormats: AgentApplicationMongoFormats
+  agentApplicationMongoFormats: AgentApplicationMongoFormats,
+  hasher: Hasher
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
@@ -60,19 +62,19 @@ extends Repo[AgentApplicationId, AgentApplication](
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("internalUserId", agentApplicationMongoFormats.encrypt(internalUserId).value)
+      filter = Filters.eq(FieldNames.internalUserIdHash, hasher.hash(internalUserId.value))
     )
     .headOption()
 
   def findByLinkId(linkId: LinkId): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("linkId", linkId.value)
+      filter = Filters.eq(FieldNames.linkId, linkId.value)
     )
     .headOption()
 
   def findByApplicationReference(applicationReference: ApplicationReference): Future[Option[AgentApplication]] = collection
     .find(
-      filter = Filters.eq("applicationReference", applicationReference.value)
+      filter = Filters.eq(FieldNames.applicationReference, applicationReference.value)
     )
     .headOption()
 
@@ -81,8 +83,8 @@ extends Repo[AgentApplicationId, AgentApplication](
     applicationState: ApplicationState
   ): Future[Unit] = collection
     .updateMany(
-      filter = Filters.in("applicationReference", applicationReferences.map(_.value)*),
-      update = Updates.set("applicationState", applicationState.toString)
+      filter = Filters.in(FieldNames.applicationReference, applicationReferences.map(_.value)*),
+      update = Updates.set(FieldNames.applicationState, applicationState.toString)
     )
     .toFuture()
     .map(_ => ())
@@ -94,16 +96,16 @@ extends Repo[AgentApplicationId, AgentApplication](
     .updateMany(
       filter = Filters.and(
         Filters.in(
-          "applicationState",
+          FieldNames.applicationState,
           ApplicationState.Started.toString,
           ApplicationState.GrsDataReceived.toString
         ),
-        Filters.lt("applicationExpiresAt", BsonDateTime(now.toEpochMilli))
+        Filters.lt(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli))
       ),
       update = Updates.combine(
-        Updates.set("applicationState", ApplicationState.Expired.toString),
-        Updates.set("postExpiryGracePeriodEndsAt", BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
-        Updates.unset("applicationExpiresAt")
+        Updates.set(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Updates.set(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
+        Updates.unset(FieldNames.applicationExpiresAt)
       )
     )
     .toFuture()
@@ -113,13 +115,13 @@ extends Repo[AgentApplicationId, AgentApplication](
     .withDocumentClass[BsonDocument]()
     .find(
       filter = Filters.and(
-        Filters.eq("applicationState", ApplicationState.Expired.toString),
-        Filters.lt("postExpiryGracePeriodEndsAt", BsonDateTime(now.toEpochMilli))
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
       )
     )
-    .projection(Projections.include("_id"))
+    .projection(Projections.include(FieldNames._id))
     .toFuture()
-    .map(_.map(bsonDocument => AgentApplicationId(bsonDocument.getString("_id").getValue)))
+    .map(_.map(bsonDocument => AgentApplicationId(bsonDocument.getString(FieldNames._id).getValue)))
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"
@@ -137,33 +139,22 @@ object AgentApplicationRepoHelp:
       override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
 
   val indexes: Seq[IndexModel] = Seq(
-    // TODO: remove once the index below replaces it - a non-deterministic ciphertext differs on every write, so
-    // this will stop enforcing one application per user
     IndexModel(
-      keys = Indexes.ascending(FieldNames.internalUserId),
+      keys = Indexes.ascending(FieldNames.internalUserIdHash),
       IndexOptions()
         .unique(true)
-        .name(FieldNames.internalUserId)
-    ),
-    // TODO: uncomment once the backfill has run in every environment and the migrator has logged
-    // "no documents left without a hash". Not before: indexes are built in the repository constructor, which
-    // runs before the backfill, so documents without a hash would collide on null and the service would not start.
-    // IndexModel(
-    //   keys = Indexes.ascending(FieldNames.internalUserIdHash),
-    //   IndexOptions()
-    //     .unique(true)
-    //     .name(FieldNames.internalUserIdHash)
-    // ),
-    IndexModel(
-      keys = Indexes.ascending("linkId"),
-      IndexOptions()
-        .unique(true)
-        .name("linkId")
+        .name(FieldNames.internalUserIdHash)
     ),
     IndexModel(
-      keys = Indexes.ascending("applicationReference"),
+      keys = Indexes.ascending(FieldNames.linkId),
       IndexOptions()
         .unique(true)
-        .name("applicationReference")
+        .name(FieldNames.linkId)
+    ),
+    IndexModel(
+      keys = Indexes.ascending(FieldNames.applicationReference),
+      IndexOptions()
+        .unique(true)
+        .name(FieldNames.applicationReference)
     )
   )

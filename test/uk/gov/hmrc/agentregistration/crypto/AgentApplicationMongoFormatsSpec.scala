@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.crypto
 
+import org.scalatest.Assertion
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -67,82 +68,91 @@ extends UnitSpec:
   "encrypt sets ciphertext on every PII field of an LLP application" - {
 
     "internalUserId is encrypted" in:
-      llpEncrypted.internalUserId.value shouldBe enc(llpModel.internalUserId.value)
+      llpEncrypted.internalUserId.value shouldBeEncryptionOf (llpModel.internalUserId.value)
 
     "groupId is encrypted" in:
-      llpEncrypted.groupId.value shouldBe enc(llpModel.groupId.value)
+      llpEncrypted.groupId.value shouldBeEncryptionOf (llpModel.groupId.value)
 
     "applicantCredentials.providerId is encrypted" in:
-      llpEncrypted.applicantCredentials.providerId shouldBe enc(llpModel.applicantCredentials.providerId)
+      llpEncrypted.applicantCredentials.providerId shouldBeEncryptionOf (llpModel.applicantCredentials.providerId)
 
     "applicantCredentials.providerType stays plaintext" in:
       llpEncrypted.applicantCredentials.providerType shouldBe llpModel.applicantCredentials.providerType
 
     "businessDetails.saUtr is encrypted" in:
-      llpEncrypted.getBusinessDetails.saUtr.value shouldBe enc(llpModel.getBusinessDetails.saUtr.value)
+      llpEncrypted.getBusinessDetails.saUtr.value shouldBeEncryptionOf (llpModel.getBusinessDetails.saUtr.value)
 
     "businessDetails.companyProfile.companyNumber is encrypted" in:
-      llpEncrypted.getBusinessDetails.companyProfile.companyNumber.value shouldBe enc(llpModel.getBusinessDetails.companyProfile.companyNumber.value)
+      llpEncrypted.getBusinessDetails.companyProfile.companyNumber.value shouldBeEncryptionOf (llpModel.getBusinessDetails.companyProfile.companyNumber.value)
 
     "businessDetails.companyProfile.companyName is encrypted" in:
-      llpEncrypted.getBusinessDetails.companyProfile.companyName shouldBe enc(llpModel.getBusinessDetails.companyProfile.companyName)
+      llpEncrypted.getBusinessDetails.companyProfile.companyName shouldBeEncryptionOf (llpModel.getBusinessDetails.companyProfile.companyName)
 
     "businessDetails.companyProfile.unsanitisedCHROAddress.address_line_1 is encrypted" in:
-      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value shouldBe
-        enc(llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value)
+      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value shouldBeEncryptionOf (llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_1.value)
 
     "businessDetails.companyProfile.unsanitisedCHROAddress.address_line_2 is encrypted" in:
-      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value shouldBe
-        enc(llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value)
+      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value shouldBeEncryptionOf (llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.address_line_2.value)
 
     "businessDetails.companyProfile.unsanitisedCHROAddress.postal_code is encrypted" in:
-      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value shouldBe
-        enc(llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value)
+      llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value shouldBeEncryptionOf (llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.postal_code.value)
 
     "businessDetails.companyProfile.unsanitisedCHROAddress.country stays plaintext" in:
       llpEncrypted.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.country shouldBe
         llpModel.getBusinessDetails.companyProfile.unsanitisedCHROAddress.value.country
 
     "applicantContactDetails.applicantName is encrypted" in:
-      llpEncrypted.getApplicantContactDetails.applicantName.value shouldBe enc(llpModel.getApplicantContactDetails.applicantName.value)
+      llpEncrypted.getApplicantContactDetails.applicantName.value shouldBeEncryptionOf (llpModel.getApplicantContactDetails.applicantName.value)
 
     "applicantContactDetails.telephoneNumber is encrypted" in:
-      llpEncrypted.getApplicantContactDetails.getTelephoneNumber.value shouldBe enc(llpModel.getApplicantContactDetails.getTelephoneNumber.value)
+      llpEncrypted.getApplicantContactDetails.getTelephoneNumber.value shouldBeEncryptionOf (llpModel.getApplicantContactDetails.getTelephoneNumber.value)
 
     "applicantContactDetails.applicantEmailAddress.emailAddress is encrypted" in:
-      llpEncrypted.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value shouldBe
-        enc(llpModel.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value)
+      llpEncrypted.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value shouldBeEncryptionOf (llpModel.getApplicantContactDetails.getApplicantEmailAddress.emailAddress.value)
 
     "agentDetails.businessName.agentBusinessName is encrypted" in:
-      llpEncrypted.getAgentDetails.businessName.agentBusinessName shouldBe enc(llpModel.getAgentDetails.businessName.agentBusinessName)
+      llpEncrypted.getAgentDetails.businessName.agentBusinessName shouldBeEncryptionOf (llpModel.getAgentDetails.businessName.agentBusinessName)
 
     "agentDetails.telephoneNumber.agentTelephoneNumber is encrypted" in:
-      llpEncrypted.getAgentDetails.getTelephoneNumber.agentTelephoneNumber shouldBe enc(llpModel.getAgentDetails.getTelephoneNumber.agentTelephoneNumber)
+      llpEncrypted.getAgentDetails.getTelephoneNumber.agentTelephoneNumber shouldBeEncryptionOf (llpModel.getAgentDetails.getTelephoneNumber.agentTelephoneNumber)
 
     "agentDetails.agentEmailAddress.emailAddress.agentEmailAddress is encrypted" in:
-      llpEncrypted.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value shouldBe
-        enc(llpModel.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value)
+      llpEncrypted.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value shouldBeEncryptionOf (llpModel.getAgentDetails.getAgentEmailAddress.emailAddress.agentEmailAddress.value)
 
     "agentDetails.agentCorrespondenceAddress.addressLine1 is encrypted" in:
-      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.addressLine1 shouldBe enc(llpModel.getAgentDetails.getAgentCorrespondenceAddress.addressLine1)
+      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.addressLine1 shouldBeEncryptionOf (llpModel.getAgentDetails.getAgentCorrespondenceAddress.addressLine1)
 
     "agentDetails.agentCorrespondenceAddress.addressLine2 is encrypted" in:
-      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value shouldBe
-        enc(llpModel.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value)
+      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value shouldBeEncryptionOf (llpModel.getAgentDetails.getAgentCorrespondenceAddress.addressLine2.value)
 
     "agentDetails.agentCorrespondenceAddress.postalCode is encrypted" in:
-      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value shouldBe
-        enc(llpModel.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value)
+      llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value shouldBeEncryptionOf (llpModel.getAgentDetails.getAgentCorrespondenceAddress.postalCode.value)
 
     "agentDetails.agentCorrespondenceAddress.countryCode stays plaintext" in:
       llpEncrypted.getAgentDetails.getAgentCorrespondenceAddress.countryCode shouldBe
         llpModel.getAgentDetails.getAgentCorrespondenceAddress.countryCode
 
     "vrns are encrypted element-wise" in:
-      llpEncrypted.vrns.value.map(_.value) shouldBe llpModel.vrns.value.map(v => enc(v.value))
+      llpEncrypted.vrns.value.map(_.value)
+        .zip(llpModel.vrns.value.map(_.value))
+        .foreach(
+          (
+            ciphertext,
+            plain
+          ) => ciphertext shouldBeEncryptionOf plain
+        )
+      llpEncrypted.vrns.value.size shouldBe llpModel.vrns.value.size
 
     "payeRefs are encrypted element-wise" in:
-      llpEncrypted.payeRefs.value.map(_.value) shouldBe llpModel.payeRefs.value.map(p => enc(p.value))
+      llpEncrypted.payeRefs.value.map(_.value)
+        .zip(llpModel.payeRefs.value.map(_.value))
+        .foreach(
+          (
+            ciphertext,
+            plain
+          ) => ciphertext shouldBeEncryptionOf plain
+        )
+      llpEncrypted.payeRefs.value.size shouldBe llpModel.payeRefs.value.size
 
     "applicationReference stays plaintext (search key, not PII)" in:
       llpEncrypted.applicationReference.value shouldBe llpModel.applicationReference.value
@@ -154,14 +164,14 @@ extends UnitSpec:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
       val written: JsObject = mongoFormats.encryptingFormat.writes(agentApplication)
       (written \ FieldNames.internalUserIdHash).as[String] shouldBe hasher.hash(agentApplication.internalUserId.value)
-      (written \ "internalUserId").as[String] shouldBe enc(agentApplication.internalUserId.value)
+      (written \ FieldNames.internalUserId).as[String] shouldBeEncryptionOf (agentApplication.internalUserId.value)
 
     "store a hash that is not the plaintext and not the ciphertext" in:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
       val written: JsObject = mongoFormats.encryptingFormat.writes(agentApplication)
       val hash: String = (written \ FieldNames.internalUserIdHash).as[String]
       hash should not be agentApplication.internalUserId.value
-      hash should not be enc(agentApplication.internalUserId.value)
+      hash should not be (written \ FieldNames.internalUserId).as[String]
 
     s"ignore ${FieldNames.internalUserIdHash} when reading" in:
       val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
@@ -173,60 +183,54 @@ extends UnitSpec:
     "BusinessDetailsPartnership.postcode is encrypted (LimitedPartnership)" in:
       val model = tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
+      encrypted.getBusinessDetails.postcode shouldBeEncryptionOf (model.getBusinessDetails.postcode)
 
     "BusinessDetailsPartnership.postcode is encrypted (ScottishLimitedPartnership)" in:
       val model = tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
+      encrypted.getBusinessDetails.postcode shouldBeEncryptionOf (model.getBusinessDetails.postcode)
 
     "BusinessDetailsGeneralPartnership.postcode is encrypted" in:
       val model = tdAll.agentApplicationGeneralPartnership.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
+      encrypted.getBusinessDetails.postcode shouldBeEncryptionOf (model.getBusinessDetails.postcode)
 
     "BusinessDetailsScottishPartnership.postcode is encrypted" in:
       val model = tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.postcode shouldBe enc(model.getBusinessDetails.postcode)
+      encrypted.getBusinessDetails.postcode shouldBeEncryptionOf (model.getBusinessDetails.postcode)
 
     "BusinessDetailsSoleTrader.trn is encrypted when provided" in:
       val model = tdAll.agentApplicationSoleTrader.soleTraderWithTrn
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.trn.value shouldBe enc(tdAll.trn)
+      encrypted.getBusinessDetails.trn.value shouldBeEncryptionOf (tdAll.trn)
 
     "BusinessDetailsSoleTrader.fullName fields are encrypted" in:
       val model = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.fullName.firstName shouldBe enc(model.getBusinessDetails.fullName.firstName)
-      encrypted.getBusinessDetails.fullName.lastName shouldBe enc(model.getBusinessDetails.fullName.lastName)
+      encrypted.getBusinessDetails.fullName.firstName shouldBeEncryptionOf (model.getBusinessDetails.fullName.firstName)
+      encrypted.getBusinessDetails.fullName.lastName shouldBeEncryptionOf (model.getBusinessDetails.fullName.lastName)
 
     "BusinessDetailsSoleTrader.nino is encrypted" in:
       val model = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.nino.value.value shouldBe enc(model.getBusinessDetails.nino.value.value)
+      encrypted.getBusinessDetails.nino.value.value shouldBeEncryptionOf (model.getBusinessDetails.nino.value.value)
 
     "BusinessDetailsLimitedCompany.ctUtr is encrypted" in:
       val model = tdAll.agentApplicationLimitedCompany.afterDeclarationSubmitted
       val encrypted = mongoFormats.encrypt(model)
-      encrypted.getBusinessDetails.ctUtr.value shouldBe enc(model.getBusinessDetails.ctUtr.value)
+      encrypted.getBusinessDetails.ctUtr.value shouldBeEncryptionOf (model.getBusinessDetails.ctUtr.value)
   }
 
   "encrypt and decrypt single values" - {
-    "encrypt(InternalUserId) -> decrypt round-trips" in:
-      mongoFormats.decrypt(mongoFormats.encrypt(tdAll.internalUserId)) shouldBe tdAll.internalUserId
-
-    "encrypt(InternalUserId) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.internalUserId).value shouldBe enc(tdAll.internalUserId.value)
-
     "encrypt(GroupId) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.groupId).value shouldBe enc(tdAll.groupId.value)
+      mongoFormats.encrypt(tdAll.groupId).value shouldBeEncryptionOf (tdAll.groupId.value)
 
     "encrypt(Vrn) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.vrn).value shouldBe enc(tdAll.vrn.value)
+      mongoFormats.encrypt(tdAll.vrn).value shouldBeEncryptionOf (tdAll.vrn.value)
 
     "encrypt(PayeRef) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.payeRef).value shouldBe enc(tdAll.payeRef.value)
+      mongoFormats.encrypt(tdAll.payeRef).value shouldBeEncryptionOf (tdAll.payeRef.value)
   }
 
   private lazy val tdAll: TdAll =
@@ -249,14 +253,19 @@ extends UnitSpec:
 
   private val hasher: Hasher = Hasher("U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00=")
 
-  private val fle: FieldLevelEncryption = FieldLevelEncryption(
+  private val fieldLevelEncryption: FieldLevelEncryption = FieldLevelEncryption(
     enabled = true,
     key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=",
     previousKeys = Seq.empty
   )
-  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle, hasher)
+  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fieldLevelEncryption, hasher)
 
-  private def enc(plain: String): String = fle.encrypt(plain)
+  /** AES-GCM gives a different ciphertext every time, so a field is encrypted if it is not the plaintext and decrypts back to it. */
+  extension (ciphertext: String)
+    private infix def shouldBeEncryptionOf(plain: String): Assertion =
+      withClue(s"ciphertext of '$plain': "):
+        ciphertext should not be plain
+        fieldLevelEncryption.decrypt(ciphertext) shouldBe plain
 
   private val llpModel: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
   private val llpEncrypted: AgentApplicationLlp = mongoFormats.encrypt(llpModel)

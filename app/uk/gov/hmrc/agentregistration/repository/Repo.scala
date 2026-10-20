@@ -60,7 +60,7 @@ extends PlayMongoRepository[A](
     */
   def upsert(a: A): Future[Unit] = collection
     .replaceOne(
-      filter = Filters.eq("_id", idString.idString(idExtractor.id(a))),
+      filter = Filters.eq(FieldNames._id, idString.idString(idExtractor.id(a))),
       replacement = a,
       options = ReplaceOptions().upsert(true)
     )
@@ -69,13 +69,13 @@ extends PlayMongoRepository[A](
 
   def findById(i: ID): Future[Option[A]] = collection
     .find(
-      filter = Filters.eq("_id", idString.idString(i))
+      filter = Filters.eq(FieldNames._id, idString.idString(i))
     )
     .headOption()
 
   def removeById(i: ID): Future[Option[DeleteResult]] = collection
     .deleteOne(
-      filter = Filters.eq("_id", idString.idString(i))
+      filter = Filters.eq(FieldNames._id, idString.idString(i))
     ).headOption()
 
 object Repo:

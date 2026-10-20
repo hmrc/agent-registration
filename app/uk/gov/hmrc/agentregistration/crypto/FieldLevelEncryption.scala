@@ -56,7 +56,11 @@ class FieldLevelEncryption(
         .value
     else encrypted
 
+  // Decrypt with AES-GCM first, falling back to the previous scheme.
   private val crypto: Encrypter & Decrypter = SymmetricCryptoFactory.composeCrypto(
-    currentCrypto = SymmetricCryptoFactory.aesCrypto(key),
-    previousDecrypters = previousKeys.map(SymmetricCryptoFactory.aesCrypto)
+    currentCrypto = SymmetricCryptoFactory.aesGcmCrypto(key),
+    previousDecrypters =
+      previousKeys.map(SymmetricCryptoFactory.aesGcmCrypto)
+      // TODO: drop the aesCrypto decrypters once no record written by the previous scheme is left
+        ++ (key +: previousKeys).map(SymmetricCryptoFactory.aesCrypto)
   )

@@ -22,6 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
@@ -94,7 +95,7 @@ extends BackendController(cc):
         agentApplicationRepo
           .collection
           .find()
-          .sort(Sorts.descending("createdAt"))
+          .sort(Sorts.descending(FieldNames.createdAt))
           .skip((safePage - 1) * safePageSize)
           .limit(safePageSize)
           .toFuture()

@@ -58,9 +58,6 @@ class IndividualProvidedDetailsMongoFormats @Inject() (
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
   def decrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
 
-  def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
-  def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
-
   private def transform(
     d: IndividualProvidedDetails,
     cryptoOp: String => String
