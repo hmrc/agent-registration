@@ -24,6 +24,7 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
@@ -38,28 +39,23 @@ object AgentApplicationMongoFormats:
     MongoJavatimeFormats.localDateFormat
   )
 
-  /** Adds hashed internal user id as additional write only field. */
-  def hashedInternalUserIdWrites(hashInternalUserId: String => String): OWrites[AgentApplication] = OWrites[AgentApplication]: app =>
-    Json.obj("hashedInternalUserId" -> hashInternalUserId(app.internalUserId.value))
-
 /** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
 class AgentApplicationMongoFormats @Inject() (
   fieldLevelEncryption: FieldLevelEncryption,
-  fieldHasher: FieldHasher
+  hasher: Hasher
 ):
 
-  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. The hashed internal user
-    * id is computed from the plaintext application before encryption and is write only.
+  /** Encrypts PII on write and decrypts it on read, and writes [[FieldNames.internalUserIdHash]] so a filter has something stable to match on. The repository's
+    * format, so PII is never stored in plaintext and the hash is never missing, whatever writes it. The hash is written but never read back.
     */
-  val encryptingFormat: OFormat[AgentApplication] =
-    val hashedWrites = AgentApplicationMongoFormats.hashedInternalUserIdWrites(fieldHasher.hash)
-    OFormat[AgentApplication](
-      r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decrypt),
-      w = OWrites[AgentApplication]: app =>
-        AgentApplicationMongoFormats.plaintextFormat.writes(encrypt(app)) ++ hashedWrites.writes(app)
-    )
+  val encryptingFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
+    r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decrypt),
+    w = OWrites[AgentApplication]: agentApplication =>
+      AgentApplicationMongoFormats.plaintextFormat.writes(encrypt(agentApplication)) ++
+        Json.obj(FieldNames.internalUserIdHash -> hasher.hash(agentApplication.internalUserId.value))
+  )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)
   def decrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.decrypt)

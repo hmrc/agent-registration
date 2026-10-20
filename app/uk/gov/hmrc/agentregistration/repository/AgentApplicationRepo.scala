@@ -123,12 +123,23 @@ object AgentApplicationRepoHelp:
       override def id(agentApplication: AgentApplication): AgentApplicationId = agentApplication.agentApplicationId
 
   val indexes: Seq[IndexModel] = Seq(
+    // TODO: remove once the index below replaces it - a non-deterministic ciphertext differs on every write, so
+    // this will stop enforcing one application per user
     IndexModel(
-      keys = Indexes.ascending("internalUserId"),
+      keys = Indexes.ascending(FieldNames.internalUserId),
       IndexOptions()
         .unique(true)
-        .name("internalUserId")
+        .name(FieldNames.internalUserId)
     ),
+    // TODO: uncomment once the backfill has run in every environment and the migrator has logged
+    // "no documents left without a hash". Not before: indexes are built in the repository constructor, which
+    // runs before the backfill, so documents without a hash would collide on null and the service would not start.
+    // IndexModel(
+    //   keys = Indexes.ascending(FieldNames.internalUserIdHash),
+    //   IndexOptions()
+    //     .unique(true)
+    //     .name(FieldNames.internalUserIdHash)
+    // ),
     IndexModel(
       keys = Indexes.ascending("linkId"),
       IndexOptions()

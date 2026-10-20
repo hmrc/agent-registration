@@ -26,21 +26,21 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FieldHasher @Inject() (appConfig: AppConfig):
+class Hasher(key: String):
 
-  private val HashPrefix = "hash:"
+  @Inject
+  def this(appConfig: AppConfig) = this(appConfig.Hasher.key)
 
-  def isHashed(value: String): Boolean = value.startsWith(HashPrefix)
+  def hash(plain: String): String = hashPrefix + symmetricHasher.hash(PlainText(plain)).value
 
-  def hash(plain: String): String =
-    if isHashed(plain)
-    then plain
-    else HashPrefix + hasher.hash(PlainText(plain)).value
+  private val hashPrefix: String = "hash:"
 
-  private val hasher =
+  private val algorithm: String = "HmacSHA256"
+
+  private val symmetricHasher: SymmetricHasher =
     new SymmetricHasher(
       new SecretKeySpec(
-        Base64.getDecoder.decode(appConfig.FieldLevelEncryption.hasherKey),
-        "HmacSHA256"
+        Base64.getDecoder.decode(key),
+        algorithm
       )
     )

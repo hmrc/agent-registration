@@ -20,6 +20,7 @@ import com.softwaremill.quicklens.*
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -35,26 +36,24 @@ object IndividualProvidedDetailsMongoFormats:
   /** Dates as BSON dates, PII as it is. */
   val plaintextFormat: OFormat[IndividualProvidedDetails] = IndividualProvidedDetailsFormat.makeFormat(using MongoJavatimeFormats.instantFormat)
 
-  /** Adds hashed internal user id as additional write only field. */
-  def hashedInternalUserIdWrites(hashInternalUserId: String => String): OWrites[IndividualProvidedDetails] = OWrites[IndividualProvidedDetails]: app =>
-    app.internalUserId.fold(Json.obj())(iui => Json.obj("hashedInternalUserId" -> hashInternalUserId(iui.value)))
-
 /** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
 class IndividualProvidedDetailsMongoFormats @Inject() (
   fieldLevelEncryption: FieldLevelEncryption,
-  fieldHasher: FieldHasher
+  hasher: Hasher
 ):
 
-  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
-  val encryptingFormat: OFormat[IndividualProvidedDetails] =
-    val hashedWrites = IndividualProvidedDetailsMongoFormats.hashedInternalUserIdWrites(fieldHasher.hash)
-    OFormat[IndividualProvidedDetails](
-      r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
-      w = OWrites[IndividualProvidedDetails]: ipd =>
-        IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(encrypt(ipd)) ++ hashedWrites.writes(ipd)
-    )
+  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. `internalUserIdHash` is
+    * written but never read back.
+    */
+  val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
+    r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
+    w = OWrites[IndividualProvidedDetails]: individualProvidedDetails =>
+      IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(encrypt(individualProvidedDetails)) ++
+        individualProvidedDetails.internalUserId.fold(Json.obj()): internalUserId =>
+          Json.obj(FieldNames.internalUserIdHash -> hasher.hash(internalUserId.value))
+  )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)
   def decrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.decrypt)
