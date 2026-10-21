@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.crypto
 
+import org.scalatest.Assertion
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -55,11 +56,11 @@ extends UnitSpec:
       val written: JsObject = mongoFormats.encryptingFormat.writes(model)
       val plainId: String = model.internalUserId.value.value
       (written \ FieldNames.internalUserIdHash).as[String] shouldBe hasher.hash(plainId)
-      (written \ "internalUserId").as[String] shouldBe enc(plainId)
+      (written \ FieldNames.internalUserId).as[String] shouldBeEncryptionOf (plainId)
 
     s"omit both internalUserId and ${FieldNames.internalUserIdHash} when there is no internal user id" in:
       val written: JsObject = mongoFormats.encryptingFormat.writes(modelWithoutInternalUserId)
-      written.keys should not contain "internalUserId"
+      written.keys should not contain FieldNames.internalUserId
       written.keys should not contain FieldNames.internalUserIdHash
 
     s"read back an individual who has no internal user id, ignoring ${FieldNames.internalUserIdHash}" in:
@@ -69,16 +70,16 @@ extends UnitSpec:
   "encrypt sets ciphertext on every PII field" - {
 
     "individualName is encrypted" in:
-      encrypted.individualName.value shouldBe enc(model.individualName.value)
+      encrypted.individualName.value shouldBeEncryptionOf (model.individualName.value)
 
     "internalUserId is encrypted" in:
-      encrypted.getInternalUserId.value shouldBe enc(model.getInternalUserId.value)
+      encrypted.getInternalUserId.value shouldBeEncryptionOf (model.getInternalUserId.value)
 
     "telephoneNumber is encrypted" in:
-      encrypted.getTelephoneNumber.value shouldBe enc(model.getTelephoneNumber.value)
+      encrypted.getTelephoneNumber.value shouldBeEncryptionOf (model.getTelephoneNumber.value)
 
     "emailAddress.emailAddress is encrypted" in:
-      encrypted.getEmailAddress.emailAddress.value shouldBe enc(model.getEmailAddress.emailAddress.value)
+      encrypted.getEmailAddress.emailAddress.value shouldBeEncryptionOf (model.getEmailAddress.emailAddress.value)
 
     "individualNino.Provided.nino is encrypted" in:
       val originalNino =
@@ -86,7 +87,7 @@ extends UnitSpec:
           case IndividualNino.Provided(n) => n
           case other => fail(s"expected IndividualNino.Provided, got $other")
       encrypted.getNino match
-        case IndividualNino.Provided(n) => n.value shouldBe enc(originalNino.value)
+        case IndividualNino.Provided(n) => n.value shouldBeEncryptionOf (originalNino.value)
         case other => fail(s"expected IndividualNino.Provided after encrypt, got $other")
 
     "individualSaUtr.Provided.saUtr is encrypted" in:
@@ -95,14 +96,30 @@ extends UnitSpec:
           case IndividualSaUtr.Provided(s) => s
           case other => fail(s"expected IndividualSaUtr.Provided, got $other")
       encrypted.getIndividualSaUtr match
-        case IndividualSaUtr.Provided(s) => s.value shouldBe enc(originalSaUtr.value)
+        case IndividualSaUtr.Provided(s) => s.value shouldBeEncryptionOf (originalSaUtr.value)
         case other => fail(s"expected IndividualSaUtr.Provided after encrypt, got $other")
 
     "vrns are encrypted element-wise" in:
-      encrypted.vrns.value.map(_.value) shouldBe model.vrns.value.map(v => enc(v.value))
+      encrypted.vrns.value.map(_.value)
+        .zip(model.vrns.value.map(_.value))
+        .foreach(
+          (
+            ciphertext,
+            plain
+          ) => ciphertext shouldBeEncryptionOf plain
+        )
+      encrypted.vrns.value.size shouldBe model.vrns.value.size
 
     "payeRefs are encrypted element-wise" in:
-      encrypted.payeRefs.value.map(_.value) shouldBe model.payeRefs.value.map(p => enc(p.value))
+      encrypted.payeRefs.value.map(_.value)
+        .zip(model.payeRefs.value.map(_.value))
+        .foreach(
+          (
+            ciphertext,
+            plain
+          ) => ciphertext shouldBeEncryptionOf plain
+        )
+      encrypted.payeRefs.value.size shouldBe model.payeRefs.value.size
 
     "personReference stays plaintext (search key)" in:
       encrypted.personReference.value shouldBe model.personReference.value
@@ -111,22 +128,13 @@ extends UnitSpec:
       encrypted.agentApplicationId.value shouldBe model.agentApplicationId.value
   }
 
-  "encrypt and decrypt single values" - {
-
-    "encrypt(InternalUserId) produces ciphertext" in:
-      mongoFormats.encrypt(tdAll.internalUserId).value shouldBe enc(tdAll.internalUserId.value)
-
-    "encrypt then decrypt round-trips" in:
-      mongoFormats.decrypt(mongoFormats.encrypt(tdAll.internalUserId)) shouldBe tdAll.internalUserId
-  }
-
   "encrypt handles every IndividualNino and IndividualSaUtr branch" - {
 
     "IndividualNino.FromAuth is encrypted" in:
       val withFromAuth: IndividualProvidedDetails = model.copy(individualNino = Some(IndividualNino.FromAuth(tdAll.nino)))
       val originalNino = tdAll.nino.value
       mongoFormats.encrypt(withFromAuth).getNino match
-        case IndividualNino.FromAuth(n) => n.value shouldBe enc(originalNino)
+        case IndividualNino.FromAuth(n) => n.value shouldBeEncryptionOf (originalNino)
         case other => fail(s"expected IndividualNino.FromAuth after encrypt, got $other")
 
     "IndividualNino.NotProvided is unchanged" in:
@@ -137,14 +145,14 @@ extends UnitSpec:
       val withFromAuth: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.FromAuth(tdAll.saUtr)))
       val originalSaUtr = tdAll.saUtr.value
       mongoFormats.encrypt(withFromAuth).getIndividualSaUtr match
-        case IndividualSaUtr.FromAuth(s) => s.value shouldBe enc(originalSaUtr)
+        case IndividualSaUtr.FromAuth(s) => s.value shouldBeEncryptionOf (originalSaUtr)
         case other => fail(s"expected IndividualSaUtr.FromAuth after encrypt, got $other")
 
     "IndividualSaUtr.FromCitizenDetails is encrypted" in:
       val withFromCitizen: IndividualProvidedDetails = model.copy(individualSaUtr = Some(IndividualSaUtr.FromCitizenDetails(tdAll.saUtr)))
       val originalSaUtr = tdAll.saUtr.value
       mongoFormats.encrypt(withFromCitizen).getIndividualSaUtr match
-        case IndividualSaUtr.FromCitizenDetails(s) => s.value shouldBe enc(originalSaUtr)
+        case IndividualSaUtr.FromCitizenDetails(s) => s.value shouldBeEncryptionOf (originalSaUtr)
         case other => fail(s"expected IndividualSaUtr.FromCitizenDetails after encrypt, got $other")
 
     "IndividualSaUtr.NotProvided is unchanged" in:
@@ -156,14 +164,19 @@ extends UnitSpec:
 
   private val hasher: Hasher = Hasher("U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00=")
 
-  private val fle: FieldLevelEncryption = FieldLevelEncryption(
+  private val fieldLevelEncryption: FieldLevelEncryption = FieldLevelEncryption(
     enabled = true,
     key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=",
     previousKeys = Seq.empty
   )
-  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle, hasher)
+  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fieldLevelEncryption, hasher)
 
-  private def enc(plain: String): String = fle.encrypt(plain)
+  /** AES-GCM gives a different ciphertext every time, so a field is encrypted if it is not the plaintext and decrypts back to it. */
+  extension (ciphertext: String)
+    private infix def shouldBeEncryptionOf(plain: String): Assertion =
+      withClue(s"ciphertext of '$plain': "):
+        ciphertext should not be plain
+        fieldLevelEncryption.decrypt(ciphertext) shouldBe plain
 
   private val model: IndividualProvidedDetails = tdAll.providedDetails.afterFinished
   private val modelWithoutInternalUserId: IndividualProvidedDetails = tdAll.providedDetails.precreated

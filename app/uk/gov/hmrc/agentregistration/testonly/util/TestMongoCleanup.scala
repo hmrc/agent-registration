@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.testonly.util
 import org.mongodb.scala.Document
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.mongo.MongoComponent
@@ -59,7 +60,7 @@ class TestMongoCleanup @Inject() (
     agentApplicationIds: Seq[String]
   ): Future[Unit] = deleteByField(
     IndividualProvidedDetailsRepo.collectionName,
-    "agentApplicationId",
+    FieldNames.agentApplicationId,
     agentApplicationIds
   )
 
@@ -67,7 +68,7 @@ class TestMongoCleanup @Inject() (
     agentApplicationIds: Seq[String]
   ): Future[Unit] = deleteByField(
     AgentApplicationRepo.collectionName,
-    "_id",
+    FieldNames._id,
     agentApplicationIds
   )
 

@@ -89,9 +89,6 @@ class AgentApplicationMongoFormats @Inject() (
   def decrypt(app: AgentApplicationScottishPartnership): AgentApplicationScottishPartnership = transformScottishPartnership(app, fieldLevelEncryption.decrypt)
 
   // Single-value helpers, for use in Mongo filters.
-  def encrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.encrypt)
-  def decrypt(internalUserId: InternalUserId): InternalUserId = internalUserId.modify(_.value).using(fieldLevelEncryption.decrypt)
-
   def encrypt(groupId: GroupId): GroupId = groupId.modify(_.value).using(fieldLevelEncryption.encrypt)
   def decrypt(groupId: GroupId): GroupId = groupId.modify(_.value).using(fieldLevelEncryption.decrypt)
 

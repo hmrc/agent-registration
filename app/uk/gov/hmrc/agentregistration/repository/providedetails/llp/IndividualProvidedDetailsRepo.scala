@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 
-import org.bson.BsonType
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
+import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsMongoFormats
 import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.repository.Repo
@@ -43,7 +43,8 @@ import scala.concurrent.Future
 @Singleton
 final class IndividualProvidedDetailsRepo @Inject() (
   mongoComponent: MongoComponent,
-  individualProvidedDetailsMongoFormats: IndividualProvidedDetailsMongoFormats
+  individualProvidedDetailsMongoFormats: IndividualProvidedDetailsMongoFormats,
+  hasher: Hasher
 )(using ec: ExecutionContext)
 extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   collectionName = IndividualProvidedDetailsRepo.collectionName,
@@ -57,21 +58,21 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
 
   def findByInternalUserId(internalUserId: InternalUserId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value)
+      filter = Filters.eq(FieldNames.internalUserIdHash, hasher.hash(internalUserId.value))
     )
     .toFuture()
     .map(_.toList)
 
   def findForApplication(agentApplicationId: AgentApplicationId): Future[List[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+      filter = Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
     )
     .toFuture()
     .map(_.toList)
 
   def deleteByApplicationId(agentApplicationId: AgentApplicationId): Future[Unit] = collection
     .deleteMany(
-      filter = Filters.eq("agentApplicationId", agentApplicationId.value)
+      filter = Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
     )
     .toFuture()
     .map(_ => ())
@@ -82,15 +83,15 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       Filters.and(
-        Filters.eq("internalUserId", individualProvidedDetailsMongoFormats.encrypt(internalUserId).value),
-        Filters.eq("agentApplicationId", agentApplicationId.value)
+        Filters.eq(FieldNames.internalUserIdHash, hasher.hash(internalUserId.value)),
+        Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
       )
     )
     .headOption()
 
   def findByPersonReference(personReference: PersonReference): Future[Option[IndividualProvidedDetails]] = collection
     .find(
-      filter = Filters.eq("personReference", personReference.value)
+      filter = Filters.eq(FieldNames.personReference, personReference.value)
     )
     .headOption()
 
@@ -100,8 +101,8 @@ extends Repo[IndividualProvidedDetailsId, IndividualProvidedDetails](
   ): Future[Option[IndividualProvidedDetails]] = collection
     .find(
       filter = Filters.and(
-        Filters.eq("personReference", personReference.value),
-        Filters.eq("agentApplicationId", agentApplicationId.value)
+        Filters.eq(FieldNames.personReference, personReference.value),
+        Filters.eq(FieldNames.agentApplicationId, agentApplicationId.value)
       )
     )
     .headOption()
@@ -121,36 +122,20 @@ object ProvidedDetailsRepoHelp:
 
   val indexes: Seq[IndexModel] = Seq(
     IndexModel(
-      Indexes.ascending("agentApplicationId")
+      Indexes.ascending(FieldNames.agentApplicationId)
     ),
-    // TODO: remove once the index below replaces it - a non-deterministic ciphertext differs on every write, so
-    // this will stop enforcing one record per user per application
     IndexModel(
-      Indexes.ascending(FieldNames.internalUserId, "agentApplicationId"),
+      Indexes.ascending(FieldNames.internalUserIdHash, FieldNames.agentApplicationId),
       IndexOptions()
         .unique(true)
-        .partialFilterExpression(
-          Filters.and(
-            Filters.exists("internalUserId", true),
-            Filters.`type`("internalUserId", BsonType.STRING) // we cannot use "null" because of wart remover
-          )
-        )
-        .name("internalUserId_applicationId_unique")
+        // an individual who has not signed in has no internal user id, so never gets a hash
+        .partialFilterExpression(Filters.exists(FieldNames.internalUserIdHash, true))
+        .name("internalUserIdHash_applicationId_unique")
     ),
-    // TODO: uncomment once the backfill has run in every environment and the migrator has logged
-    // "no documents left without a hash". Partial, unlike the application one: an individual who has not signed in
-    // has no internal user id and so never gets a hash, which stays true after the backfill.
-    // IndexModel(
-    //   Indexes.ascending(FieldNames.internalUserIdHash, "agentApplicationId"),
-    //   IndexOptions()
-    //     .unique(true)
-    //     .partialFilterExpression(Filters.exists(FieldNames.internalUserIdHash, true))
-    //     .name("internalUserIdHash_applicationId_unique")
-    // ),
     IndexModel(
-      keys = Indexes.ascending("personReference"),
+      keys = Indexes.ascending(FieldNames.personReference),
       IndexOptions()
         .unique(true)
-        .name("personReference")
+        .name(FieldNames.personReference)
     )
   )

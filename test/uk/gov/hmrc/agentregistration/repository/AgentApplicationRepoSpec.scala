@@ -198,13 +198,13 @@ extends ISpec:
 
   // the fields the Mongo format stores as BSON Date; afterStarted, afterResubmitted and afterExpired between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
-    "createdAt",
-    "applicationExpiresAt",
+    FieldNames.createdAt,
+    FieldNames.applicationExpiresAt,
     "submittedAt",
     "riskingOutcomeApplication.actualDecisionDate",
     "riskingOutcomeApplication.reSubmittedAt",
     "riskingOutcomeApplication.correctiveActionExpiryDate",
-    "postExpiryGracePeriodEndsAt"
+    FieldNames.postExpiryGracePeriodEndsAt
   )
 
   private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
@@ -217,7 +217,7 @@ extends ISpec:
     repo
       .collection
       .withDocumentClass[BsonDocument]()
-      .find(Filters.eq("_id", record.agentApplicationId.value))
+      .find(Filters.eq(FieldNames._id, record.agentApplicationId.value))
       .headOption()
       .futureValue
       .value
@@ -265,13 +265,13 @@ extends ISpec:
     DateQueryCase(
       description = "a started application",
       record = tdAll.agentApplicationLlp.afterStarted,
-      fieldName = "createdAt",
+      fieldName = FieldNames.createdAt,
       storedInstant = tdAll.nowAsInstant
     ),
     DateQueryCase(
       description = "a started application",
       record = tdAll.agentApplicationLlp.afterStarted,
-      fieldName = "applicationExpiresAt",
+      fieldName = FieldNames.applicationExpiresAt,
       storedInstant = tdAll.applicationExpiresAtAsInstant
     ),
     DateQueryCase(
@@ -301,7 +301,7 @@ extends ISpec:
     DateQueryCase(
       description = "an expired application",
       record = tdAll.agentApplicationLlp.afterExpired,
-      fieldName = "postExpiryGracePeriodEndsAt",
+      fieldName = FieldNames.postExpiryGracePeriodEndsAt,
       storedInstant = tdAll.postExpiryGracePeriodEndsAtAsInstant
     )
   )

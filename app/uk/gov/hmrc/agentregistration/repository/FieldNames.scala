@@ -18,6 +18,14 @@ package uk.gov.hmrc.agentregistration.repository
 
 object FieldNames:
 
+  val _id: String = "_id"
+  val agentApplicationId: String = "agentApplicationId"
+  val applicationExpiresAt: String = "applicationExpiresAt"
+  val applicationReference: String = "applicationReference"
+  val applicationState: String = "applicationState"
+  val createdAt: String = "createdAt"
   val internalUserId: String = "internalUserId"
-
   val internalUserIdHash: String = "internalUserIdHash"
+  val linkId: String = "linkId"
+  val personReference: String = "personReference"
+  val postExpiryGracePeriodEndsAt: String = "postExpiryGracePeriodEndsAt"

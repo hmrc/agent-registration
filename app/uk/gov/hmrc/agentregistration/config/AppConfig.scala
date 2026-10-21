@@ -71,7 +71,3 @@ class AppConfig @Inject() (
 
   object HipBusinessPartnerRecord:
     val isEnabled: Boolean = configuration.get[Boolean]("hip-business-partner-record.enabled")
-
-  // TODO: remove with InternalUserIdHashMigrator, once the migration has run in every environment
-  object InternalUserIdHashMigrator:
-    val enabled: Boolean = configuration.get[Boolean]("internal-user-id-hash-migrator.enabled")

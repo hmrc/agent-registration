@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.repository.providedetails.llp
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
@@ -39,7 +40,7 @@ extends ISpec:
   private def rawDocumentFor(record: IndividualProvidedDetails): Document =
     mongoComponent.database
       .getCollection(repo.collectionName)
-      .find(Filters.eq("_id", record._id.value))
+      .find(Filters.eq(FieldNames._id, record._id.value))
       .first()
       .toFuture()
       .futureValue

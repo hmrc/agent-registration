@@ -70,8 +70,7 @@ extends AnyFreeSpecLike,
       "microservice.services.object-store.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
       "mongodb.uri" -> mongoUri,
-      "hasher.key" -> "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00=",
-      "internal-user-id-hash-migrator.enabled" -> false
+      "hasher.key" -> "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
     ) ++ configOverrides
 
   protected def configOverrides: Map[String, Any] = Map[String, Any]()
