@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,59 +16,51 @@
 
 package uk.gov.hmrc.agentregistration.crypto
 
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class FieldLevelEncryptionSpec
 extends UnitSpec:
 
-  private val baseConfigString: String =
-    """
-      |appName = "agent-registration"
-      |microservice.services.des.host = "localhost"
-      |microservice.services.des.port = 1234
-      |microservice.services.des.protocol = "http"
-      |microservice.services.des.environment = "test"
-      |microservice.services.des.authorization-token = "test-token"
-      |microservice.services.hip.host = "localhost"
-      |microservice.services.hip.port = 1234
-      |microservice.services.hip.protocol = "http"
-      |microservice.services.hip.authorization-token = "test-token"
-      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
-      |field-level-encryption.previousKeys = []
-      |post-expiry-grace-period = 45 days
-      |""".stripMargin
+  "encrypt is deterministic, so an encrypted field can still be matched in a filter" in:
+    fieldLevelEncryption.encrypt("alice@example.com") shouldBe fieldLevelEncryption.encrypt("alice@example.com")
 
-  private def fleWith(enabled: Boolean): FieldLevelEncryption = {
-    val configuration: Configuration = Configuration(ConfigFactory.parseString(
-      s"$baseConfigString\nfield-level-encryption.enabled = $enabled"
-    ))
-    val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-    new FieldLevelEncryption(appConfig)
-  }
+  "encrypt gives something other than the plaintext" in:
+    fieldLevelEncryption.encrypt("alice@example.com") should not be "alice@example.com"
 
-  "FieldLevelEncryption with enabled = true" - {
-    val fle = fleWith(enabled = true)
+  "decrypt undoes encrypt" in:
+    fieldLevelEncryption.decrypt(fieldLevelEncryption.encrypt("alice@example.com")) shouldBe "alice@example.com"
 
-    "encrypts deterministically — same plaintext always produces the same ciphertext (required for indexed/searchable fields)" in:
-      fle.encrypt("alice@example.com") shouldBe fle.encrypt("alice@example.com")
+  "decrypt reads a value encrypted under a previous key" in:
+    val beforeRotation: FieldLevelEncryption = FieldLevelEncryption(
+      enabled = true,
+      key = previousKey,
+      previousKeys = Seq.empty
+    )
+    val afterRotation: FieldLevelEncryption = FieldLevelEncryption(
+      enabled = true,
+      key = key,
+      previousKeys = Seq(previousKey)
+    )
 
-    "produces ciphertext distinct from plaintext" in:
-      fle.encrypt("alice@example.com") should not be "alice@example.com"
+    afterRotation.decrypt(beforeRotation.encrypt("alice@example.com")) shouldBe "alice@example.com"
 
-    "round-trips: decrypt(encrypt(x)) == x" in:
-      fle.decrypt(fle.encrypt("alice@example.com")) shouldBe "alice@example.com"
-  }
+  "encrypt is identity when encryption is off" in:
+    fieldLevelEncryptionDisabled.encrypt("alice@example.com") shouldBe "alice@example.com"
 
-  "FieldLevelEncryption with enabled = false (local-dev path)" - {
-    val fle = fleWith(enabled = false)
+  "decrypt is identity when encryption is off" in:
+    fieldLevelEncryptionDisabled.decrypt("alice@example.com") shouldBe "alice@example.com"
 
-    "encrypt is identity" in:
-      fle.encrypt("alice@example.com") shouldBe "alice@example.com"
+  private val key: String = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
+  private val previousKey: String = "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
 
-    "decrypt is identity" in:
-      fle.decrypt("alice@example.com") shouldBe "alice@example.com"
-  }
+  private val fieldLevelEncryption: FieldLevelEncryption = FieldLevelEncryption(
+    enabled = true,
+    key = key,
+    previousKeys = Seq.empty
+  )
+
+  private val fieldLevelEncryptionDisabled: FieldLevelEncryption = FieldLevelEncryption(
+    enabled = false,
+    key = key,
+    previousKeys = Seq.empty
+  )

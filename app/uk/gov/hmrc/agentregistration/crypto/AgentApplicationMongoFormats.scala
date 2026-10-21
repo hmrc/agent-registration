@@ -17,11 +17,14 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentDetails
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.shared.companieshouse.ChroAddress
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetails
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
@@ -39,12 +42,19 @@ object AgentApplicationMongoFormats:
 /** Mongo formats of [[AgentApplication]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class AgentApplicationMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class AgentApplicationMongoFormats @Inject() (
+  fieldLevelEncryption: FieldLevelEncryption,
+  hasher: Hasher
+):
 
-  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
+  /** Encrypts PII on write and decrypts it on read, and writes [[FieldNames.internalUserIdHash]] so a filter has something stable to match on. The repository's
+    * format, so PII is never stored in plaintext and the hash is never missing, whatever writes it. The hash is written but never read back.
+    */
   val encryptingFormat: OFormat[AgentApplication] = OFormat[AgentApplication](
     r = AgentApplicationMongoFormats.plaintextFormat.map[AgentApplication](decrypt),
-    w = AgentApplicationMongoFormats.plaintextFormat.contramap[AgentApplication](encrypt)
+    w = OWrites[AgentApplication]: agentApplication =>
+      AgentApplicationMongoFormats.plaintextFormat.writes(encrypt(agentApplication)) ++
+        Json.obj(FieldNames.internalUserIdHash -> hasher.hash(agentApplication.internalUserId.value))
   )
 
   def encrypt(app: AgentApplication): AgentApplication = transform(app, fieldLevelEncryption.encrypt)

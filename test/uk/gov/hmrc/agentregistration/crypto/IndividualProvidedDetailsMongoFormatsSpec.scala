@@ -16,17 +16,15 @@
 
 package uk.gov.hmrc.agentregistration.crypto
 
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualSaUtr
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class IndividualProvidedDetailsMongoFormatsSpec
 extends UnitSpec:
@@ -36,7 +34,10 @@ extends UnitSpec:
     "serialize and deserialize IndividualProvidedDetails" in:
       val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterRiskedFixable
       IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(individualProvidedDetails) shouldBe afterRiskedFixableJson
-      afterRiskedFixableJson.as[IndividualProvidedDetails](using IndividualProvidedDetailsMongoFormats.plaintextFormat) shouldBe individualProvidedDetails
+      afterRiskedFixableJson.as[IndividualProvidedDetails](using
+        IndividualProvidedDetailsMongoFormats.plaintextFormat
+      ) shouldBe individualProvidedDetails
+
   }
 
   "encryptingFormat" - {
@@ -49,6 +50,20 @@ extends UnitSpec:
       plaintextPii.foreach: plaintext =>
         withClue(s"plaintext '$plaintext' must not appear as a JSON value in Mongo JSON: "):
           written should not include s"\"$plaintext\""
+
+    "store the hash of the plaintext internal user id and the encrypted internal user id when present" in:
+      val written: JsObject = mongoFormats.encryptingFormat.writes(model)
+      val plainId: String = model.internalUserId.value.value
+      (written \ FieldNames.internalUserIdHash).as[String] shouldBe hasher.hash(plainId)
+      (written \ "internalUserId").as[String] shouldBe enc(plainId)
+
+    s"omit both internalUserId and ${FieldNames.internalUserIdHash} when there is no internal user id" in:
+      val written: JsObject = mongoFormats.encryptingFormat.writes(modelWithoutInternalUserId)
+      written.keys should not contain "internalUserId"
+      written.keys should not contain FieldNames.internalUserIdHash
+
+    s"read back an individual who has no internal user id, ignoring ${FieldNames.internalUserIdHash}" in:
+      mongoFormats.encryptingFormat.reads(mongoFormats.encryptingFormat.writes(model)).get shouldBe model
   }
 
   "encrypt sets ciphertext on every PII field" - {
@@ -139,31 +154,19 @@ extends UnitSpec:
 
   private val tdAll: TdAll = TdAll()
 
-  private val configuration: Configuration = Configuration(ConfigFactory.parseString(
-    """
-      |appName = "agent-registration"
-      |microservice.services.des.host = "localhost"
-      |microservice.services.des.port = 1234
-      |microservice.services.des.protocol = "http"
-      |microservice.services.des.environment = "test"
-      |microservice.services.des.authorization-token = "test-token"
-      |microservice.services.hip.host = "localhost"
-      |microservice.services.hip.port = 1234
-      |microservice.services.hip.protocol = "http"
-      |microservice.services.hip.authorization-token = "test-token"
-      |field-level-encryption.enabled = true
-      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
-      |field-level-encryption.previousKeys = []
-      |post-expiry-grace-period = 45 days
-      |""".stripMargin
-  ))
-  private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-  private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle)
+  private val hasher: Hasher = Hasher("U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00=")
+
+  private val fle: FieldLevelEncryption = FieldLevelEncryption(
+    enabled = true,
+    key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=",
+    previousKeys = Seq.empty
+  )
+  private val mongoFormats: IndividualProvidedDetailsMongoFormats = new IndividualProvidedDetailsMongoFormats(fle, hasher)
 
   private def enc(plain: String): String = fle.encrypt(plain)
 
   private val model: IndividualProvidedDetails = tdAll.providedDetails.afterFinished
+  private val modelWithoutInternalUserId: IndividualProvidedDetails = tdAll.providedDetails.precreated
   private val encrypted: IndividualProvidedDetails = mongoFormats.encrypt(model)
 
   private val plaintextPii: List[String] =

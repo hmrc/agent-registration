@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.crypto
 
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentregistration.config.AppConfig
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLimitedCompany
@@ -33,7 +32,6 @@ import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 
@@ -151,6 +149,23 @@ extends UnitSpec:
 
     "linkId stays plaintext" in:
       llpEncrypted.linkId.value shouldBe llpModel.linkId.value
+
+    "store the hash of the plaintext internalUserId, and the encrypted internalUserId" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      val written: JsObject = mongoFormats.encryptingFormat.writes(agentApplication)
+      (written \ FieldNames.internalUserIdHash).as[String] shouldBe hasher.hash(agentApplication.internalUserId.value)
+      (written \ "internalUserId").as[String] shouldBe enc(agentApplication.internalUserId.value)
+
+    "store a hash that is not the plaintext and not the ciphertext" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      val written: JsObject = mongoFormats.encryptingFormat.writes(agentApplication)
+      val hash: String = (written \ FieldNames.internalUserIdHash).as[String]
+      hash should not be agentApplication.internalUserId.value
+      hash should not be enc(agentApplication.internalUserId.value)
+
+    s"ignore ${FieldNames.internalUserIdHash} when reading" in:
+      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+      mongoFormats.encryptingFormat.reads(mongoFormats.encryptingFormat.writes(agentApplication)).get shouldBe agentApplication
   }
 
   "encrypt sets ciphertext on subtype-specific PII fields" - {
@@ -232,27 +247,14 @@ extends UnitSpec:
       case BusinessType.Partnership.ScottishLimitedPartnership => tdAll.agentApplicationScottishLimitedPartnership.afterDeclarationSubmitted
       case BusinessType.Partnership.ScottishPartnership => tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted
 
-  private val configuration: Configuration = Configuration(ConfigFactory.parseString(
-    """
-      |appName = "agent-registration"
-      |microservice.services.des.host = "localhost"
-      |microservice.services.des.port = 1234
-      |microservice.services.des.protocol = "http"
-      |microservice.services.des.environment = "test"
-      |microservice.services.des.authorization-token = "test-token"
-      |microservice.services.hip.host = "localhost"
-      |microservice.services.hip.port = 1234
-      |microservice.services.hip.protocol = "http"
-      |microservice.services.hip.authorization-token = "test-token"
-      |field-level-encryption.enabled = true
-      |field-level-encryption.key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc="
-      |field-level-encryption.previousKeys = []
-      |post-expiry-grace-period = 45 days
-      |""".stripMargin
-  ))
-  private val appConfig: AppConfig = new AppConfig(new ServicesConfig(configuration), configuration)
-  private val fle: FieldLevelEncryption = new FieldLevelEncryption(appConfig)
-  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle)
+  private val hasher: Hasher = Hasher("U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00=")
+
+  private val fle: FieldLevelEncryption = FieldLevelEncryption(
+    enabled = true,
+    key = "HIvqb3uQRW8oryUZ3jEQPgMQsvgBSgl71ygWJk6VIdc=",
+    previousKeys = Seq.empty
+  )
+  private val mongoFormats: AgentApplicationMongoFormats = new AgentApplicationMongoFormats(fle, hasher)
 
   private def enc(plain: String): String = fle.encrypt(plain)
 

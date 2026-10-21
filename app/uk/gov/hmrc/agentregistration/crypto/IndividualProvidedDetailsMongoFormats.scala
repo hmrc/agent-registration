@@ -17,7 +17,10 @@
 package uk.gov.hmrc.agentregistration.crypto
 
 import com.softwaremill.quicklens.*
+import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import play.api.libs.json.OWrites
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualNino
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
@@ -36,12 +39,20 @@ object IndividualProvidedDetailsMongoFormats:
 /** Mongo formats of [[IndividualProvidedDetails]]. `encrypt` and `decrypt` share one `transform` that lists every PII path once, so the two cannot drift apart.
   */
 @Singleton
-class IndividualProvidedDetailsMongoFormats @Inject() (fieldLevelEncryption: FieldLevelEncryption):
+class IndividualProvidedDetailsMongoFormats @Inject() (
+  fieldLevelEncryption: FieldLevelEncryption,
+  hasher: Hasher
+):
 
-  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. */
+  /** Encrypts PII on write and decrypts it on read. The repository's format, so PII is never stored in plaintext, whatever writes it. `internalUserIdHash` is
+    * written but never read back.
+    */
   val encryptingFormat: OFormat[IndividualProvidedDetails] = OFormat[IndividualProvidedDetails](
     r = IndividualProvidedDetailsMongoFormats.plaintextFormat.map[IndividualProvidedDetails](decrypt),
-    w = IndividualProvidedDetailsMongoFormats.plaintextFormat.contramap[IndividualProvidedDetails](encrypt)
+    w = OWrites[IndividualProvidedDetails]: individualProvidedDetails =>
+      IndividualProvidedDetailsMongoFormats.plaintextFormat.writes(encrypt(individualProvidedDetails)) ++
+        individualProvidedDetails.internalUserId.fold(Json.obj()): internalUserId =>
+          Json.obj(FieldNames.internalUserIdHash -> hasher.hash(internalUserId.value))
   )
 
   def encrypt(d: IndividualProvidedDetails): IndividualProvidedDetails = transform(d, fieldLevelEncryption.encrypt)

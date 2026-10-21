@@ -22,6 +22,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.agentregistration.crypto.IndividualProvidedDetailsMongoFormats
+import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.repository.Repo
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
 import uk.gov.hmrc.agentregistration.repository.Repo.IdString
@@ -122,8 +123,10 @@ object ProvidedDetailsRepoHelp:
     IndexModel(
       Indexes.ascending("agentApplicationId")
     ),
+    // TODO: remove once the index below replaces it - a non-deterministic ciphertext differs on every write, so
+    // this will stop enforcing one record per user per application
     IndexModel(
-      Indexes.ascending("internalUserId", "agentApplicationId"),
+      Indexes.ascending(FieldNames.internalUserId, "agentApplicationId"),
       IndexOptions()
         .unique(true)
         .partialFilterExpression(
@@ -134,6 +137,16 @@ object ProvidedDetailsRepoHelp:
         )
         .name("internalUserId_applicationId_unique")
     ),
+    // TODO: uncomment once the backfill has run in every environment and the migrator has logged
+    // "no documents left without a hash". Partial, unlike the application one: an individual who has not signed in
+    // has no internal user id and so never gets a hash, which stays true after the backfill.
+    // IndexModel(
+    //   Indexes.ascending(FieldNames.internalUserIdHash, "agentApplicationId"),
+    //   IndexOptions()
+    //     .unique(true)
+    //     .partialFilterExpression(Filters.exists(FieldNames.internalUserIdHash, true))
+    //     .name("internalUserIdHash_applicationId_unique")
+    // ),
     IndexModel(
       keys = Indexes.ascending("personReference"),
       IndexOptions()

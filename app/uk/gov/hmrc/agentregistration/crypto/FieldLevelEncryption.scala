@@ -27,10 +27,21 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FieldLevelEncryption @Inject() (appConfig: AppConfig):
+class FieldLevelEncryption(
+  enabled: Boolean,
+  key: String,
+  previousKeys: Seq[String]
+):
+
+  @Inject
+  def this(appConfig: AppConfig) = this(
+    enabled = appConfig.FieldLevelEncryption.enabled,
+    key = appConfig.FieldLevelEncryption.key,
+    previousKeys = appConfig.FieldLevelEncryption.previousKeys
+  )
 
   def encrypt(plain: String): String =
-    if appConfig.FieldLevelEncryption.enabled
+    if enabled
     then
       crypto
         .encrypt(PlainText(plain))
@@ -38,7 +49,7 @@ class FieldLevelEncryption @Inject() (appConfig: AppConfig):
     else plain
 
   def decrypt(encrypted: String): String =
-    if appConfig.FieldLevelEncryption.enabled
+    if enabled
     then
       crypto
         .decrypt(Crypted(encrypted))
@@ -46,6 +57,6 @@ class FieldLevelEncryption @Inject() (appConfig: AppConfig):
     else encrypted
 
   private val crypto: Encrypter & Decrypter = SymmetricCryptoFactory.composeCrypto(
-    currentCrypto = SymmetricCryptoFactory.aesCrypto(appConfig.FieldLevelEncryption.key),
-    previousDecrypters = appConfig.FieldLevelEncryption.previousKeys.map(SymmetricCryptoFactory.aesCrypto)
+    currentCrypto = SymmetricCryptoFactory.aesCrypto(key),
+    previousDecrypters = previousKeys.map(SymmetricCryptoFactory.aesCrypto)
   )

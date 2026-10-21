@@ -63,8 +63,15 @@ class AppConfig @Inject() (
     val key: String = configuration.get[String]("field-level-encryption.key")
     val previousKeys: Seq[String] = configuration.get[Seq[String]]("field-level-encryption.previousKeys")
 
+  object Hasher:
+    val key: String = configuration.get[String]("hasher.key")
+
   object InternalAuth:
     val isEnabled: Boolean = configuration.get[Boolean]("internal-auth.enabled")
 
   object HipBusinessPartnerRecord:
     val isEnabled: Boolean = configuration.get[Boolean]("hip-business-partner-record.enabled")
+
+  // TODO: remove with InternalUserIdHashMigrator, once the migration has run in every environment
+  object InternalUserIdHashMigrator:
+    val enabled: Boolean = configuration.get[Boolean]("internal-user-id-hash-migrator.enabled")
