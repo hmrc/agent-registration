@@ -24,6 +24,7 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.action.AuthorisedRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
+import uk.gov.hmrc.agentregistration.services.ApplicationStateTransitionHelper.validateTransitionTo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
@@ -60,8 +61,13 @@ extends BackendController(cc):
           val agentApplication: AgentApplication = request.body
           ensureInternalUserId(agentApplication)
           agentApplicationRepo
-            .upsert(request.body)
-            .map(_ => Ok(""))
+            .findById(agentApplication.agentApplicationId)
+            .flatMap: existingAgentApplication =>
+              existingAgentApplication.validateTransitionTo(agentApplication) match
+                case Right(validAgentApplication) => agentApplicationRepo.upsert(validAgentApplication).map(_ => Ok(""))
+                case Left(invalidTransition) =>
+                  logger.warn(invalidTransition.message)
+                  Future.successful(Conflict(invalidTransition.message))
 
   def deleteApplication(): Action[AnyContent] = actions.authorised.async: request =>
     agentApplicationRepo

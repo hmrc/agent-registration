@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonDateTime
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
@@ -34,6 +35,7 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
@@ -78,16 +80,39 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .headOption()
 
+  override def upsert(agentApplication: AgentApplication): Future[Unit] = collection
+    .replaceOne(
+      filter = Filters.and(
+        Filters.eq("_id", agentApplication.agentApplicationId.value),
+        applicationStateAllowsTransitionTo(agentApplication.applicationState)
+      ),
+      replacement = agentApplication
+    )
+    .toFuture()
+    .flatMap: updateResult =>
+      if updateResult.getMatchedCount > 0L then Future.unit
+      else
+        findById(agentApplication.agentApplicationId).flatMap:
+          case None => collection.insertOne(agentApplication).toFuture().map(_ => ())
+          case Some(existingAgentApplication) =>
+            Future.failed(InternalServerException(
+              s"Refusing to upsert application [${agentApplication.applicationReference.value}]: " +
+                s"state [${existingAgentApplication.applicationState}] does not allow transition to [${agentApplication.applicationState}]"
+            ))
+
   def updateManyApplicationStateByReference(
     applicationReferences: Seq[ApplicationReference],
     applicationState: ApplicationState
-  ): Future[Unit] = collection
+  ): Future[Long] = collection
     .updateMany(
-      filter = Filters.in(FieldNames.applicationReference, applicationReferences.map(_.value)*),
-      update = Updates.set(FieldNames.applicationState, applicationState.toString)
+      filter = Filters.and(
+        Filters.in(FieldNames.applicationReference, applicationReferences.map(_.value)*),
+        applicationStateAllowsTransitionTo(applicationState)
+      ),
+      update = Updates.set("applicationState", applicationState.toString)
     )
     .toFuture()
-    .map(_ => ())
+    .map(_.getMatchedCount)
 
   def updateManyToExpiredForUnsubmitted(
     now: Instant,
@@ -110,6 +135,11 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
     .map(_.getModifiedCount)
+
+  private def applicationStateAllowsTransitionTo(nextState: ApplicationState): Bson = Filters.in(
+    "applicationState",
+    ApplicationState.allowedPreviousStates(nextState).toSeq.map(_.toString)*
+  )
 
   def findIdsOfExpiredWithPostExpiryGracePeriodEnded(now: Instant): Future[Seq[AgentApplicationId]] = collection
     .withDocumentClass[BsonDocument]()

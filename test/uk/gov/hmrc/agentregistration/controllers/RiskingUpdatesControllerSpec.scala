@@ -21,8 +21,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.PersonReference
+import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetailsId
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix
@@ -456,11 +458,12 @@ extends ControllerSpec:
       "corrected entity outcome must override the stale FailedNonFixable entity"
     AuthStubs.verifyInternalAuth()
 
-  "receiveRiskingOutcome applies the outcome even when the application is in an unexpected state (e.g. Started) — the anomaly is logged as a warning so ops can investigate, but the update is not silently dropped" in:
+  "receiveRiskingOutcome applies the outcome when the application is SentToMinerva" in:
     AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
-    val startedApp = agentApplicationSentForRisking.copy(applicationState = ApplicationState.Started)
-    agentApplicationRepo.upsert(startedApp).futureValue
+    val sentToMinervaAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterSentToMinerva
+    sentToMinervaAgentApplication.applicationReference shouldBe applicationReference withClue "sanity check"
+    agentApplicationRepo.upsert(sentToMinervaAgentApplication).futureValue
     individualProvidedDetailsRepo.upsert(tdAll.providedDetails.afterFinished).futureValue
 
     val response =
@@ -472,10 +475,53 @@ extends ControllerSpec:
 
     response.status shouldBe Status.OK
     val updated = agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value
-    updated.applicationState shouldBe ApplicationState.RiskingCompleted withClue
-      "outcome must be applied even from an unexpected state; ops receive a warning log for investigation"
+    updated.applicationState shouldBe ApplicationState.RiskingCompleted
     updated.riskingOutcomeApplication shouldBe Some(RiskingOutcomeApplication.Approved(actualDecisionDate = emailsSentAtLocalDate))
     updated.riskingOutcomeEntity shouldBe Some(RiskingOutcomeEntity.Approved)
+    AuthStubs.verifyInternalAuth()
+
+  "receiveRiskingOutcome returns CONFLICT and leaves the application and its individuals untouched when the application is in a state which cannot transition to RiskingCompleted (e.g. Started)" in:
+    AuthStubs.stubInternalAuth()
+    given Request[?] = tdAll.backendRequest
+    val startedAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted
+    startedAgentApplication.applicationReference shouldBe applicationReference withClue "sanity check"
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterFinished
+    agentApplicationRepo.upsert(startedAgentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.CONFLICT
+    response.body shouldBe s"Invalid application state transition from [Started] to [RiskingCompleted] for applicationReference [${applicationReference.value}]"
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe startedAgentApplication
+    individualProvidedDetailsRepo.findById(individualProvidedDetails.individualProvidedDetailsId).futureValue.value shouldBe individualProvidedDetails
+    AuthStubs.verifyInternalAuth()
+
+  "receiveRiskingOutcome returns CONFLICT and leaves the application and its individuals untouched when the application is Expired" in:
+    AuthStubs.stubInternalAuth()
+    given Request[?] = tdAll.backendRequest
+    val expiredAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
+    expiredAgentApplication.applicationReference shouldBe applicationReference withClue "sanity check"
+    val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterFinished
+    agentApplicationRepo.upsert(expiredAgentApplication).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/risking-outcome/${applicationReference.value}")
+        .withBody(Json.toJson(emptyFailuresRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.CONFLICT
+    response.body shouldBe s"Invalid application state transition from [Expired] to [RiskingCompleted] for applicationReference [${applicationReference.value}]"
+    agentApplicationRepo.findByApplicationReference(applicationReference).futureValue.value shouldBe expiredAgentApplication
+    individualProvidedDetailsRepo.findById(individualProvidedDetails.individualProvidedDetailsId).futureValue.value shouldBe individualProvidedDetails
     AuthStubs.verifyInternalAuth()
 
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
@@ -500,6 +546,28 @@ extends ControllerSpec:
     agentApplicationRepo.findByApplicationReference(
       tdAll.applicationReference
     ).futureValue.value.applicationState shouldBe SentToMinerva withClue "application state should be updated"
+    AuthStubs.verifyInternalAuth()
+
+  "updateApplicationStatusSentToMinerva returns OK and leaves an application untouched when its state does not allow the transition (e.g. Expired)" in:
+    AuthStubs.stubInternalAuth()
+    given Request[?] = tdAll.backendRequest
+    val expiredAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
+    expiredAgentApplication.applicationReference shouldBe tdAll.applicationReference withClue "sanity check"
+    agentApplicationRepo.upsert(expiredAgentApplication).futureValue
+
+    val updateApplicationStatusRequest: UpdateApplicationStateSentToMinervaRequest = UpdateApplicationStateSentToMinervaRequest(
+      applicationReferences = Seq(tdAll.applicationReference)
+    )
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/risking-updates/sent-to-minerva")
+        .withBody(Json.toJson(updateApplicationStatusRequest))
+        .execute[HttpResponse]
+        .futureValue
+
+    response.status shouldBe Status.OK
+    agentApplicationRepo.findByApplicationReference(tdAll.applicationReference).futureValue.value shouldBe expiredAgentApplication
     AuthStubs.verifyInternalAuth()
 
   "receiveRiskingOutcome returns FORBIDDEN when the calling service does not have the required internal-auth permission" in:
