@@ -70,7 +70,8 @@ extends BackendController(cc):
       .async(parse.json[AgentApplication]):
         implicit request =>
           agentApplicationRepo
-            .upsert(request.body)
+            .removeById(request.body.agentApplicationId)
+            .flatMap(_ => agentApplicationRepo.upsert(request.body))
             .map(_ => Ok(""))
 
   def runExpiryScheduler: Action[AnyContent] = actions

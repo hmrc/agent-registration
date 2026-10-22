@@ -103,5 +103,8 @@ extends UnitSpec:
       ApplicationState.RiskingCompleted
     )
 
+  "Expired is the only terminal state" in:
+    ApplicationState.values.filter(_.isTerminal).toSet shouldBe Set(ApplicationState.Expired)
+
   "initialState is Started" in:
     ApplicationState.initialState shouldBe ApplicationState.Started

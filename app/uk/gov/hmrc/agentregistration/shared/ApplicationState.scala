@@ -70,4 +70,6 @@ object ApplicationState:
           )
         case Expired => Set.empty
 
+    def isTerminal: Boolean = as.allowedNextStates.isEmpty
+
     def canTransitionTo(nextState: ApplicationState): Boolean = as.allowedNextStates.contains(nextState)
