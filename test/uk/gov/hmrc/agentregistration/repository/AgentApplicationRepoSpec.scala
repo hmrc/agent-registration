@@ -35,6 +35,7 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.http.InternalServerException
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -72,6 +73,59 @@ extends ISpec:
     updatedRecord2.applicationState shouldBe SentToMinerva withClue "application state for record 2 should be updated"
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
+
+  "upsert inserts a new application whatever its state" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    repo.findById(record.agentApplicationId).futureValue shouldBe None withClue "assuming initially there is no record in mongo"
+
+    repo.upsert(record).futureValue
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "upsert replaces the application when the state does not change" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    val updatedRecord: AgentApplication = tdAll.agentApplicationLlp.afterRefusalToDealWithCheckPass
+    repo.upsert(record).futureValue
+
+    repo.upsert(updatedRecord).futureValue
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe updatedRecord
+
+  "upsert replaces the application on fixable resubmission (RiskingCompleted -> SentForRisking)" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterRiskingCompletedFixableFixed
+    val updatedRecord: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+    repo.upsert(record).futureValue
+
+    repo.upsert(updatedRecord).futureValue
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe updatedRecord
+
+  "upsert fails and leaves the application untouched when the transition goes backwards" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    val updatedRecord: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    repo.upsert(record).futureValue
+
+    val exception: Throwable = repo.upsert(updatedRecord).failed.futureValue
+    exception shouldBe an[InternalServerException]
+    exception.getMessage shouldBe s"Refusing to upsert application [${record.applicationReference.value}]: state [SentForRisking] does not allow transition to [GrsDataReceived]"
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
+
+  "upsert fails and leaves an Expired application untouched whatever the incoming state - a new state MUST update the pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val record: AgentApplication = tdAll.agentApplicationLlp.afterExpired
+      val updatedRecord: AgentApplication = notYetExpiredApplicationInState(state)
+      updatedRecord.agentApplicationId shouldBe record.agentApplicationId withClue s"precondition: state=$state record must have the same id"
+      repo.upsert(record).futureValue
+
+      repo.upsert(updatedRecord).failed.futureValue shouldBe an[InternalServerException] withClue s"state=$state must be rejected"
+      repo.findById(record.agentApplicationId).futureValue.value shouldBe record withClue s"state=$state record must be untouched"
+
+  "updateManyApplicationStateByReference leaves an application untouched when its state does not allow the transition" in:
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    repo.upsert(record).futureValue
+
+    val matchedCount: Long = repo.updateManyApplicationStateByReference(Seq(record.applicationReference), SentToMinerva).futureValue
+
+    matchedCount shouldBe 0L
+    repo.findById(record.agentApplicationId).futureValue.value shouldBe record
 
   private def expiredApplicationInState(state: ApplicationState): AgentApplication =
     state match
@@ -248,6 +302,7 @@ extends ISpec:
     // the states share an _id, so each is upserted and inspected in turn
     val storedFieldNames: Set[String] =
       recordsWithDates.flatMap: (_, record) =>
+        dropDatabase()
         repo.upsert(record).futureValue
         storedBsonDateFieldNames(record)
       .toSet

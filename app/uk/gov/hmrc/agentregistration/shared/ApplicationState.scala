@@ -33,5 +33,43 @@ object ApplicationState:
 
   given Format[ApplicationState] = JsonFormatsFactory.makeEnumFormat[ApplicationState]
 
+  val initialState: ApplicationState = Started
+
+  def allowedPreviousStates(nextState: ApplicationState): Set[ApplicationState] = values.filter(_.canTransitionTo(nextState)).toSet
+
   extension (as: ApplicationState)
+
     def sentForRisking: Boolean = as === ApplicationState.SentForRisking
+
+    def allowedNextStates: Set[ApplicationState] =
+      as match
+        case Started =>
+          Set(
+            Started,
+            GrsDataReceived,
+            Expired
+          )
+        case GrsDataReceived =>
+          Set(
+            GrsDataReceived,
+            SentForRisking,
+            Expired
+          )
+        case SentForRisking =>
+          Set(
+            SentForRisking,
+            SentToMinerva,
+            RiskingCompleted
+          )
+        case SentToMinerva => Set(SentToMinerva, RiskingCompleted)
+        case RiskingCompleted =>
+          Set(
+            RiskingCompleted,
+            SentForRisking,
+            Expired
+          )
+        case Expired => Set.empty
+
+    def isTerminal: Boolean = as.allowedNextStates.isEmpty
+
+    def canTransitionTo(nextState: ApplicationState): Boolean = as.allowedNextStates.contains(nextState)

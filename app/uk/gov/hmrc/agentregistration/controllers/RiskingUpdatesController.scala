@@ -23,6 +23,7 @@ import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
+import uk.gov.hmrc.agentregistration.services.ApplicationStateTransitionHelper.transitionTo
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeEntityHelper
 import uk.gov.hmrc.agentregistration.services.RiskingOutcomeIndividualHelper
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
@@ -80,11 +81,11 @@ extends BackendController(cc):
                 logger.warn(message)
                 Future.successful(NotFound(message))
               case Some(agentApplication) =>
-                if agentApplication.applicationState =!= ApplicationState.SentForRisking then
-                  logger.warn(
-                    s"receiveRiskingOutcome for applicationReference [${applicationReference.value}] in unexpected state [${agentApplication.applicationState}] "
-                  )
-                markRiskingCompleted(agentApplication, request.body).map(_ => Ok(""))
+                agentApplication.transitionTo(ApplicationState.RiskingCompleted) match
+                  case Right(riskingCompletedAgentApplication) => markRiskingCompleted(riskingCompletedAgentApplication, request.body).map(_ => Ok(""))
+                  case Left(invalidTransition) =>
+                    logger.warn(invalidTransition.message)
+                    Future.successful(Conflict(invalidTransition.message))
 
   def updateApplicationStatusSentToMinerva: Action[UpdateApplicationStateSentToMinervaRequest] =
     baseAction
@@ -93,7 +94,13 @@ extends BackendController(cc):
           val applicationReferences = request.body.applicationReferences
           agentApplicationRepo
             .updateManyApplicationStateByReference(applicationReferences = applicationReferences, applicationState = SentToMinerva)
-            .map(_ => Ok)
+            .map: matchedCount =>
+              if matchedCount =!= applicationReferences.size.toLong then
+                logger.warn(
+                  s"Updated application state to [$SentToMinerva] for $matchedCount of ${applicationReferences.size} applications, " +
+                    s"the others were not found or are not in a state allowing this transition. applicationReferences: [${applicationReferences.map(_.value).mkString(", ")}]"
+                )
+              Ok
 
   private def markRiskingCompleted(
     agentApplication: AgentApplication,
@@ -114,7 +121,6 @@ extends BackendController(cc):
         agentApplication
           .modify(_.riskingOutcomeApplication).setTo(Some(riskingOutcomeApplication))
           .modify(_.riskingOutcomeEntity).setTo(Some(riskingOutcomeEntity))
-          .modify(_.applicationState).setTo(ApplicationState.RiskingCompleted)
       )
     yield ()
 

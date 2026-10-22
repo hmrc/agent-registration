@@ -89,6 +89,85 @@ extends ControllerSpec:
     ).futureValue.value shouldBe exampleAgentApplication withClue "after http request there should be records in mongo"
     AuthStubs.verifyAuthorise()
 
+  "upsert application returns OK on fixable resubmission (RiskingCompleted -> SentForRisking)" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterRiskingCompletedFixableFixed
+    val resubmittedAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterResubmitted
+    repo.upsert(exampleAgentApplication).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/application")
+        .withBody(Json.toJson(resubmittedAgentApplication))
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.OK
+    response.body shouldBe ""
+
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe resubmittedAgentApplication
+    AuthStubs.verifyAuthorise()
+
+  "upsert application returns CONFLICT and leaves the application untouched when it is Expired" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
+    val agentApplicationToUpsert: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    repo.upsert(exampleAgentApplication).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/application")
+        .withBody(Json.toJson(agentApplicationToUpsert))
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.CONFLICT
+    response.body shouldBe s"Invalid application state transition from [Expired] to [GrsDataReceived] for applicationReference [${tdAll.applicationReference.value}]"
+
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
+
+  "upsert application returns CONFLICT and leaves the application untouched when the transition goes backwards" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+    val exampleAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    val agentApplicationToUpsert: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+    repo.upsert(exampleAgentApplication).futureValue
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/application")
+        .withBody(Json.toJson(agentApplicationToUpsert))
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.CONFLICT
+    response.body shouldBe s"Invalid application state transition from [SentForRisking] to [GrsDataReceived] for applicationReference [${tdAll.applicationReference.value}]"
+
+    repo.findById(exampleAgentApplication.agentApplicationId).futureValue.value shouldBe exampleAgentApplication
+    AuthStubs.verifyAuthorise()
+
+  "upsert application returns CONFLICT when a new application is not in the initial state" in:
+    given Request[?] = tdAll.backendRequest
+    AuthStubs.stubAuthorise()
+    val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
+    repo.findByInternalUserId(tdAll.internalUserId).futureValue shouldBe None withClue "assuming initially there is no records in mongo "
+    val agentApplicationToUpsert: AgentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived
+
+    val response =
+      httpClient
+        .post(url"$baseUrl/agent-registration/application")
+        .withBody(Json.toJson(agentApplicationToUpsert))
+        .execute[HttpResponse]
+        .futureValue
+    response.status shouldBe Status.CONFLICT
+    response.body shouldBe s"Invalid application state transition from [no application] to [GrsDataReceived] for applicationReference [${tdAll.applicationReference.value}]"
+
+    repo.findByInternalUserId(tdAll.internalUserId).futureValue shouldBe None
+    AuthStubs.verifyAuthorise()
+
   "find application by linkId returns NO_CONTENT if there is no underlying records" in:
 
     given Request[?] = tdAll.backendRequest
