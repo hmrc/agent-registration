@@ -54,6 +54,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
       postExpiryGracePeriodEndsAt = None,
+      expiredAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
       businessDetails = None,
@@ -89,7 +90,8 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
     val afterExpired: AgentApplicationLlp = afterStartedExpired.copy(
       applicationState = ApplicationState.Expired,
       applicationExpiresAt = None,
-      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant)
+      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant),
+      expiredAt = Some(dependencies.expiredAtAsInstant)
     ).assertDataIntegrity()
 
     val afterExpiredPostExpiryGracePeriodEnded: AgentApplicationLlp = afterExpired.copy(

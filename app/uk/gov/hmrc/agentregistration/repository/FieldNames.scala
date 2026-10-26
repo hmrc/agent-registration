@@ -24,6 +24,7 @@ object FieldNames:
   val applicationReference: String = "applicationReference"
   val applicationState: String = "applicationState"
   val createdAt: String = "createdAt"
+  val expiredAt: String = "expiredAt"
   val internalUserId: String = "internalUserId"
   val internalUserIdHash: String = "internalUserIdHash"
   val linkId: String = "linkId"
