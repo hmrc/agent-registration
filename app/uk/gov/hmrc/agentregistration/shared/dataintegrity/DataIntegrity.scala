@@ -89,8 +89,15 @@ object DataIntegrity:
         requireThat(agentApplication.submittedAt.isEmpty, s"submittedAt should not be defined in $state state"),
         requireThat(agentApplication.riskingOutcomeApplication.isEmpty, s"riskingOutcomeApplication should not be defined in $state state"),
         requireThat(agentApplication.riskingOutcomeEntity.isEmpty, s"riskingOutcomeEntity should not be defined in $state state"),
-        requireThat(agentApplication.postExpiryGracePeriodEndsAt.isDefined, s"postExpiryGracePeriodEndsAt should be defined in $state state")
+        requireThat(agentApplication.postExpiryGracePeriodEndsAt.isDefined, s"postExpiryGracePeriodEndsAt should be defined in $state state"),
+        requireThat(agentApplication.expiredAt.isDefined, s"expiredAt should be defined in $state state"),
+        requireThat(expiredBeforeGracePeriodEnds(agentApplication), s"expiredAt should not be after postExpiryGracePeriodEndsAt in $state state")
       ).flatten
+
+    private def expiredBeforeGracePeriodEnds(agentApplication: AgentApplication): Boolean =
+      (agentApplication.expiredAt, agentApplication.postExpiryGracePeriodEndsAt) match
+        case (Some(expiredAt), Some(postExpiryGracePeriodEndsAt)) => !expiredAt.isAfter(postExpiryGracePeriodEndsAt)
+        case _ => true
 
     private def whenGrsDataReceived(agentApplication: AgentApplication): Seq[String] =
       given state: ApplicationState = ApplicationState.GrsDataReceived

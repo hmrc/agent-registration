@@ -72,8 +72,11 @@ trait TdBase:
   def nowAsInstant: Instant = nowAsLocalDateTime.toInstant(ZoneOffset.UTC)
   def newInstant: Instant = nowAsInstant.plusSeconds(20) // used when a new application is created from existing one
   def applicationExpiresAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(73)) // matches days-to-submit-application config
+  def createdLongBeforeExpiryAsInstant: Instant = nowAsInstant.minus(Duration.ofDays(200))
+  def expiredAtAsInstant: Instant = nowAsInstant
   def postExpiryGracePeriodEndsAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(45)) // matches post-expiry-grace-period config
   def postExpiryGracePeriodEndedAtAsInstant: Instant = nowAsInstant.minusSeconds(60)
+  def expiredAtForPostExpiryGracePeriodEndedAsInstant: Instant = postExpiryGracePeriodEndedAtAsInstant.minus(Duration.ofDays(45))
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 

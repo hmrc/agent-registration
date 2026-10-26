@@ -40,6 +40,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdGrsBusin
       applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
       submittedAt = None,
       postExpiryGracePeriodEndsAt = None,
+      expiredAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
       businessDetails = None,

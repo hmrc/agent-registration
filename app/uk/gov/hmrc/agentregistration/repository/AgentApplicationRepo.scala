@@ -104,6 +104,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       ),
       update = Updates.combine(
         Updates.set(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Updates.set(FieldNames.expiredAt, BsonDateTime(now.toEpochMilli)),
         Updates.set(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
         Updates.unset(FieldNames.applicationExpiresAt)
       )

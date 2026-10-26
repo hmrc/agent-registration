@@ -113,6 +113,7 @@ extends ISpec:
           val expiredAgentApplication: AgentApplication = repo.findById(agentApplication.agentApplicationId).futureValue.value
           expiredAgentApplication.applicationState shouldBe Expired
           expiredAgentApplication.postExpiryGracePeriodEndsAt shouldBe Some(tdAll.postExpiryGracePeriodEndsAtAsInstant)
+          expiredAgentApplication.expiredAt shouldBe Some(tdAll.expiredAtAsInstant)
           expiredAgentApplication.applicationExpiresAt shouldBe None
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
@@ -204,7 +205,8 @@ extends ISpec:
     "riskingOutcomeApplication.actualDecisionDate",
     "riskingOutcomeApplication.reSubmittedAt",
     "riskingOutcomeApplication.correctiveActionExpiryDate",
-    FieldNames.postExpiryGracePeriodEndsAt
+    FieldNames.postExpiryGracePeriodEndsAt,
+    FieldNames.expiredAt
   )
 
   private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
@@ -303,6 +305,12 @@ extends ISpec:
       record = tdAll.agentApplicationLlp.afterExpired,
       fieldName = FieldNames.postExpiryGracePeriodEndsAt,
       storedInstant = tdAll.postExpiryGracePeriodEndsAtAsInstant
+    ),
+    DateQueryCase(
+      description = "an expired application",
+      record = tdAll.agentApplicationLlp.afterExpired,
+      fieldName = FieldNames.expiredAt,
+      storedInstant = tdAll.expiredAtAsInstant
     )
   )
 
