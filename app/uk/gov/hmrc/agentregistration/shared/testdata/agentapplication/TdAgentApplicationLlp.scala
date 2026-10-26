@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
+import java.time.Duration
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.agentdetails.*
@@ -83,6 +84,11 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       applicationExpiresAt = Some(dependencies.nowAsInstant.minusSeconds(60))
     ).assertDataIntegrity()
 
+    val afterStartedExpiredLongAfterCreation: AgentApplicationLlp = afterStarted.copy(
+      createdAt = dependencies.createdLongBeforeExpiryAsInstant,
+      applicationExpiresAt = Some(dependencies.createdLongBeforeExpiryAsInstant.plus(Duration.ofDays(73)))
+    ).assertDataIntegrity()
+
     val afterGrsDataReceivedExpired: AgentApplicationLlp = afterGrsDataReceived.copy(
       applicationExpiresAt = Some(dependencies.nowAsInstant.minusSeconds(60))
     ).assertDataIntegrity()
@@ -94,8 +100,16 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       expiredAt = Some(dependencies.expiredAtAsInstant)
     ).assertDataIntegrity()
 
+    val afterExpiredLongAfterCreation: AgentApplicationLlp = afterStartedExpiredLongAfterCreation.copy(
+      applicationState = ApplicationState.Expired,
+      applicationExpiresAt = None,
+      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant),
+      expiredAt = Some(dependencies.expiredAtAsInstant)
+    ).assertDataIntegrity()
+
     val afterExpiredPostExpiryGracePeriodEnded: AgentApplicationLlp = afterExpired.copy(
-      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndedAtAsInstant)
+      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndedAtAsInstant),
+      expiredAt = Some(dependencies.expiredAtForPostExpiryGracePeriodEndedAsInstant)
     ).assertDataIntegrity()
 
     val afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded: AgentApplicationLlp = afterExpiredPostExpiryGracePeriodEnded.copy(

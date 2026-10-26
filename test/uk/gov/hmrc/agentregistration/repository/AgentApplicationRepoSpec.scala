@@ -113,7 +113,7 @@ extends ISpec:
           val expiredAgentApplication: AgentApplication = repo.findById(agentApplication.agentApplicationId).futureValue.value
           expiredAgentApplication.applicationState shouldBe Expired
           expiredAgentApplication.postExpiryGracePeriodEndsAt shouldBe Some(tdAll.postExpiryGracePeriodEndsAtAsInstant)
-          expiredAgentApplication.expiredAt shouldBe Some(tdAll.nowAsInstant)
+          expiredAgentApplication.expiredAt shouldBe Some(tdAll.expiredAtAsInstant)
           expiredAgentApplication.applicationExpiresAt shouldBe None
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
