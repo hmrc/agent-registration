@@ -83,7 +83,7 @@ sealed trait AgentApplication:
       case ApplicationState.SentForRisking => true
       case ApplicationState.SentToMinerva => true
       case ApplicationState.RiskingCompleted => true
-      case ApplicationState.Expired => true
+      case ApplicationState.Expired => submittedAt.isDefined
 
   val isBeforeSentForRisking: Boolean = !isAfterSentForRisking
 
