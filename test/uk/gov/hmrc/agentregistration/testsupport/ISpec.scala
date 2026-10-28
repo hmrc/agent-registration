@@ -68,6 +68,7 @@ extends AnyFreeSpecLike,
       "microservice.services.hip.authorization-token" -> "test-hip-auth-token",
       "microservice.services.internal-auth.port" -> WireMockSupport.port,
       "microservice.services.object-store.port" -> WireMockSupport.port,
+      "microservice.services.email.port" -> WireMockSupport.port,
       "internal-auth.enabled" -> false,
       "mongodb.uri" -> mongoUri,
       "hasher.key" -> "U/g3pVPBa/hIJ109AIwEeuRefPzeqXB312MTw/JTF00="
