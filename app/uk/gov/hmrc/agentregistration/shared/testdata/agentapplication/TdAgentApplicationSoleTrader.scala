@@ -58,6 +58,13 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       riskingOutcomeEntity = None
     ).assertDataIntegrity()
 
+    val afterExpired: AgentApplicationSoleTrader = afterStarted.copy(
+      applicationState = ApplicationState.Expired,
+      applicationExpiresAt = None,
+      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant),
+      expiredAt = Some(dependencies.expiredAtAsInstant)
+    ).assertDataIntegrity()
+
     val afterGrsDataReceived: AgentApplicationSoleTrader = afterStarted.copy(
       businessDetails = Some(
         dependencies.grsBusinessDetails.soleTrader.businessDetails
