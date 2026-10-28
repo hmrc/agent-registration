@@ -45,6 +45,8 @@ class AppConfig @Inject() (
   val hipBaseUrl: String = servicesConfig.baseUrl("hip")
   val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
 
+  val emailBaseUrl: String = servicesConfig.baseUrl("email")
+
   object CorrectiveAction:
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 

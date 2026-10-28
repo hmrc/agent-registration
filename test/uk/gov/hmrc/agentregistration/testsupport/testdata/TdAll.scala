@@ -31,7 +31,8 @@ object TdAll:
   */
 trait TdAll
 extends TestOnlyData
-with TdRequest:
+with TdRequest
+with TdEmail:
 
   // Backward-compatible aliases for properties renamed/removed in shared
   lazy val instant: Instant = nowAsInstant
