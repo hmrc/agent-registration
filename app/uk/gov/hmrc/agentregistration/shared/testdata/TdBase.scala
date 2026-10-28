@@ -77,6 +77,9 @@ trait TdBase:
   def postExpiryGracePeriodEndsAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(45)) // matches post-expiry-grace-period config
   def postExpiryGracePeriodEndedAtAsInstant: Instant = nowAsInstant.minusSeconds(60)
   def expiredAtForPostExpiryGracePeriodEndedAsInstant: Instant = postExpiryGracePeriodEndedAtAsInstant.minus(Duration.ofDays(45))
+  def expiryReminderEmailSentAtAsInstant: Instant = nowAsInstant
+  def expiredEmailSentAtAsInstant: Instant = nowAsInstant
+  def deletionEmailSentAtAsInstant: Instant = nowAsInstant
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
