@@ -96,6 +96,18 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       expiryReminderEmailSentAt = Some(dependencies.expiryReminderEmailSentAtAsInstant)
     ).assertDataIntegrity()
 
+    val afterStartedDueForExpiryReminder: AgentApplicationLlp = afterStarted.copy(
+      applicationExpiresAt = Some(dependencies.applicationExpiresAtWithinReminderPeriodAsInstant)
+    ).assertDataIntegrity()
+
+    val afterStartedDueForExpiryReminderEmailSent: AgentApplicationLlp = afterStartedDueForExpiryReminder.copy(
+      expiryReminderEmailSentAt = Some(dependencies.expiryReminderEmailSentAtAsInstant)
+    ).assertDataIntegrity()
+
+    val afterGrsDataReceivedDueForExpiryReminder: AgentApplicationLlp = afterGrsDataReceived.copy(
+      applicationExpiresAt = Some(dependencies.applicationExpiresAtWithinReminderPeriodAsInstant)
+    ).assertDataIntegrity()
+
     val afterGrsDataReceivedExpired: AgentApplicationLlp = afterGrsDataReceived.copy(
       applicationExpiresAt = Some(dependencies.nowAsInstant.minusSeconds(60))
     ).assertDataIntegrity()
@@ -163,8 +175,17 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
       agentDetails = None
     ).assertDataIntegrity()
 
+    val afterContactDetailsWithUnverifiedEmail: AgentApplicationLlp = afterGlobalAsaEnrolmentCheckPass.copy(
+      applicantContactDetails = Some(dependencies.applicantContactDetailsWithUnverifiedEmail),
+      agentDetails = None
+    ).assertDataIntegrity()
+
     val afterAgentDetailsComplete: AgentApplicationLlp = afterContactDetailsComplete.copy(
       agentDetails = Some(dependencies.completeAgentDetails)
+    ).assertDataIntegrity()
+
+    val afterAgentDetailsWithUnverifiedEmail: AgentApplicationLlp = afterContactDetailsComplete.copy(
+      agentDetails = Some(dependencies.completeAgentDetails.copy(agentEmailAddress = Some(dependencies.agentUnverifiedEmailAddress)))
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationLlp = afterAgentDetailsComplete.copy(

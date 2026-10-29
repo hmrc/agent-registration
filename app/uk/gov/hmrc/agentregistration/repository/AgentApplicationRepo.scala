@@ -124,6 +124,52 @@ extends Repo[AgentApplicationId, AgentApplication](
     .toFuture()
     .map(_.map(bsonDocument => AgentApplicationId(bsonDocument.getString(FieldNames._id).getValue)))
 
+  def findUnsubmittedDueForExpiryReminder(
+    now: Instant,
+    expiryReminderPeriodEndsAt: Instant
+  ): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.in(
+          FieldNames.applicationState,
+          ApplicationState.Started.toString,
+          ApplicationState.GrsDataReceived.toString
+        ),
+        Filters.gte(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli)),
+        Filters.lte(FieldNames.applicationExpiresAt, BsonDateTime(expiryReminderPeriodEndsAt.toEpochMilli)),
+        Filters.exists(FieldNames.expiryReminderEmailSentAt, false)
+      )
+    )
+    .toFuture()
+
+  def findExpiredWithoutExpiredEmail(): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.exists(FieldNames.expiredEmailSentAt, false)
+      )
+    )
+    .toFuture()
+
+  def findExpiredWithPostExpiryGracePeriodEnded(now: Instant): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
+      )
+    )
+    .toFuture()
+
+  def findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(now: Instant): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+        Filters.exists(FieldNames.deletionEmailSentAt, false)
+      )
+    )
+    .toFuture()
+
 object AgentApplicationRepo:
   val collectionName = "agent-application"
 
