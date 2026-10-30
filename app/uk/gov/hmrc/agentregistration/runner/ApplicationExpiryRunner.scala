@@ -17,10 +17,7 @@
 package uk.gov.hmrc.agentregistration.runner
 
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.services.ApplicationExpiryService
-import uk.gov.hmrc.agentregistration.services.email.EmailServiceForDeletedApplications
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiredApplications
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiryReminders
 import uk.gov.hmrc.agentregistration.util.EmptyRequest
@@ -32,48 +29,27 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton
-class ApplicationExpiryAndDeletionRunner @Inject() (
+class ApplicationExpiryRunner @Inject() (
   applicationExpiryService: ApplicationExpiryService,
   emailServiceForExpiryReminders: EmailServiceForExpiryReminders,
-  emailServiceForExpiredApplications: EmailServiceForExpiredApplications,
-  emailServiceForDeletedApplications: EmailServiceForDeletedApplications,
-  agentApplicationDeletionService: AgentApplicationDeletionService,
-  appConfig: AppConfig
+  emailServiceForExpiredApplications: EmailServiceForExpiredApplications
 )(using ec: ExecutionContext)
 extends RequestAwareLogging:
 
+  private val runnerName: String = "ApplicationExpiryRunner"
+
   def run(): Future[Unit] =
     given RequestHeader = EmptyRequest.emptyRequestHeader
+    logger.info(s"$runnerName: Started...")
     (for
-      _ <- ifEnabled(appConfig.Scheduler.expiryEnabled, "scheduler.expiry.enabled")(runExpiryStages())
-      _ <- ifEnabled(appConfig.Scheduler.deletionEnabled, "scheduler.deletion.enabled")(runDeletionStages())
-    yield ()).recover { case ex => logger.error("Error processing application expiry and deletion", ex) }
-
-  def runExpiryStages()(using RequestHeader): Future[Unit] =
-    for
       _ <- stage("ApplicationExpiryService.processExpiry")(applicationExpiryService.processExpiry())
       _ <- stage("EmailServiceForExpiryReminders.processEmails")(emailServiceForExpiryReminders.processEmails())
       _ <- stage("EmailServiceForExpiredApplications.processEmails")(emailServiceForExpiredApplications.processEmails())
-    yield ()
-
-  def runDeletionStages()(using RequestHeader): Future[Unit] =
-    for
-      _ <- stage("EmailServiceForDeletedApplications.processEmails")(emailServiceForDeletedApplications.processEmails())
-      _ <- stage("AgentApplicationDeletionService.processDeletions")(agentApplicationDeletionService.processDeletions())
-    yield ()
-
-  private def ifEnabled(
-    enabled: Boolean,
-    flagName: String
-  )(runStages: => Future[Unit])(using RequestHeader): Future[Unit] =
-    if enabled then runStages
-    else
-      logger.info(s"Stages skipped: $flagName is false")
-      Future.successful(())
+    yield logger.info(s"$runnerName: DONE")).recover { case ex => logger.error(s"$runnerName: Error processing application expiry", ex) }
 
   private def stage(name: String)(runStage: => Future[Unit])(using RequestHeader): Future[Unit] =
-    logger.info(s"Stage started: $name")
+    logger.info(s"$runnerName: Stage started: $name")
     runStage
-      .map { _ => logger.info(s"Stage completed: $name") }
+      .map { _ => logger.info(s"$runnerName: Stage completed: $name") }
       .recover:
-        case ex => logger.error(s"Stage failed: $name, continuing with remaining stages", ex)
+        case ex => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", ex)

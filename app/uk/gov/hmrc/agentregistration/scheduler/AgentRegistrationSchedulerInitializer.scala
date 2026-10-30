@@ -18,7 +18,8 @@ package uk.gov.hmrc.agentregistration.scheduler
 
 import play.api.Logging
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.runner.ApplicationExpiryAndDeletionRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationDeletionRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationExpiryRunner
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,19 +28,30 @@ import javax.inject.Singleton
 class AgentRegistrationSchedulerInitializer @Inject() (
   scheduler: Scheduler,
   appConfig: AppConfig,
-  applicationExpiryAndDeletionRunner: ApplicationExpiryAndDeletionRunner
+  applicationExpiryRunner: ApplicationExpiryRunner,
+  applicationDeletionRunner: ApplicationDeletionRunner
 )
 extends Logging:
 
   initialize()
 
   private def initialize(): Unit =
-    if appConfig.Scheduler.expiryEnabled || appConfig.Scheduler.deletionEnabled then
-      logger.info("Bootstrapping application expiry and deletion scheduler")
+    if appConfig.Scheduler.expiryEnabled then
+      logger.info("Bootstrapping application expiry scheduler")
       scheduler.scheduleDaily(
-        "application expiry and deletion",
-        appConfig.Scheduler.time,
-        () => applicationExpiryAndDeletionRunner.run()
+        "application expiry",
+        appConfig.Scheduler.expiryTime,
+        () => applicationExpiryRunner.run()
       )
     else
-      logger.info("application expiry and deletion scheduler not scheduled as neither expiry nor deletion is enabled")
+      logger.info("application expiry scheduler not scheduled as it is not enabled")
+
+    if appConfig.Scheduler.deletionEnabled then
+      logger.info("Bootstrapping application deletion scheduler")
+      scheduler.scheduleDaily(
+        "application deletion",
+        appConfig.Scheduler.deletionTime,
+        () => applicationDeletionRunner.run()
+      )
+    else
+      logger.info("application deletion scheduler not scheduled as it is not enabled")
