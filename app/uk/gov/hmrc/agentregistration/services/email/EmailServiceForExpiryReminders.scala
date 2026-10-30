@@ -83,7 +83,7 @@ extends RequestAwareLogging:
         logger.warn(s"Application ${agentApplication.applicationReference.value} no longer exists, expiryReminderEmailSentAt not recorded")
         Future.successful(())
 
-  private def makeSendEmailRequest(
+  def makeSendEmailRequest(
     agentApplication: AgentApplication,
     emailRecipient: EmailRecipient
   ): SendEmailRequest =
