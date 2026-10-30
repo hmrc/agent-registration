@@ -22,12 +22,12 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.runner.DeleteExpiredApplicationsRunner
-import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationExpiryAndDeletionRunner
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.individual.*
@@ -47,8 +47,7 @@ class TestApplicationController @Inject() (
   actions: Actions,
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner,
-  deleteExpiredApplicationsRunner: DeleteExpiredApplicationsRunner,
+  applicationExpiryAndDeletionRunner: ApplicationExpiryAndDeletionRunner,
   testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
@@ -75,13 +74,15 @@ extends BackendController(cc):
 
   def runExpiryScheduler: Action[AnyContent] = actions
     .default
-    .async: _ =>
-      expireUnsubmittedApplicationsRunner.run().map(_ => Ok(""))
+    .async: request =>
+      given RequestHeader = request
+      applicationExpiryAndDeletionRunner.runExpiryStages().map(_ => Ok(""))
 
   def runDeletionScheduler: Action[AnyContent] = actions
     .default
-    .async: _ =>
-      deleteExpiredApplicationsRunner.run().map(_ => Ok(""))
+    .async: request =>
+      given RequestHeader = request
+      applicationExpiryAndDeletionRunner.runDeletionStages().map(_ => Ok(""))
 
   def recentApplications(
     page: Int,

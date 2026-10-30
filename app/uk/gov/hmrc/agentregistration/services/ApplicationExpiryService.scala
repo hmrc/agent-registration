@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.runner
+package uk.gov.hmrc.agentregistration.services
 
-import play.api.Logging
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import java.time.Clock
 import java.time.Instant
@@ -29,17 +30,18 @@ import scala.concurrent.Future
 import scala.jdk.DurationConverters.*
 
 @Singleton
-class ExpireUnsubmittedApplicationsRunner @Inject() (
+class ApplicationExpiryService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   appConfig: AppConfig,
   clock: Clock
-)(using ec: ExecutionContext)
-extends Logging:
+)(using ExecutionContext)
+extends RequestAwareLogging:
 
-  def run(): Future[Unit] =
+  def processExpiry()(using RequestHeader): Future[Unit] =
     val now: Instant = Instant.now(clock)
     val postExpiryGracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
-    logger.info(s"Marking unsubmitted applications with applicationExpiresAt < $now as Expired, postExpiryGracePeriodEndsAt = $postExpiryGracePeriodEndsAt")
-    agentApplicationRepo.updateManyToExpiredForUnsubmitted(now, postExpiryGracePeriodEndsAt).map { modifiedCount =>
-      logger.info(s"Marked $modifiedCount unsubmitted applications as Expired")
-    }
+    logger.info(s"Expiring unsubmitted applications: Started... (applicationExpiresAt < $now, postExpiryGracePeriodEndsAt = $postExpiryGracePeriodEndsAt)")
+    agentApplicationRepo
+      .updateManyToExpiredForUnsubmitted(now, postExpiryGracePeriodEndsAt)
+      .map: modifiedCount =>
+        logger.info(s"Expiring unsubmitted applications: marked $modifiedCount as Expired DONE")
