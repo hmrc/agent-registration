@@ -110,7 +110,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     .toFuture()
     .map(_.getModifiedCount)
 
-  def findUnsubmittedDueForExpiryReminder(
+  def findReadyForExpiryReminderEmail(
     now: Instant,
     expiryReminderPeriodEndsAt: Instant
   ): Future[Seq[AgentApplication]] = collection
@@ -128,7 +128,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
 
-  def findExpiredWithoutExpiredEmail(now: Instant): Future[Seq[AgentApplication]] = collection
+  def findReadyForExpiredEmail(now: Instant): Future[Seq[AgentApplication]] = collection
     .find(
       filter = Filters.and(
         Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
@@ -138,7 +138,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
 
-  def findExpiredWithPostExpiryGracePeriodEnded(now: Instant): Future[Seq[AgentApplication]] = collection
+  def findReadyForDeletion(now: Instant): Future[Seq[AgentApplication]] = collection
     .find(
       filter = Filters.and(
         Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
@@ -147,7 +147,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
 
-  def findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(now: Instant): Future[Seq[AgentApplication]] = collection
+  def findReadyForDeletionEmail(now: Instant): Future[Seq[AgentApplication]] = collection
     .find(
       filter = Filters.and(
         Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),

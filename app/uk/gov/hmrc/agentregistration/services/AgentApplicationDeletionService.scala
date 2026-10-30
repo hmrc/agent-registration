@@ -44,7 +44,7 @@ extends RequestAwareLogging:
     val now: Instant = Instant.now(clock)
     logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
     agentApplicationRepo
-      .findExpiredWithPostExpiryGracePeriodEnded(now)
+      .findReadyForDeletion(now)
       .flatMap: agentApplications =>
         val (waitingForDeletionEmail: Seq[AgentApplication], readyForDeletion: Seq[AgentApplication]) = agentApplications.partition(isWaitingForDeletionEmail)
         logger.info(

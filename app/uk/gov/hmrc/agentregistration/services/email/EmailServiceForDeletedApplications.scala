@@ -46,7 +46,7 @@ extends RequestAwareLogging:
   def processEmails()(using RequestHeader): Future[Unit] =
     val now: Instant = Instant.now(clock)
     agentApplicationRepo
-      .findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(now)
+      .findReadyForDeletionEmail(now)
       .flatMap: agentApplications =>
         val (withoutRecipient: Seq[AgentApplication], withRecipient: Seq[AgentApplicationWithRecipient]) = EmailRecipient.partition(agentApplications)
         logger.info(

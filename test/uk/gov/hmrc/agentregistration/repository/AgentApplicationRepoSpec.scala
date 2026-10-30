@@ -167,7 +167,7 @@ extends ISpec:
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
       case Expired => tdAll.agentApplicationLlp.afterExpired
 
-  "findUnsubmittedDueForExpiryReminder has an explicitly defined outcome for every ApplicationState whose applicationExpiresAt is within the reminder period — a new state MUST update all pattern matches below" in:
+  "findReadyForExpiryReminderEmail has an explicitly defined outcome for every ApplicationState whose applicationExpiresAt is within the reminder period — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
       val agentApplication: AgentApplication = dueForExpiryReminderApplicationInState(state)
@@ -184,80 +184,80 @@ extends ISpec:
 
       repo.upsert(agentApplication).futureValue
       val agentApplications: Seq[AgentApplication] =
-        repo.findUnsubmittedDueForExpiryReminder(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue
+        repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue
 
       state match
         case Started | GrsDataReceived => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the reminder"
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           agentApplications shouldBe empty withClue s"state=$state must NOT be found for the reminder"
 
-  "findUnsubmittedDueForExpiryReminder does not find an application whose reminder was already sent" in:
+  "findReadyForExpiryReminderEmail does not find an application whose reminder was already sent" in:
     repo.upsert(tdAll.agentApplicationLlp.afterStartedDueForExpiryReminderEmailSent).futureValue
-    repo.findUnsubmittedDueForExpiryReminder(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
 
-  "findUnsubmittedDueForExpiryReminder does not find an application whose applicationExpiresAt is after the reminder period" in:
+  "findReadyForExpiryReminderEmail does not find an application whose applicationExpiresAt is after the reminder period" in:
     repo.upsert(tdAll.agentApplicationLlp.afterStarted).futureValue
-    repo.findUnsubmittedDueForExpiryReminder(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
 
-  "findUnsubmittedDueForExpiryReminder does not find an application whose applicationExpiresAt has already passed" in:
+  "findReadyForExpiryReminderEmail does not find an application whose applicationExpiresAt has already passed" in:
     repo.upsert(tdAll.agentApplicationLlp.afterStartedExpired).futureValue
-    repo.findUnsubmittedDueForExpiryReminder(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
 
-  "findExpiredWithoutExpiredEmail has an explicitly defined outcome for every ApplicationState — a new state MUST update all pattern matches below" in:
+  "findReadyForExpiredEmail has an explicitly defined outcome for every ApplicationState — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
       val agentApplication: AgentApplication = postExpiryGracePeriodNotEndedApplicationInState(state)
       repo.upsert(agentApplication).futureValue
-      val agentApplications: Seq[AgentApplication] = repo.findExpiredWithoutExpiredEmail(tdAll.nowAsInstant).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue
 
       state match
         case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the expired email"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
           agentApplications shouldBe empty withClue s"state=$state must NOT be found for the expired email"
 
-  "findExpiredWithoutExpiredEmail does not find an expired application whose grace period has already ended" in:
+  "findReadyForExpiredEmail does not find an expired application whose grace period has already ended" in:
     repo.upsert(tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded).futureValue
-    repo.findExpiredWithoutExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+    repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
 
-  "findExpiredWithoutExpiredEmail does not find an application whose expired email was already sent" in:
+  "findReadyForExpiredEmail does not find an application whose expired email was already sent" in:
     repo.upsert(tdAll.agentApplicationLlp.afterExpiredEmailSent).futureValue
-    repo.findExpiredWithoutExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+    repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
 
-  "findExpiredWithPostExpiryGracePeriodEnded has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+  "findReadyForDeletion has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
       val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
       repo.upsert(agentApplication).futureValue
-      val agentApplications: Seq[AgentApplication] = repo.findExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForDeletion(tdAll.nowAsInstant).futureValue
 
       state match
         case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for deletion"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
           agentApplications shouldBe empty withClue s"state=$state must NOT be found for deletion"
 
-  "findExpiredWithPostExpiryGracePeriodEnded does not find an expired application whose grace period has not ended" in:
+  "findReadyForDeletion does not find an expired application whose grace period has not ended" in:
     repo.upsert(tdAll.agentApplicationLlp.afterExpired).futureValue
-    repo.findExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue shouldBe empty
+    repo.findReadyForDeletion(tdAll.nowAsInstant).futureValue shouldBe empty
 
-  "findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+  "findReadyForDeletionEmail has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
       val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
       repo.upsert(agentApplication).futureValue
-      val agentApplications: Seq[AgentApplication] = repo.findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(tdAll.nowAsInstant).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue
 
       state match
         case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the deletion email"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
           agentApplications shouldBe empty withClue s"state=$state must NOT be found for the deletion email"
 
-  "findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail does not find an expired application whose grace period has not ended" in:
+  "findReadyForDeletionEmail does not find an expired application whose grace period has not ended" in:
     repo.upsert(tdAll.agentApplicationLlp.afterExpired).futureValue
-    repo.findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+    repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
 
-  "findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail does not find an application whose deletion email was already sent" in:
+  "findReadyForDeletionEmail does not find an application whose deletion email was already sent" in:
     repo.upsert(tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEndedDeletionEmailSent).futureValue
-    repo.findExpiredWithPostExpiryGracePeriodEndedWithoutDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+    repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
 
   // the fields the Mongo format stores as BSON Date; the records below between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
