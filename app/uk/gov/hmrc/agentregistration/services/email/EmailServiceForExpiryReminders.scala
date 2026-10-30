@@ -51,7 +51,7 @@ extends RequestAwareLogging:
     val now: Instant = Instant.now(clock)
     val expiryReminderPeriodEndsAt: Instant = now.plus(appConfig.expiryReminderPeriod.toJava)
     agentApplicationRepo
-      .findUnsubmittedDueForExpiryReminder(now, expiryReminderPeriodEndsAt)
+      .findReadyForExpiryReminderEmail(now, expiryReminderPeriodEndsAt)
       .flatMap: agentApplications =>
         val (withoutRecipient: Seq[AgentApplication], withRecipient: Seq[AgentApplicationWithRecipient]) = EmailRecipient.partition(agentApplications)
         logger.info(
