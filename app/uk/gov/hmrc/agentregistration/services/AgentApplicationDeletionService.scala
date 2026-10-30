@@ -43,19 +43,17 @@ extends RequestAwareLogging:
   def processDeletions()(using RequestHeader): Future[Unit] =
     val now: Instant = Instant.now(clock)
     logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
-    agentApplicationRepo
-      .findReadyForDeletion(now)
-      .flatMap: agentApplications =>
-        val (waitingForDeletionEmail: Seq[AgentApplication], readyForDeletion: Seq[AgentApplication]) = agentApplications.partition(isWaitingForDeletionEmail)
-        logger.info(
-          s"Deleting Expired applications: found ${agentApplications.size}, ${waitingForDeletionEmail.size} waiting for the deletion email"
-        )
+    for
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForDeletion(now)
+      (waitingForDeletionEmail, readyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
+      _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}, ${waitingForDeletionEmail.size} waiting for the deletion email")
+      deletedCount: Int <-
         ProcessInSequence
           .processAllInSequence(readyForDeletion)(deleteWithIndividualsAndAmlsEvidence):
             case (throwable, agentApplication) =>
               logger.error(s"Deleting Expired applications: FAILED for ${agentApplication.applicationReference.value}", throwable)
-          .map: deletedCount =>
-            logger.info(s"Deleting Expired applications: deleted $deletedCount of ${readyForDeletion.size} DONE")
+      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${readyForDeletion.size} DONE")
+    yield ()
 
   private def isWaitingForDeletionEmail(agentApplication: AgentApplication): Boolean =
     agentApplication.deletionEmailSentAt.isEmpty && EmailRecipient.resolve(agentApplication).isDefined

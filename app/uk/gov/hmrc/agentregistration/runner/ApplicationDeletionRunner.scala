@@ -42,11 +42,11 @@ extends RequestAwareLogging:
     (for
       _ <- stage("EmailServiceForDeletedApplications.processEmails")(emailServiceForDeletedApplications.processEmails())
       _ <- stage("AgentApplicationDeletionService.processDeletions")(agentApplicationDeletionService.processDeletions())
-    yield logger.info(s"$runnerName: DONE")).recover { case ex => logger.error(s"$runnerName: Error processing application deletion", ex) }
+    yield logger.info(s"$runnerName: DONE")).recover { case throwable => logger.error(s"$runnerName: Error processing application deletion", throwable) }
 
   private def stage(name: String)(runStage: => Future[Unit])(using RequestHeader): Future[Unit] =
     logger.info(s"$runnerName: Stage started: $name")
     runStage
       .map { _ => logger.info(s"$runnerName: Stage completed: $name") }
       .recover:
-        case ex => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", ex)
+        case throwable => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", throwable)
