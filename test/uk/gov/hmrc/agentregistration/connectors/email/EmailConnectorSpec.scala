@@ -42,5 +42,5 @@ extends ISpec:
     val exception: Throwable = emailConnector.sendEmail(tdAll.sendEmailRequest).failed.futureValue
 
     exception shouldBe a[UpstreamErrorResponse]
-    exception.getMessage should include("Failed to send email for template agent_registration_application_expired")
+    exception.getMessage should include("Failed to send email for template ApplicationExpired")
     EmailStubs.verifySendEmail()

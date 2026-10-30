@@ -158,6 +158,14 @@ trait TdBase:
     isVerified = true
   )
   def agentUnverifiedEmailAddress: AgentVerifiedEmailAddress = agentVerifiedEmailAddress.copy(isVerified = false)
+  def otherAgentEmailAddress: EmailAddress = EmailAddress("agent@test.com")
+  def agentVerifiedEmailAddressWithOtherEmail: AgentVerifiedEmailAddress = AgentVerifiedEmailAddress(
+    emailAddress = AgentEmailAddress(
+      agentEmailAddress = applicantEmailAddress,
+      otherAgentEmailAddress = Some(otherAgentEmailAddress)
+    ),
+    isVerified = true
+  )
   def individualVerifiedEmailAddress = IndividualVerifiedEmailAddress(individualEmailAddress, isVerified = true)
   def applicantContactDetails: ApplicantContactDetails = ApplicantContactDetails(
     applicantName = applicantName,

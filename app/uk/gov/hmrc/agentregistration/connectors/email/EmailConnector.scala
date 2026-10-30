@@ -60,6 +60,6 @@ extends RequestAwareLogging:
               url = url,
               status = status,
               response = response,
-              info = s"Failed to send email for template ${sendEmailRequest.templateId.id}"
+              info = s"Failed to send email for template ${sendEmailRequest.templateId}"
             )
-      .andLogOnFailure(s"Failed to send email for template ${sendEmailRequest.templateId.id}")
+      .andLogOnFailure(s"Failed to send email for template ${sendEmailRequest.templateId}")

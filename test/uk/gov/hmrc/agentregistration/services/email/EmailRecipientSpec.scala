@@ -43,4 +43,9 @@ extends UnitSpec:
       EmailRecipient.resolve(tdAll.agentApplicationLlp.afterAgentDetailsComplete) shouldBe Some(
         EmailRecipient(tdAll.applicantName, tdAll.agentVerifiedEmailAddress.getEmailAddress)
       )
+
+    "prefers the verified agent email over the verified applicant email when both are present" in:
+      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail) shouldBe Some(
+        EmailRecipient(tdAll.applicantName, tdAll.otherAgentEmailAddress)
+      )
   }

@@ -51,13 +51,13 @@ class AppConfig @Inject() (
     val daysToTakeCorrectiveAction: Int = configuration.get[Int]("corrective-action.days-to-take-corrective-action")
 
   val postExpiryGracePeriod: FiniteDuration = configuration.get[FiniteDuration]("post-expiry-grace-period")
+  val expiryReminderPeriod: FiniteDuration = configuration.get[FiniteDuration]("expiry-reminder-period")
 
   object Scheduler:
 
+    val time: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.time"))
     val expiryEnabled: Boolean = configuration.get[Boolean]("scheduler.expiry.enabled")
-    val expiryTime: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.expiry.time"))
     val deletionEnabled: Boolean = configuration.get[Boolean]("scheduler.deletion.enabled")
-    val deletionTime: LocalTime = LocalTime.parse(configuration.get[String]("scheduler.deletion.time"))
 
   object FieldLevelEncryption:
 

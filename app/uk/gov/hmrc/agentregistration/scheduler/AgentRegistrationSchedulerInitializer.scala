@@ -18,8 +18,7 @@ package uk.gov.hmrc.agentregistration.scheduler
 
 import play.api.Logging
 import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.runner.DeleteExpiredApplicationsRunner
-import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationExpiryAndDeletionRunner
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,30 +27,19 @@ import javax.inject.Singleton
 class AgentRegistrationSchedulerInitializer @Inject() (
   scheduler: Scheduler,
   appConfig: AppConfig,
-  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner,
-  deleteExpiredApplicationsRunner: DeleteExpiredApplicationsRunner
+  applicationExpiryAndDeletionRunner: ApplicationExpiryAndDeletionRunner
 )
 extends Logging:
 
   initialize()
 
   private def initialize(): Unit =
-    if appConfig.Scheduler.expiryEnabled then
-      logger.info("Bootstrapping expiry scheduler")
+    if appConfig.Scheduler.expiryEnabled || appConfig.Scheduler.deletionEnabled then
+      logger.info("Bootstrapping application expiry and deletion scheduler")
       scheduler.scheduleDaily(
-        "expiring unsubmitted applications",
-        appConfig.Scheduler.expiryTime,
-        () => expireUnsubmittedApplicationsRunner.run()
+        "application expiry and deletion",
+        appConfig.Scheduler.time,
+        () => applicationExpiryAndDeletionRunner.run()
       )
     else
-      logger.info("expiry scheduler not scheduled as it is not enabled")
-
-    if appConfig.Scheduler.deletionEnabled then
-      logger.info("Bootstrapping deletion scheduler")
-      scheduler.scheduleDaily(
-        "deleting expired applications",
-        appConfig.Scheduler.deletionTime,
-        () => deleteExpiredApplicationsRunner.run()
-      )
-    else
-      logger.info("deletion scheduler not scheduled as it is not enabled")
+      logger.info("application expiry and deletion scheduler not scheduled as neither expiry nor deletion is enabled")
