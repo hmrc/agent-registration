@@ -25,6 +25,9 @@ object ProcessInSequence:
     *
     * This method ensures that the async function `f` is applied to each item one at a time, waiting for each Future to complete before processing the next
     * item. This is useful when order matters or when you need to limit concurrency to avoid overwhelming downstream services.
+    *
+    * If processing an item fails (either the returned Future fails, or `f` throws synchronously), processing stops immediately and the returned Future fails
+    * with that exception; no subsequent items are invoked.
     */
   def processInSequence[Item, Result](items: Seq[Item])(f: Item => Future[Result])(using ExecutionContext): Future[List[Result]] = items
     .foldLeft[Future[List[Result]]](Future.successful(List.empty[Result])):
@@ -48,7 +51,9 @@ object ProcessInSequence:
     * @param f
     *   The asynchronous function to apply to each item. Failures are caught and handled via the onFailure hook.
     * @param onFailure
-    *   A callback function invoked when processing of an item fails. It receives the exception and the item that failed.
+    *   A callback function invoked when processing of an item fails. It receives the exception and the item that failed. This callback must not throw. If it
+    *   does, processing stops at that item and the returned Future fails with the exception thrown by `onFailure`. This aligns with the guard against
+    *   overengineering — the callback is intended for logging only.
     * @return
     *   A Future containing the count of successfully processed items.
     */
@@ -64,6 +69,9 @@ object ProcessInSequence:
   )(using
     ExecutionContext
   ): Future[Int] = processInSequence(items)(i =>
-    f(i).map(_ => true).recover:
-      case ex => onFailure(ex, i); false
+    Future.unit
+      .flatMap(_ => f(i))
+      .map(_ => true)
+      .recover:
+        case ex => onFailure(ex, i); false
   ).map(_.count(identity))

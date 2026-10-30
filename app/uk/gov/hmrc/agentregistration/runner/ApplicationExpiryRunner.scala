@@ -45,11 +45,11 @@ extends RequestAwareLogging:
       _ <- stage("ApplicationExpiryService.processExpiry")(applicationExpiryService.processExpiry())
       _ <- stage("EmailServiceForExpiryReminders.processEmails")(emailServiceForExpiryReminders.processEmails())
       _ <- stage("EmailServiceForExpiredApplications.processEmails")(emailServiceForExpiredApplications.processEmails())
-    yield logger.info(s"$runnerName: DONE")).recover { case ex => logger.error(s"$runnerName: Error processing application expiry", ex) }
+    yield logger.info(s"$runnerName: DONE")).recover { case throwable => logger.error(s"$runnerName: Error processing application expiry", throwable) }
 
   private def stage(name: String)(runStage: => Future[Unit])(using RequestHeader): Future[Unit] =
     logger.info(s"$runnerName: Stage started: $name")
     runStage
       .map { _ => logger.info(s"$runnerName: Stage completed: $name") }
       .recover:
-        case ex => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", ex)
+        case throwable => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", throwable)

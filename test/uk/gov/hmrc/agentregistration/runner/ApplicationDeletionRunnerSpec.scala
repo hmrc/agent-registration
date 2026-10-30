@@ -84,6 +84,6 @@ extends UnitSpec:
 
     val runner: ApplicationDeletionRunner =
       new ApplicationDeletionRunner(
-        emailServiceForDeletedApplications,
-        agentApplicationDeletionService
+        emailServiceForDeletedApplications = emailServiceForDeletedApplications,
+        agentApplicationDeletionService = agentApplicationDeletionService
       )

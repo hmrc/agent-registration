@@ -94,7 +94,7 @@ extends UnitSpec:
 
     val runner: ApplicationExpiryRunner =
       new ApplicationExpiryRunner(
-        applicationExpiryService,
-        emailServiceForExpiryReminders,
-        emailServiceForExpiredApplications
+        applicationExpiryService = applicationExpiryService,
+        emailServiceForExpiryReminders = emailServiceForExpiryReminders,
+        emailServiceForExpiredApplications = emailServiceForExpiredApplications
       )
