@@ -190,5 +190,21 @@ object AgentApplicationRepoHelp:
       IndexOptions()
         .unique(true)
         .name(FieldNames.applicationReference)
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.applicationExpiresAt
+      ),
+      IndexOptions()
+        .name("applicationState_applicationExpiresAt_index")
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.postExpiryGracePeriodEndsAt
+      ),
+      IndexOptions()
+        .name("applicationState_postExpiryGracePeriodEndsAt_index")
     )
   )
