@@ -22,7 +22,23 @@ import uk.gov.hmrc.agentregistration.shared.util.JsonFormatsFactory
 final case class IndividualName(
   value: String
 ):
-  def isValidName: Boolean = value.matches("^[a-zA-Z\\-' ]+$")
+
+  /** Regex using Unicode Property Escapes: \p{L} = Letters, \p{M} = Diacritics/Marks, \s = Spaces Includes standard apostrophe, right smart quote, hyphens, and
+    * periods Supports names with diacritics, e.g., José, Chloë, François, etc. Examples of valid names:
+    *   - John Doe
+    *   - Anne-Marie O'Neill
+    *   - José Ángel
+    *   - Chloë Sévigny
+    *   - François L'Écuyer
+    *   - O'Connor
+    *   - Jean-Luc Picard
+    *   - Mary Jane Watson-Parker
+    *   - Dr. John A. Smith
+    *   - Jean-Pierre
+    *   - Løvring
+    */
+  private val NameRegex = """^[\p{L}\p{M}\s'\u2019\-.]+$""".r
+  def isValidName: Boolean = value.matches(NameRegex.regex)
 
 object IndividualName:
   given format: Format[IndividualName] = JsonFormatsFactory.makeValueClassFormat
