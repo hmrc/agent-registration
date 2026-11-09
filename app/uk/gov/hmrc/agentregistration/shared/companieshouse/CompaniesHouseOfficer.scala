@@ -20,7 +20,6 @@ import play.api.libs.json.*
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import scala.util.matching.Regex
 
 final case class CompaniesHouseOfficer(
   name: String,
@@ -32,29 +31,10 @@ final case class CompaniesHouseOfficer(
 
 object CompaniesHouseOfficer:
 
-  private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
-  private given Format[LocalDate] = Format(
-    Reads.localDateReads("yyyy-MM-dd"),
-    Writes.temporalWrites[LocalDate, DateTimeFormatter](dateFormat)
-  )
-
-  given Format[CompaniesHouseOfficer] = Json.format[CompaniesHouseOfficer]
-
-  def normaliseOfficerName(raw: String): String =
-    val trimmed = raw.trim
-
-    if trimmed.contains(",") then
-      // Format: SURNAME, Forename(s), Title (Not used in matching, Optional, e.g. Mr.)
-      val parts = trimmed.split(",").map(_.trim)
-      parts.toList match
-        case surname :: forenames :: _ => s"${titleCase(forenames)} ${titleCase(surname)}"
-        case _ => titleCase(trimmed)
-    else
-      // Already likely "Forename Surname"
-      titleCase(trimmed)
-
-  private val namePartDelimiter: Regex = "(?<=^|[\\s.'’-])(\\p{L})".r
-  // this ensures names like O'CONNOR do not come out as O'connor, but rather O'Connor, and similarly for hyphenated names like Smith-Jones
-  // the only companies house officer names we support are for individuals, so we don't need to worry about corporate acronyms like "ACME UK LTD" or "ACME LIMITED"
-  private def titleCase(s: String): String = namePartDelimiter.replaceAllIn(s.toLowerCase, m => m.group(1).toUpperCase)
+  given Format[CompaniesHouseOfficer] =
+    val datePattern: String = "yyyy-MM-dd"
+    given Format[LocalDate] = Format(
+      Reads.localDateReads(datePattern),
+      Writes.temporalWrites[LocalDate, DateTimeFormatter](DateTimeFormatter.ofPattern(datePattern))
+    )
+    Json.format[CompaniesHouseOfficer]
