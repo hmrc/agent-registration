@@ -31,43 +31,10 @@ final case class CompaniesHouseOfficer(
 
 object CompaniesHouseOfficer:
 
-  private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
-  private given Format[LocalDate] = Format(
-    Reads.localDateReads("yyyy-MM-dd"),
-    Writes.temporalWrites[LocalDate, DateTimeFormatter](dateFormat)
-  )
-
-  given Format[CompaniesHouseOfficer] = Json.format[CompaniesHouseOfficer]
-
-  def normaliseOfficerName(raw: String): String =
-    val trimmed = raw.trim
-
-    if trimmed.contains(",") then
-      // Format: SURNAME, Forename(s), Title (Not used in matching, Optional, e.g. Mr.)
-      val parts = trimmed.split(",").map(_.trim)
-      parts.toList match
-        case surname :: forenames :: _ => s"${titleCase(forenames)} ${titleCase(surname)}"
-        case _ => trimmed
-    else
-      // Already likely "Forename Surname" or corporate name
-      titleCasePreserveAcronyms(trimmed)
-
-  private def titleCase(s: String): String = s.split("\\s+")
-    .filter(_.nonEmpty)
-    .map { word =>
-      if word.forall(_.isUpper) then
-        word.toLowerCase.capitalize
-      else
-        s"${word.head.toUpper}${word.tail.toLowerCase}"
-    }
-    .mkString(" ")
-
-  private def titleCasePreserveAcronyms(s: String): String = s.split("\\s+")
-    .filter(_.nonEmpty)
-    .map { word =>
-      // Preserve things like "LLP", "UK", "HMRC"
-      if word.forall(_.isUpper) && word.length <= 5 then word
-      else s"${word.head.toUpper}${word.tail.toLowerCase}"
-    }
-    .mkString(" ")
+  given Format[CompaniesHouseOfficer] =
+    val datePattern: String = "yyyy-MM-dd"
+    given Format[LocalDate] = Format(
+      Reads.localDateReads(datePattern),
+      Writes.temporalWrites[LocalDate, DateTimeFormatter](DateTimeFormatter.ofPattern(datePattern))
+    )
+    Json.format[CompaniesHouseOfficer]
