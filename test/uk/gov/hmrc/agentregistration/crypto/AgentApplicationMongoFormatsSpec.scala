@@ -34,8 +34,6 @@ import uk.gov.hmrc.agentregistration.shared.businessdetails.CompanyProfile
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
-import java.time.LocalDate
-
 class AgentApplicationMongoFormatsSpec
 extends UnitSpec:
 
@@ -233,12 +231,7 @@ extends UnitSpec:
       mongoFormats.encrypt(tdAll.payeRef).value shouldBeEncryptionOf (tdAll.payeRef.value)
   }
 
-  private lazy val tdAll: TdAll =
-    new TdAll:
-      // TdBase derives these dates from LocalDate.now(); the document below needs fixed values, so they are taken from the frozen time
-      override def dateOfIncorporation: LocalDate = nowAsLocalDateTime.toLocalDate.minusYears(10)
-      override def riskingCompletedDate: LocalDate = nowAsLocalDateTime.toLocalDate.minusDays(1)
-      override def correctiveActionExpiryDate: LocalDate = nowAsLocalDateTime.toLocalDate.plusDays(45)
+  private lazy val tdAll: TdAll = TdAll.tdAll
 
   // exhaustive on purpose: a new business type does not compile until it has an application here
   private def agentApplicationFor(businessType: BusinessType): AgentApplication =
@@ -353,12 +346,12 @@ extends UnitSpec:
       |  "groupId": "group-id-12345",
       |  "createdAt": {
       |    "$date": {
-      |      "$numberLong": "2837003631880"
+      |      "$numberLong": "2836139631880"
       |    }
       |  },
       |  "submittedAt": {
       |    "$date": {
-      |      "$numberLong": "2837003631880"
+      |      "$numberLong": "2836398831880"
       |    }
       |  },
       |  "applicationState": "SentForRisking",
@@ -438,7 +431,7 @@ extends UnitSpec:
       |    },
       |    "reSubmittedAt": {
       |      "$date": {
-      |        "$numberLong": "2837003631880"
+      |        "$numberLong": "2836485231880"
       |      }
       |    },
       |    "outcome": "FailedFixable"

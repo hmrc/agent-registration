@@ -36,7 +36,7 @@ object ObjectStoreStubs:
           Json.obj(
             "location" -> s"/object-store/object/agent-registration-frontend/${amlsEvidence.fileUploadReference.value}/${amlsEvidence.fileName}",
             "contentLength" -> 1234,
-            "lastModified" -> TdAll.tdAll.nowAsInstant
+            "lastModified" -> TdAll.tdAll.now
           )
         )
       ).toString

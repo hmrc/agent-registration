@@ -40,7 +40,7 @@ extends UnitSpec:
       |  "individualName": "Test Name",
       |  "isPersonOfControl": true,
       |  "internalUserId": "internal-user-id-12345",
-      |  "createdAt": "2059-11-25T16:33:51.880Z",
+      |  "createdAt": "2059-11-16T16:33:51.880Z",
       |  "providedDetailsState": "Finished",
       |  "agentApplicationId": "agent-application-id-12345",
       |  "individualDateOfBirth": {

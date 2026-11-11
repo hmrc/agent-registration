@@ -34,6 +34,6 @@ extends TestOnlyData
 with TdRequest:
 
   // Backward-compatible aliases for properties renamed/removed in shared
-  lazy val instant: Instant = nowAsInstant
+  lazy val instant: Instant = now
   lazy val utr: Utr = Utr(saUtr.value)
   lazy val email: String = "test@example.com"

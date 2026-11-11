@@ -32,7 +32,7 @@ import uk.gov.hmrc.agentregistration.shared.lists.IndividualName
 import uk.gov.hmrc.agentregistration.shared.risking.submitforrisking.IndividualData
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
-trait TdIndividualProvidedDetails { dependencies: TdBase =>
+trait TdIndividualProvidedDetails { dependencies: (TdBase & TdIndividualProvidedDetailsTime) =>
 
   object providedDetails:
 
@@ -41,7 +41,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       personReference = dependencies.personReference,
       internalUserId = None,
       individualName = dependencies.individualName,
-      createdAt = dependencies.nowAsInstant,
+      createdAt = dependencies.individualCreatedAt,
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Precreated,
       isPersonOfControl = true,
@@ -53,7 +53,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       personReference = dependencies.personReference,
       internalUserId = None,
       individualName = dependencies.individualName,
-      createdAt = dependencies.nowAsInstant,
+      createdAt = dependencies.individualCreatedAt,
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = AccessConfirmed,
       isPersonOfControl = true,
@@ -65,7 +65,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
       personReference = dependencies.personReference,
       internalUserId = Some(dependencies.internalUserId),
       individualName = dependencies.individualName,
-      createdAt = dependencies.nowAsInstant,
+      createdAt = dependencies.individualCreatedAt,
       agentApplicationId = dependencies.agentApplicationId,
       providedDetailsState = Started,
       isPersonOfControl = true,
@@ -219,7 +219,7 @@ trait TdIndividualProvidedDetails { dependencies: TdBase =>
         _id = individualProvidedDetailsId,
         personReference = dependencies.personReference,
         internalUserId = None,
-        createdAt = nowAsInstant,
+        createdAt = individualCreatedAt,
         agentApplicationId = agentApplicationId,
         providedDetailsState = ProvidedDetailsState.AccessConfirmed,
         individualName = IndividualName(fullName.toStringFull),
