@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.runner
+package uk.gov.hmrc.agentregistration.services
 
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import play.api.http.Status
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 
-class DeleteExpiredApplicationsRunnerSpec
+class AgentApplicationDeletionServiceSpec
 extends ISpec:
 
-  private lazy val runner: DeleteExpiredApplicationsRunner = app.injector.instanceOf[DeleteExpiredApplicationsRunner]
+  private lazy val agentApplicationDeletionService: AgentApplicationDeletionService = app.injector.instanceOf[AgentApplicationDeletionService]
   private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
   private lazy val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
-  "run deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals" in:
+  private given RequestHeader = tdAll.fakeBackendRequest
+
+  "processDeletions deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, without waiting for a deletion email when there is no verified email address" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
@@ -42,12 +45,12 @@ extends ISpec:
     agentApplicationRepo.upsert(agentApplication).futureValue
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
 
-    runner.run().futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
-  "run keeps an Expired application whose postExpiryGracePeriodEndsAt is still in the future, together with its individuals" in:
+  "processDeletions keeps an Expired application whose postExpiryGracePeriodEndsAt is still in the future, together with its individuals" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
@@ -57,12 +60,12 @@ extends ISpec:
     agentApplicationRepo.upsert(agentApplication).futureValue
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
 
-    runner.run().futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
 
-  "run deletes the AMLS evidence of an Expired application whose postExpiryGracePeriodEndsAt has passed, together with the application and its individuals" in:
+  "processDeletions deletes the AMLS evidence of an Expired application whose postExpiryGracePeriodEndsAt has passed, together with the application and its individuals" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
@@ -71,13 +74,13 @@ extends ISpec:
     ObjectStoreStubs.stubListAmlsEvidence(amlsEvidence)
     ObjectStoreStubs.stubDeleteAmlsEvidence(amlsEvidence)
 
-    runner.run().futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
     ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence)
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
-  "run deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when its AMLS evidence is already gone from object-store" in:
+  "processDeletions deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when its AMLS evidence is already gone from object-store" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
@@ -85,13 +88,13 @@ extends ISpec:
     individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
     ObjectStoreStubs.stubListAmlsEvidenceEmpty(amlsEvidence)
 
-    runner.run().futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
     ObjectStoreStubs.verifyDeleteAmlsEvidence(amlsEvidence, count = 0)
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
-  "run keeps an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when deleting its AMLS evidence fails, so the next run retries" in:
+  "processDeletions keeps an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when deleting its AMLS evidence fails, so the next run retries" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
@@ -100,7 +103,23 @@ extends ISpec:
     ObjectStoreStubs.stubListAmlsEvidence(amlsEvidence)
     ObjectStoreStubs.stubDeleteAmlsEvidence(amlsEvidence, responseStatus = Status.INTERNAL_SERVER_ERROR)
 
-    runner.run().futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
+
+  "processDeletions deletes an Expired application past postExpiryGracePeriodEndsAt once its deletion email has been sent" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEndedDeletionEmailSent
+    agentApplicationRepo.upsert(agentApplication).futureValue
+
+    agentApplicationDeletionService.processDeletions().futureValue
+
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe None
+
+  "processDeletions keeps an Expired application past postExpiryGracePeriodEndsAt that has a verified email but no deletion email yet, so the email is sent first" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEnded
+    agentApplicationRepo.upsert(agentApplication).futureValue
+
+    agentApplicationDeletionService.processDeletions().futureValue
+
+    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue shouldBe Some(agentApplication)

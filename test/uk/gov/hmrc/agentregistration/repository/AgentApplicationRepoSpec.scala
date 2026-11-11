@@ -158,46 +158,108 @@ extends ISpec:
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
       case Expired => tdAll.agentApplicationLlp.afterExpired
 
-  "findIdsOfExpiredWithPostExpiryGracePeriodEnded has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+  private def dueForExpiryReminderApplicationInState(state: ApplicationState): AgentApplication =
+    state match
+      case Started => tdAll.agentApplicationLlp.afterStartedDueForExpiryReminder
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceivedDueForExpiryReminder
+      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
+      case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
+      case Expired => tdAll.agentApplicationLlp.afterExpired
+
+  "findReadyForExpiryReminderEmail has an explicitly defined outcome for every ApplicationState whose applicationExpiresAt is within the reminder period — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
-      val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
+      val agentApplication: AgentApplication = dueForExpiryReminderApplicationInState(state)
 
       state match
-        case Expired =>
-          agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
-            s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the past"
-        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
-          agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
-            s"precondition: state=$state cannot have postExpiryGracePeriodEndsAt"
+        case Started | GrsDataReceived =>
+          agentApplication.applicationExpiresAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have applicationExpiresAt in the future"
+          agentApplication.applicationExpiresAt.value.isBefore(tdAll.expiryReminderPeriodEndsAtAsInstant) shouldBe true withClue
+            s"precondition: state=$state must have applicationExpiresAt within the reminder period"
+        case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
+          agentApplication.applicationExpiresAt shouldBe None withClue
+            s"precondition: state=$state cannot have applicationExpiresAt"
 
       repo.upsert(agentApplication).futureValue
-      val agentApplicationIds: Seq[AgentApplicationId] = repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue
+      val agentApplications: Seq[AgentApplication] =
+        repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue
 
       state match
-        case Expired => agentApplicationIds shouldBe Seq(agentApplication.agentApplicationId) withClue s"state=$state should be found for deletion"
-        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
-          agentApplicationIds shouldBe empty withClue s"state=$state must NOT be found for deletion"
+        case Started | GrsDataReceived => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the reminder"
+        case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
+          agentApplications shouldBe empty withClue s"state=$state must NOT be found for the reminder"
 
-  "findIdsOfExpiredWithPostExpiryGracePeriodEnded finds no ApplicationState whose postExpiryGracePeriodEndsAt is in the future or absent — a new state MUST update the pattern matches below" in:
+  "findReadyForExpiryReminderEmail does not find an application whose reminder was already sent" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterStartedDueForExpiryReminderEmailSent).futureValue
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+
+  "findReadyForExpiryReminderEmail does not find an application whose applicationExpiresAt is after the reminder period" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterStarted).futureValue
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+
+  "findReadyForExpiryReminderEmail does not find an application whose applicationExpiresAt has already passed" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterStartedExpired).futureValue
+    repo.findReadyForExpiryReminderEmail(tdAll.nowAsInstant, tdAll.expiryReminderPeriodEndsAtAsInstant).futureValue shouldBe empty
+
+  "findReadyForExpiredEmail has an explicitly defined outcome for every ApplicationState — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
       dropDatabase()
       val agentApplication: AgentApplication = postExpiryGracePeriodNotEndedApplicationInState(state)
+      repo.upsert(agentApplication).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue
 
       state match
-        case Expired =>
-          agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
-            s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the future"
+        case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the expired email"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
-          agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
-            s"precondition: state=$state cannot have postExpiryGracePeriodEndsAt"
+          agentApplications shouldBe empty withClue s"state=$state must NOT be found for the expired email"
 
+  "findReadyForExpiredEmail does not find an expired application whose grace period has already ended" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded).futureValue
+    repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+
+  "findReadyForExpiredEmail does not find an application whose expired email was already sent" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterExpiredEmailSent).futureValue
+    repo.findReadyForExpiredEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+
+  "findReadyForDeletion has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
       repo.upsert(agentApplication).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForDeletion(tdAll.nowAsInstant).futureValue
 
-      repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue shouldBe empty withClue
-        s"state=$state must NOT be found for deletion"
+      state match
+        case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for deletion"
+        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
+          agentApplications shouldBe empty withClue s"state=$state must NOT be found for deletion"
 
-  // the fields the Mongo format stores as BSON Date; afterStarted, afterResubmitted and afterExpired between them carry all of them
+  "findReadyForDeletion does not find an expired application whose grace period has not ended" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterExpired).futureValue
+    repo.findReadyForDeletion(tdAll.nowAsInstant).futureValue shouldBe empty
+
+  "findReadyForDeletionEmail has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
+    ApplicationState.values.foreach: state =>
+      dropDatabase()
+      val agentApplication: AgentApplication = postExpiryGracePeriodEndedApplicationInState(state)
+      repo.upsert(agentApplication).futureValue
+      val agentApplications: Seq[AgentApplication] = repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue
+
+      state match
+        case Expired => agentApplications shouldBe Seq(agentApplication) withClue s"state=$state should be found for the deletion email"
+        case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
+          agentApplications shouldBe empty withClue s"state=$state must NOT be found for the deletion email"
+
+  "findReadyForDeletionEmail does not find an expired application whose grace period has not ended" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterExpired).futureValue
+    repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+
+  "findReadyForDeletionEmail does not find an application whose deletion email was already sent" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEndedDeletionEmailSent).futureValue
+    repo.findReadyForDeletionEmail(tdAll.nowAsInstant).futureValue shouldBe empty
+
+  // the fields the Mongo format stores as BSON Date; the records below between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(
     FieldNames.createdAt,
     FieldNames.applicationExpiresAt,
@@ -206,13 +268,18 @@ extends ISpec:
     "riskingOutcomeApplication.reSubmittedAt",
     "riskingOutcomeApplication.correctiveActionExpiryDate",
     FieldNames.postExpiryGracePeriodEndsAt,
-    FieldNames.expiredAt
+    FieldNames.expiredAt,
+    FieldNames.expiryReminderEmailSentAt,
+    FieldNames.expiredEmailSentAt,
+    FieldNames.deletionEmailSentAt
   )
 
   private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
     "afterStarted" -> tdAll.agentApplicationLlp.afterStarted,
     "afterResubmitted" -> tdAll.agentApplicationLlp.afterResubmitted,
-    "afterExpired" -> tdAll.agentApplicationLlp.afterExpired
+    "afterExpired" -> tdAll.agentApplicationLlp.afterExpired,
+    "afterStartedExpiryReminderEmailSent" -> tdAll.agentApplicationLlp.afterStartedExpiryReminderEmailSent,
+    "afterExpiredPostExpiryGracePeriodEndedDeletionEmailSent" -> tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEndedDeletionEmailSent
   )
 
   private def rawDocument(record: AgentApplication): BsonDocument =
@@ -246,7 +313,7 @@ extends ISpec:
         withClue(s"$fieldName: "):
           rawValue(document, fieldName).value.getBsonType shouldBe BsonType.DATE_TIME
 
-  "afterStarted, afterResubmitted and afterExpired between them store every date field" in:
+  "the records with dates between them store every date field" in:
     // the states share an _id, so each is upserted and inspected in turn
     val storedFieldNames: Set[String] =
       recordsWithDates.flatMap: (_, record) =>
@@ -311,6 +378,24 @@ extends ISpec:
       record = tdAll.agentApplicationLlp.afterExpired,
       fieldName = FieldNames.expiredAt,
       storedInstant = tdAll.expiredAtAsInstant
+    ),
+    DateQueryCase(
+      description = "a started application with the reminder sent",
+      record = tdAll.agentApplicationLlp.afterStartedExpiryReminderEmailSent,
+      fieldName = FieldNames.expiryReminderEmailSentAt,
+      storedInstant = tdAll.expiryReminderEmailSentAtAsInstant
+    ),
+    DateQueryCase(
+      description = "an expired application with the expired email sent",
+      record = tdAll.agentApplicationLlp.afterExpiredEmailSent,
+      fieldName = FieldNames.expiredEmailSentAt,
+      storedInstant = tdAll.expiredEmailSentAtAsInstant
+    ),
+    DateQueryCase(
+      description = "an expired application with the deletion email sent",
+      record = tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEndedDeletionEmailSent,
+      fieldName = FieldNames.deletionEmailSentAt,
+      storedInstant = tdAll.deletionEmailSentAtAsInstant
     )
   )
 

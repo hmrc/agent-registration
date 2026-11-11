@@ -17,12 +17,10 @@
 package uk.gov.hmrc.agentregistration.repository
 
 import org.mongodb.scala.bson.BsonDateTime
-import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
-import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.crypto.Hasher
@@ -112,17 +110,52 @@ extends Repo[AgentApplicationId, AgentApplication](
     .toFuture()
     .map(_.getModifiedCount)
 
-  def findIdsOfExpiredWithPostExpiryGracePeriodEnded(now: Instant): Future[Seq[AgentApplicationId]] = collection
-    .withDocumentClass[BsonDocument]()
+  def findReadyForExpiryReminderEmail(
+    now: Instant,
+    expiryReminderPeriodEndsAt: Instant
+  ): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.in(
+          FieldNames.applicationState,
+          ApplicationState.Started.toString,
+          ApplicationState.GrsDataReceived.toString
+        ),
+        Filters.gte(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli)),
+        Filters.lte(FieldNames.applicationExpiresAt, BsonDateTime(expiryReminderPeriodEndsAt.toEpochMilli)),
+        Filters.exists(FieldNames.expiryReminderEmailSentAt, false)
+      )
+    )
+    .toFuture()
+
+  def findReadyForExpiredEmail(now: Instant): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.gte(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+        Filters.exists(FieldNames.expiredEmailSentAt, false)
+      )
+    )
+    .toFuture()
+
+  def findReadyForDeletion(now: Instant): Future[Seq[AgentApplication]] = collection
     .find(
       filter = Filters.and(
         Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
         Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
       )
     )
-    .projection(Projections.include(FieldNames._id))
     .toFuture()
-    .map(_.map(bsonDocument => AgentApplicationId(bsonDocument.getString(FieldNames._id).getValue)))
+
+  def findReadyForDeletionEmail(now: Instant): Future[Seq[AgentApplication]] = collection
+    .find(
+      filter = Filters.and(
+        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+        Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+        Filters.exists(FieldNames.deletionEmailSentAt, false)
+      )
+    )
+    .toFuture()
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"
@@ -157,5 +190,21 @@ object AgentApplicationRepoHelp:
       IndexOptions()
         .unique(true)
         .name(FieldNames.applicationReference)
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.applicationExpiresAt
+      ),
+      IndexOptions()
+        .name("applicationState_applicationExpiresAt_index")
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.postExpiryGracePeriodEndsAt
+      ),
+      IndexOptions()
+        .name("applicationState_postExpiryGracePeriodEndsAt_index")
     )
   )

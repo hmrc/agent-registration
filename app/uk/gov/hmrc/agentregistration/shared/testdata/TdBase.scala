@@ -72,11 +72,16 @@ trait TdBase:
   def nowAsInstant: Instant = nowAsLocalDateTime.toInstant(ZoneOffset.UTC)
   def newInstant: Instant = nowAsInstant.plusSeconds(20) // used when a new application is created from existing one
   def applicationExpiresAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(73)) // matches days-to-submit-application config
+  def applicationExpiresAtWithinReminderPeriodAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(5))
+  def expiryReminderPeriodEndsAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(10)) // matches expiry-reminder-period config
   def createdLongBeforeExpiryAsInstant: Instant = nowAsInstant.minus(Duration.ofDays(200))
   def expiredAtAsInstant: Instant = nowAsInstant
   def postExpiryGracePeriodEndsAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(45)) // matches post-expiry-grace-period config
   def postExpiryGracePeriodEndedAtAsInstant: Instant = nowAsInstant.minusSeconds(60)
   def expiredAtForPostExpiryGracePeriodEndedAsInstant: Instant = postExpiryGracePeriodEndedAtAsInstant.minus(Duration.ofDays(45))
+  def expiryReminderEmailSentAtAsInstant: Instant = nowAsInstant
+  def expiredEmailSentAtAsInstant: Instant = nowAsInstant
+  def deletionEmailSentAtAsInstant: Instant = nowAsInstant
 
   final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
@@ -152,6 +157,15 @@ trait TdBase:
     ),
     isVerified = true
   )
+  def agentUnverifiedEmailAddress: AgentVerifiedEmailAddress = agentVerifiedEmailAddress.copy(isVerified = false)
+  def otherAgentEmailAddress: EmailAddress = EmailAddress("agent@test.com")
+  def agentVerifiedEmailAddressWithOtherEmail: AgentVerifiedEmailAddress = AgentVerifiedEmailAddress(
+    emailAddress = AgentEmailAddress(
+      agentEmailAddress = applicantEmailAddress,
+      otherAgentEmailAddress = Some(otherAgentEmailAddress)
+    ),
+    isVerified = true
+  )
   def individualVerifiedEmailAddress = IndividualVerifiedEmailAddress(individualEmailAddress, isVerified = true)
   def applicantContactDetails: ApplicantContactDetails = ApplicantContactDetails(
     applicantName = applicantName,
@@ -159,6 +173,12 @@ trait TdBase:
     applicantEmailAddress = Some(ApplicantEmailAddress(
       emailAddress = applicantEmailAddress,
       isVerified = true
+    ))
+  )
+  def applicantContactDetailsWithUnverifiedEmail: ApplicantContactDetails = applicantContactDetails.copy(
+    applicantEmailAddress = Some(ApplicantEmailAddress(
+      emailAddress = applicantEmailAddress,
+      isVerified = false
     ))
   )
   def completeAgentDetails: AgentDetails = AgentDetails(
