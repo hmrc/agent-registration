@@ -61,7 +61,7 @@ extends UnitSpec:
       |    "saUtr": "1234567895",
       |    "companyProfile": {
       |      "companyNumber": "1234567890",
-      |      "companyName": "Test Partnership",
+      |      "companyName": "ABC Accounting LLP",
       |      "dateOfIncorporation": "2049-11-25",
       |      "unsanitisedCHROAddress": {
       |        "address_line_1": "23 Great Portland Street",
@@ -85,7 +85,7 @@ extends UnitSpec:
       |  },
       |  "agentDetails": {
       |    "businessName": {
-      |      "agentBusinessName": "Test Company Name"
+      |      "agentBusinessName": "ABC Accounting LLP"
       |    },
       |    "telephoneNumber": {
       |      "agentTelephoneNumber": "(+44) 10794554342"
