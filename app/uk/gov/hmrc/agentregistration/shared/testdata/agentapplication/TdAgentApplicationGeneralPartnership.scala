@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.GeneralPartnership
 import uk.gov.hmrc.agentregistration.shared.CheckResult
 import uk.gov.hmrc.agentregistration.shared.StateOfAgreement
 import uk.gov.hmrc.agentregistration.shared.UserRole
@@ -96,7 +97,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
     ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationGeneralPartnership = afterContactDetailsComplete.copy(
-      agentDetails = Some(dependencies.completeAgentDetails)
+      agentDetails = Some(dependencies.getCompleteAgentDetails(GeneralPartnership))
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationGeneralPartnership = afterAgentDetailsComplete.copy(

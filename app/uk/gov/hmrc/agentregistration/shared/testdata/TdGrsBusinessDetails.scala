@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared.testdata
 
+import uk.gov.hmrc.agentregistration.shared.BusinessType.LimitedCompany
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.LimitedLiabilityPartnership
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.LimitedPartnership
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.ScottishLimitedPartnership
 import uk.gov.hmrc.agentregistration.shared.businessdetails.*
 
 trait TdGrsBusinessDetails {
@@ -28,7 +32,7 @@ trait TdGrsBusinessDetails {
       val businessDetails = BusinessDetailsLlp(
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
-        companyProfile = dependencies.companyProfileLimitedPartnership
+        companyProfile = dependencies.getCompanyProfile(LimitedLiabilityPartnership)
       )
 
     object soleTrader:
@@ -47,7 +51,7 @@ trait TdGrsBusinessDetails {
       val businessDetails: BusinessDetailsLimitedCompany = BusinessDetailsLimitedCompany(
         safeId = dependencies.safeId,
         ctUtr = dependencies.ctUtr,
-        companyProfile = dependencies.companyProfileLimited
+        companyProfile = dependencies.getCompanyProfile(LimitedCompany)
       )
 
     object ltdPartnership:
@@ -56,7 +60,7 @@ trait TdGrsBusinessDetails {
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
         postcode = dependencies.postcode,
-        companyProfile = dependencies.companyProfileLimitedPartnership
+        companyProfile = dependencies.getCompanyProfile(LimitedPartnership)
       )
 
     object scottishLtdPartnership:
@@ -65,7 +69,7 @@ trait TdGrsBusinessDetails {
         safeId = dependencies.safeId,
         saUtr = dependencies.saUtr,
         postcode = dependencies.postcode,
-        companyProfile = dependencies.companyProfileLimitedPartnership
+        companyProfile = dependencies.getCompanyProfile(ScottishLimitedPartnership)
       )
 
     object generalPartnership:

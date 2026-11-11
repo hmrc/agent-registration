@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 import java.time.Duration
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.LimitedLiabilityPartnership
 import uk.gov.hmrc.agentregistration.shared.agentdetails.*
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsDetails
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsRegistrationNumber
@@ -148,7 +149,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
     ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationLlp = afterContactDetailsComplete.copy(
-      agentDetails = Some(dependencies.completeAgentDetails)
+      agentDetails = Some(dependencies.getCompleteAgentDetails(LimitedLiabilityPartnership))
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationLlp = afterAgentDetailsComplete.copy(
@@ -291,7 +292,7 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdGrsBusinessDetails) =>
           amlsEvidence = None
         ),
         agentDetails = AgentDetailsData(
-          businessName = dependencies.agentBusinessName,
+          businessName = dependencies.getAgentBusinessName(LimitedLiabilityPartnership),
           telephoneNumber = dependencies.agentTelephoneNumber,
           agentEmailAddress = dependencies.applicantEmailAddress,
           agentCorrespondenceAddress = dependencies.chroAddress
