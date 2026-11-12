@@ -142,7 +142,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdTime & T
       .copy(
         numberOfIndividuals = Some(
           SixOrMore(
-            numberOfKeyIndividualsResponsibleForTaxMatters = 2
+            numberOfKeyIndividualsResponsibleForTaxMatters = Some(2)
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
