@@ -16,16 +16,19 @@
 
 package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.*
+import uk.gov.hmrc.agentregistration.shared.agentdetails.*
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.BusinessType.SoleTrader
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFailure
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
+import uk.gov.hmrc.agentregistration.shared.testdata.TdTime
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 
-trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetails) =>
+trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdTime & TdAgentApplicationTime & TdGrsBusinessDetails) =>
 
   object agentApplicationSoleTrader:
 
@@ -37,8 +40,8 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
-      createdAt = dependencies.nowAsInstant,
-      applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
+      createdAt = dependencies.createdAt,
+      applicationExpiresAt = Some(dependencies.applicationExpiresAt),
       submittedAt = None,
       postExpiryGracePeriodEndsAt = None,
       expiredAt = None,
@@ -59,13 +62,6 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
       riskingOutcomeEntity = None
     ).assertDataIntegrity()
 
-    val afterExpired: AgentApplicationSoleTrader = afterStarted.copy(
-      applicationState = ApplicationState.Expired,
-      applicationExpiresAt = None,
-      postExpiryGracePeriodEndsAt = Some(dependencies.postExpiryGracePeriodEndsAtAsInstant),
-      expiredAt = Some(dependencies.expiredAtAsInstant)
-    ).assertDataIntegrity()
-
     val afterGrsDataReceived: AgentApplicationSoleTrader = afterStarted.copy(
       businessDetails = Some(
         dependencies.grsBusinessDetails.soleTrader.businessDetails
@@ -75,6 +71,11 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
 
     val afterRefusalToDealWithCheckPass: AgentApplicationSoleTrader = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
+    ).assertDataIntegrity()
+
+    val afterUnifiedCustomerRegistryUpdateEmptyIdentifiers: AgentApplicationSoleTrader = afterRefusalToDealWithCheckPass.copy(
+      vrns = Some(List.empty),
+      payeRefs = Some(List.empty)
     ).assertDataIntegrity()
 
     val afterRefusalToDealWithCheckFail: AgentApplicationSoleTrader = afterGrsDataReceived.copy(
@@ -103,8 +104,7 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
     ).assertDataIntegrity()
 
     val afterContactDetailsComplete: AgentApplicationSoleTrader = afterGlobalAsaEnrolmentCheckPass.copy(
-      applicantContactDetails = Some(dependencies.applicantContactDetails),
-      agentDetails = None
+      applicantContactDetails = Some(dependencies.applicantContactDetails)
     ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationSoleTrader = afterContactDetailsComplete.copy(
@@ -121,16 +121,88 @@ trait TdAgentApplicationSoleTrader { dependencies: (TdBase & TdGrsBusinessDetail
 
     val afterDeclarationSubmitted: AgentApplicationSoleTrader = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant),
+      submittedAt = Some(dependencies.submittedAt),
       applicationExpiresAt = None
     ).assertDataIntegrity()
 
-    val soleTraderWithTrn: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
-      businessDetails = afterDeclarationSubmitted.businessDetails.map(_.copy(trn = Some(dependencies.trn)))
+    val afterDeclarationSubmittedWithAllOptionalFields: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
+      agentDetails = Some(AgentDetails(
+        businessName = AgentBusinessName(
+          agentBusinessName = "Test Trading Name",
+          otherAgentBusinessName = Some("Other Trading Name")
+        ),
+        telephoneNumber = Some(AgentTelephoneNumber(
+          agentTelephoneNumber = dependencies.telephoneNumber.value,
+          otherAgentTelephoneNumber = Some("+44 1234 567890")
+        )),
+        agentEmailAddress = Some(AgentVerifiedEmailAddress(
+          emailAddress = AgentEmailAddress(
+            agentEmailAddress = dependencies.applicantEmailAddress,
+            otherAgentEmailAddress = Some(EmailAddress("other.address@example.com"))
+          ),
+          isVerified = true
+        )),
+        agentCorrespondenceAddress = Some(dependencies.chroAddress)
+      ))
     ).assertDataIntegrity()
 
     val afterSentToMinerva: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
       applicationState = ApplicationState.SentToMinerva
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedApproved: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.approved),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedApprovedWithFixableIndividuals: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixable: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable(isFixed = None))
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableNonHmrcAmls: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFixableNonHmrcAmls)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableAllCodes: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllCodes)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedNonFixable: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedNonFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedNonFixable)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableFixed: AgentApplicationSoleTrader = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable(isFixed = Some(true)))
+    ).assertDataIntegrity()
+
+    val afterResubmitted: AgentApplicationSoleTrader = afterRiskingCompletedFixableFixed.copy(
+      applicationState = ApplicationState.SentForRisking,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable.copy(reSubmittedAt = Some(dependencies.reSubmittedAt)))
+    ).assertDataIntegrity()
+
+    val afterResubmittedSentToMinerva: AgentApplicationSoleTrader = afterResubmitted.copy(
+      applicationState = ApplicationState.SentToMinerva
+    ).assertDataIntegrity()
+
+    val soleTraderWithTrn: AgentApplicationSoleTrader = afterDeclarationSubmitted.copy(
+      businessDetails = afterDeclarationSubmitted.businessDetails.map(_.copy(trn = Some(dependencies.trn)))
     ).assertDataIntegrity()
 
     val riskingOutcomeEntityFailedFixableAllSoleTraderCodes: AgentApplicationSoleTrader = afterSentToMinerva.copy(

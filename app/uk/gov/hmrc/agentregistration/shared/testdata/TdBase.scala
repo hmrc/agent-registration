@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentregistration.shared.testdata
 
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.TdAgentApplicationTime
+
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.BusinessType.LimitedCompany
 import uk.gov.hmrc.agentregistration.shared.BusinessType.SoleTrader
@@ -56,36 +58,11 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeIndividual
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 
 import java.time.*
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-trait TdBase:
+trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
 
-  final val zoneOffset: ZoneOffset = ZoneOffset.UTC
-  final val zoneId: ZoneId = ZoneId.of("UTC")
-
-  def dateString: String = "2059-11-25"
-  def timeString: String = s"${dateString}T16:33:51.880"
   def randomId(): String = UUID.randomUUID().toString
-
-  def nowAsLocalDateTime: LocalDateTime =
-    // the frozen time has to be in future otherwise the applications will disappear from mongodb because of expiry index
-    LocalDateTime.parse(timeString, DateTimeFormatter.ISO_DATE_TIME)
-
-  def nowPlus6mAsLocalDateTime: LocalDateTime = nowAsLocalDateTime.plus(java.time.Period.ofMonths(6))
-  def nowPlus13mAsLocalDateTime: LocalDateTime = nowAsLocalDateTime.plus(java.time.Period.ofMonths(13))
-  def newPlus20sAsLocalDateTime: LocalDateTime = nowAsLocalDateTime.plusSeconds(20)
-
-  def nowAsInstant: Instant = nowAsLocalDateTime.toInstant(ZoneOffset.UTC)
-  def newInstant: Instant = nowAsInstant.plusSeconds(20) // used when a new application is created from existing one
-  def applicationExpiresAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(73)) // matches days-to-submit-application config
-  def createdLongBeforeExpiryAsInstant: Instant = nowAsInstant.minus(Duration.ofDays(200))
-  def expiredAtAsInstant: Instant = nowAsInstant
-  def postExpiryGracePeriodEndsAtAsInstant: Instant = nowAsInstant.plus(Duration.ofDays(45)) // matches post-expiry-grace-period config
-  def postExpiryGracePeriodEndedAtAsInstant: Instant = nowAsInstant.minusSeconds(60)
-  def expiredAtForPostExpiryGracePeriodEndedAsInstant: Instant = postExpiryGracePeriodEndedAtAsInstant.minus(Duration.ofDays(45))
-
-  final val clock: Clock = Clock.fixed(nowAsInstant, zoneId)
 
   def cachedSessionId: SessionId = SessionId("session-id-123")
   def saUtr: SaUtr = SaUtr("1234567895")
@@ -118,7 +95,6 @@ trait TdBase:
 
   def telephoneNumber: TelephoneNumber = TelephoneNumber("(+44) 10794554342")
   def crn: Crn = Crn("1234567890")
-
   def agencyNameBase = "ABC Accounting"
 
   object TdAgencyName:
@@ -141,7 +117,6 @@ trait TdBase:
         case GeneralPartnership => generalPartnership
         case SoleTrader => soleTrader
 
-  def dateOfIncorporation: LocalDate = LocalDate.now().minusYears(10)
   def applicationReference: ApplicationReference = ApplicationReference("APPREF123")
   def personReference: PersonReference = PersonReference("1234567890")
   def applicantName: ApplicantName = ApplicantName(authorisedPersonName)
@@ -157,13 +132,11 @@ trait TdBase:
   def trn: String = "ST-TRN-987654321"
   def individualDateOfBirth: LocalDate = LocalDate.of(1980, 1, 1)
   def agentTelephoneNumber = AgentTelephoneNumber(agentTelephoneNumber = telephoneNumber.value, otherAgentTelephoneNumber = None)
-  def riskingCompletedDate: LocalDate = LocalDate.now().minusDays(1)
-  def correctiveActionExpiryDate: LocalDate = LocalDate.now().plusDays(45)
 
   def getCompanyProfile(businessType: BusinessType): CompanyProfile = CompanyProfile(
     companyNumber = crn,
     companyName = TdAgencyName.getAgencyName(businessType),
-    dateOfIncorporation = Some(dateOfIncorporation),
+    dateOfIncorporation = Some(dependencies.dateOfIncorporation),
     unsanitisedCHROAddress = Some(ChroAddress(
       address_line_1 = Some("23 Great Portland Street"),
       address_line_2 = Some("London"),
@@ -332,16 +305,16 @@ trait TdBase:
   object riskingOutcomeApplication:
 
     def approved: RiskingOutcomeApplication.Approved = RiskingOutcomeApplication.Approved(
-      actualDecisionDate = riskingCompletedDate
+      actualDecisionDate = dependencies.riskingCompletedDate
     )
     def failedFixable: RiskingOutcomeApplication.FailedFixable = RiskingOutcomeApplication.FailedFixable(
-      actualDecisionDate = riskingCompletedDate,
-      correctiveActionExpiryDate = correctiveActionExpiryDate,
+      actualDecisionDate = dependencies.riskingCompletedDate,
+      correctiveActionExpiryDate = dependencies.correctiveActionExpiryDate,
       reSubmittedAt = None
     )
     def failedNonFixable: RiskingOutcomeApplication.FailedNonFixable = RiskingOutcomeApplication.FailedNonFixable(
-      actualDecisionDate = riskingCompletedDate,
-      correctiveActionExpiryDate = correctiveActionExpiryDate
+      actualDecisionDate = dependencies.riskingCompletedDate,
+      correctiveActionExpiryDate = dependencies.correctiveActionExpiryDate
     )
 
   def riskingOutcomeEntityFixableAmls(failure: EntityFailure.IsAmls): RiskingOutcomeEntity.FailedFixable = RiskingOutcomeEntity.FailedFixable(
@@ -605,3 +578,5 @@ trait TdBase:
     ),
     declarationAgreed = false
   )
+
+}
