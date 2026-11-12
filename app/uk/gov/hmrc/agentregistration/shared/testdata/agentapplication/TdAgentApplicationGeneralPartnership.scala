@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.agentregistration.shared.testdata.agentapplication
 
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.agentdetails.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationGeneralPartnership
+import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
 import uk.gov.hmrc.agentregistration.shared.CheckResult
@@ -25,10 +28,11 @@ import uk.gov.hmrc.agentregistration.shared.UserRole
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.SixOrMore
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
+import uk.gov.hmrc.agentregistration.shared.testdata.TdTime
 import uk.gov.hmrc.agentregistration.shared.testdata.TdGrsBusinessDetails
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 
-trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusinessDetails) =>
+trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdTime & TdAgentApplicationTime & TdGrsBusinessDetails) =>
 
   object agentApplicationGeneralPartnership:
 
@@ -40,8 +44,8 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
       applicantCredentials = dependencies.credentials,
       linkId = dependencies.linkId,
       groupId = dependencies.groupId,
-      createdAt = dependencies.nowAsInstant,
-      applicationExpiresAt = Some(dependencies.applicationExpiresAtAsInstant),
+      createdAt = dependencies.createdAt,
+      applicationExpiresAt = Some(dependencies.applicationExpiresAt),
       submittedAt = None,
       postExpiryGracePeriodEndsAt = None,
       expiredAt = None,
@@ -73,6 +77,11 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
       refusalToDealWithCheckResult = Some(CheckResult.Pass)
     ).assertDataIntegrity()
 
+    val afterUnifiedCustomerRegistryUpdateEmptyIdentifiers: AgentApplicationGeneralPartnership = afterRefusalToDealWithCheckPass.copy(
+      vrns = Some(List.empty),
+      payeRefs = Some(List.empty)
+    ).assertDataIntegrity()
+
     val afterRefusalToDealWithCheckFail: AgentApplicationGeneralPartnership = afterGrsDataReceived.copy(
       refusalToDealWithCheckResult = Some(CheckResult.Fail)
     ).assertDataIntegrity()
@@ -91,8 +100,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
     ).assertDataIntegrity()
 
     val afterContactDetailsComplete: AgentApplicationGeneralPartnership = afterGlobalAsaEnrolmentCheckPass.copy(
-      applicantContactDetails = Some(dependencies.applicantContactDetails),
-      agentDetails = None
+      applicantContactDetails = Some(dependencies.applicantContactDetails)
     ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationGeneralPartnership = afterContactDetailsComplete.copy(
@@ -188,13 +196,89 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdGrsBusine
 
     val afterDeclarationSubmitted: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant),
+      submittedAt = Some(dependencies.submittedAt),
       applicationExpiresAt = None
+    ).assertDataIntegrity()
+
+    val afterDeclarationSubmittedWithAllOptionalFields: AgentApplicationGeneralPartnership = afterDeclarationSubmitted.copy(
+      agentDetails = Some(AgentDetails(
+        businessName = AgentBusinessName(
+          agentBusinessName = "Test Trading Name",
+          otherAgentBusinessName = Some("Other Trading Name")
+        ),
+        telephoneNumber = Some(AgentTelephoneNumber(
+          agentTelephoneNumber = dependencies.telephoneNumber.value,
+          otherAgentTelephoneNumber = Some("+44 1234 567890")
+        )),
+        agentEmailAddress = Some(AgentVerifiedEmailAddress(
+          emailAddress = AgentEmailAddress(
+            agentEmailAddress = dependencies.applicantEmailAddress,
+            otherAgentEmailAddress = Some(EmailAddress("other.address@example.com"))
+          ),
+          isVerified = true
+        )),
+        agentCorrespondenceAddress = Some(dependencies.chroAddress)
+      ))
+    ).assertDataIntegrity()
+
+    val afterSentToMinerva: AgentApplicationGeneralPartnership = afterDeclarationSubmitted.copy(
+      applicationState = ApplicationState.SentToMinerva
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedApproved: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.approved),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedApprovedWithFixableIndividuals: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(RiskingOutcomeEntity.Approved)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixable: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable(isFixed = None))
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableNonHmrcAmls: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFixableNonHmrcAmls)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableAllCodes: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixableAllCodes)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedNonFixable: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedNonFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedNonFixable)
+    ).assertDataIntegrity()
+
+    val afterRiskingCompletedFixableFixed: AgentApplicationGeneralPartnership = afterSentToMinerva.copy(
+      applicationState = ApplicationState.RiskingCompleted,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable),
+      riskingOutcomeEntity = Some(dependencies.riskingOutcomeEntityFailedFixable(isFixed = Some(true)))
+    ).assertDataIntegrity()
+
+    val afterResubmitted: AgentApplicationGeneralPartnership = afterRiskingCompletedFixableFixed.copy(
+      applicationState = ApplicationState.SentForRisking,
+      riskingOutcomeApplication = Some(dependencies.riskingOutcomeApplication.failedFixable.copy(reSubmittedAt = Some(dependencies.reSubmittedAt)))
+    ).assertDataIntegrity()
+
+    val afterResubmittedSentToMinerva: AgentApplicationGeneralPartnership = afterResubmitted.copy(
+      applicationState = ApplicationState.SentToMinerva
     ).assertDataIntegrity()
 
     val afterDeclarationSubmittedAndTwoIndividualFinished: AgentApplicationGeneralPartnership = afterConfirmTwoIndividuals.copy(
       applicationState = ApplicationState.SentForRisking,
-      submittedAt = Some(dependencies.nowAsInstant),
+      submittedAt = Some(dependencies.submittedAt),
       applicationExpiresAt = None
     ).assertDataIntegrity()
 

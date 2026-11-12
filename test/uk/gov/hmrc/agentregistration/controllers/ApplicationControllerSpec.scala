@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ControllerSpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.AuthStubs
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
@@ -157,7 +158,7 @@ extends ControllerSpec:
     AuthStubs.stubAuthorise()
     val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
     val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpired.makeDueForDeletion
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
     agentApplicationRepo.upsert(agentApplication).futureValue

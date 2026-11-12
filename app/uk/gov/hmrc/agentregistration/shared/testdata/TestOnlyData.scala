@@ -20,6 +20,9 @@ import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.*
 
 trait TestOnlyData
 extends TdBase,
+  TdTime,
+  agentapplication.TdAgentApplicationTime,
+  providedetails.individual.TdIndividualProvidedDetailsTime,
   TdAgentApplicationLlp,
   TdAgentApplicationGeneralPartnership,
   TdAgentApplicationScottishPartnership,

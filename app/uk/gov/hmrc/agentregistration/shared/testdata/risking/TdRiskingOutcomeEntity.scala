@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 
 trait TdRiskingOutcomeEntity:
-  dependencies: (TdBase) =>
+  dependencies: TdBase =>
 
   object entityRiskingOutcome:
 

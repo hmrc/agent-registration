@@ -64,7 +64,7 @@ extends ControllerSpec:
     dropDatabase()
     super.afterAll()
 
-  private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterSentForRisking
+  private val agentApplicationSentForRisking = tdAll.agentApplicationLlp.afterDeclarationSubmitted
   private val applicationReference = agentApplicationSentForRisking.applicationReference
   private val emailsSentAt: Instant = Instant.parse("2026-06-24T11:33:55Z")
   private val emailsSentAtLocalDate = LocalDate.of(2026, 6, 24)
@@ -481,7 +481,7 @@ extends ControllerSpec:
   "updateApplicationStatusSentToMinerva returns OK and updates application state" in:
     AuthStubs.stubInternalAuth()
     given Request[?] = tdAll.backendRequest
-    val exampleAgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
+    val exampleAgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted
     agentApplicationRepo.upsert(exampleAgentApplication).futureValue
     agentApplicationRepo.findById(exampleAgentApplication.agentApplicationId).futureValue.value.applicationState shouldBe SentForRisking withClue "sanity check"
 

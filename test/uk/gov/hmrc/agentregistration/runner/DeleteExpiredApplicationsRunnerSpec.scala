@@ -22,6 +22,7 @@ import play.api.http.Status
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 
@@ -33,9 +34,9 @@ extends ISpec:
   private lazy val individualProvidedDetailsRepo: IndividualProvidedDetailsRepo = app.injector.instanceOf[IndividualProvidedDetailsRepo]
 
   "run deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeDueForDeletion
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
-    agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+    agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.now) shouldBe true withClue
       "precondition: postExpiryGracePeriodEndsAt must be in the past"
     individualProvidedDetails.agentApplicationId shouldBe agentApplication.agentApplicationId withClue
       "precondition: the individual must belong to the application"
@@ -48,9 +49,9 @@ extends ISpec:
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
   "run keeps an Expired application whose postExpiryGracePeriodEndsAt is still in the future, together with its individuals" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
-    agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+    agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.now) shouldBe true withClue
       "precondition: postExpiryGracePeriodEndsAt must be in the future"
     individualProvidedDetails.agentApplicationId shouldBe agentApplication.agentApplicationId withClue
       "precondition: the individual must belong to the application"
@@ -63,7 +64,7 @@ extends ISpec:
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
 
   "run deletes the AMLS evidence of an Expired application whose postExpiryGracePeriodEndsAt has passed, together with the application and its individuals" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpired.makeDueForDeletion
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
     agentApplicationRepo.upsert(agentApplication).futureValue
@@ -78,7 +79,7 @@ extends ISpec:
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
   "run deletes an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when its AMLS evidence is already gone from object-store" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpired.makeDueForDeletion
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
     agentApplicationRepo.upsert(agentApplication).futureValue
@@ -92,7 +93,7 @@ extends ISpec:
     individualProvidedDetailsRepo.findForApplication(agentApplication.agentApplicationId).futureValue shouldBe empty
 
   "run keeps an Expired application whose postExpiryGracePeriodEndsAt has passed, together with its individuals, when deleting its AMLS evidence fails, so the next run retries" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredWithAmlsEvidencePostExpiryGracePeriodEnded
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpired.makeDueForDeletion
     val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
     val amlsEvidence: AmlsEvidence = agentApplication.getAmlsDetails.amlsEvidence.value
     agentApplicationRepo.upsert(agentApplication).futureValue

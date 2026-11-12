@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentregistration.runner
 
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
 import java.time.temporal.ChronoUnit
@@ -29,9 +30,9 @@ extends ISpec:
   private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
 
   "run marks an unsubmitted application whose applicationExpiresAt has passed as Expired, recording expiredAt and postExpiryGracePeriodEndsAt from the same instant" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpired
-    val expiredAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
-    agentApplication.applicationExpiresAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeOverdue
+    val expiredAgentApplication: AgentApplication = agentApplication.makeExpired
+    agentApplication.applicationExpiresAt.value.isBefore(tdAll.now) shouldBe true withClue
       "precondition: applicationExpiresAt must be in the past"
     agentApplicationRepo.upsert(agentApplication).futureValue
 
@@ -40,9 +41,9 @@ extends ISpec:
     agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe expiredAgentApplication
 
   "run records a grace period of exactly post-expiry-grace-period days for an application created long before it expired, so the period never depends on createdAt" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStartedExpiredLongAfterCreation
-    val expiredAgentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredLongAfterCreation
-    ChronoUnit.DAYS.between(agentApplication.createdAt, tdAll.nowAsInstant) should be > 73L withClue
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeLongOverdue
+    val expiredAgentApplication: AgentApplication = agentApplication.makeExpired
+    ChronoUnit.DAYS.between(agentApplication.createdAt, tdAll.now) should be > 73L withClue
       "precondition: the application must have been created more than days-to-submit-application before the run"
     agentApplicationRepo.upsert(agentApplication).futureValue
 
@@ -54,7 +55,7 @@ extends ISpec:
 
   "run leaves an unsubmitted application whose applicationExpiresAt is still in the future unchanged" in:
     val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    agentApplication.applicationExpiresAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+    agentApplication.applicationExpiresAt.value.isAfter(tdAll.now) shouldBe true withClue
       "precondition: applicationExpiresAt must be in the future"
     agentApplicationRepo.upsert(agentApplication).futureValue
 

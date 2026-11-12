@@ -205,7 +205,7 @@ extends UnitSpec:
       |  "internalUserId": "internal-user-id-12345",
       |  "createdAt": {
       |    "$date": {
-      |      "$numberLong": "2837003631880"
+      |      "$numberLong": "2836226031880"
       |    }
       |  },
       |  "providedDetailsState": "Finished",
