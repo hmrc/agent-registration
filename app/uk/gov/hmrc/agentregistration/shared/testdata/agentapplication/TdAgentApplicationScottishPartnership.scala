@@ -142,7 +142,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdTime & T
       .copy(
         numberOfIndividuals = Some(
           SixOrMore(
-            numberOfKeyIndividualsResponsibleForTaxMatters = 2
+            numberOfKeyIndividualsResponsibleForTaxMatters = Some(2)
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
@@ -159,7 +159,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdTime & T
     val afterHowManyKeyIndividualsNeedsNoPadding: AgentApplicationScottishPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         SixOrMore(
-          numberOfKeyIndividualsResponsibleForTaxMatters = 6
+          numberOfKeyIndividualsResponsibleForTaxMatters = Some(6)
         )
       )
     ).assertDataIntegrity()
@@ -184,7 +184,7 @@ trait TdAgentApplicationScottishPartnership { dependencies: (TdBase & TdTime & T
       .copy(
         numberOfIndividuals = Some(
           SixOrMore(
-            numberOfKeyIndividualsResponsibleForTaxMatters = 6
+            numberOfKeyIndividualsResponsibleForTaxMatters = Some(6)
           )
         ),
         hasOtherRelevantIndividuals = Some(false)

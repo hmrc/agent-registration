@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentregistration.shared.contactdetails.ApplicantContactDetai
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLess
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfCompaniesHouseOfficers
 import uk.gov.hmrc.agentregistration.shared.lists.NumberOfIndividuals
-import uk.gov.hmrc.agentregistration.shared.lists.NumberOfRequiredKeyIndividuals
+import uk.gov.hmrc.agentregistration.shared.lists.NumberOfPartners
 import uk.gov.hmrc.agentregistration.shared.risking.EntityFix._3.AmlsFix
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeApplication
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
@@ -196,12 +196,12 @@ extends AgentApplication:
 
   override val businessType: BusinessType.SoleTrader.type = BusinessType.SoleTrader
   def getBusinessDetails: BusinessDetailsSoleTrader = businessDetails.getOrElse(expectedDataNotDefinedError("businessDetails"))
-  override def numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
+  override def numberOfIndividuals: Option[NumberOfPartners] = Some(AgentApplicationSoleTrader.numberOfRequiredKeyIndividuals)
   def isOwner: Boolean = userRole.contains(UserRole.Owner)
   def getDeceasedCheckResult: CheckResult = deceasedCheckResult.getOrThrowExpectedDataMissing("deceasedCheckResult")
 
 object AgentApplicationSoleTrader:
-  val numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals = FiveOrLess(1)
+  val numberOfRequiredKeyIndividuals: NumberOfPartners = FiveOrLess(1)
 
 /** Application for Limited Liability Partnership (Llp). This final case class represents the data entered by a user for registering as an Llp.
   */
@@ -303,7 +303,7 @@ final case class AgentApplicationGeneralPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val globalAsaEnrolmentCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfPartners],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]],
@@ -412,7 +412,7 @@ final case class AgentApplicationScottishPartnership(
   override val refusalToDealWithCheckResult: Option[CheckResult],
   override val globalAsaEnrolmentCheckResult: Option[CheckResult],
   override val hmrcStandardForAgentsAgreed: StateOfAgreement,
-  override val numberOfIndividuals: Option[NumberOfRequiredKeyIndividuals],
+  override val numberOfIndividuals: Option[NumberOfPartners],
   override val hasOtherRelevantIndividuals: Option[Boolean],
   override val vrns: Option[List[Vrn]],
   override val payeRefs: Option[List[PayeRef]],
