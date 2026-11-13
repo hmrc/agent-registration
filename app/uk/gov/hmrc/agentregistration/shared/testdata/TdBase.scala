@@ -261,7 +261,7 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
   )
 
   def sixOrMoreKeyIndividuals: SixOrMore = SixOrMore(
-    numberOfKeyIndividualsResponsibleForTaxMatters = 3
+    numberOfKeyIndividualsResponsibleForTaxMatters = Some(3)
   )
 
   def sixOrMoreCompaniesHouseOfficers: SixOrMoreOfficers = SixOrMoreOfficers(

@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentregistration.shared.lists
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.JsonConfiguration
+import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.JsonConfig
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.===
 
@@ -27,7 +28,7 @@ sealed trait NumberOfIndividuals
 // =======================================================
 // Required Key Individuals
 // =======================================================
-sealed trait NumberOfRequiredKeyIndividuals
+sealed trait NumberOfPartners
 extends NumberOfIndividuals:
 
   def isValid: Boolean
@@ -38,7 +39,7 @@ extends NumberOfIndividuals:
 final case class FiveOrLess(
   numberOfKeyIndividuals: Int
 )
-extends NumberOfRequiredKeyIndividuals:
+extends NumberOfPartners:
 
   override def isValid: Boolean = numberOfKeyIndividuals <= 5
   override def totalListSize: Int = numberOfKeyIndividuals
@@ -47,34 +48,39 @@ extends NumberOfRequiredKeyIndividuals:
 
 /** When there are more than 5, the Applicant has to declare how many of those are responsible for tax matters */
 final case class SixOrMore(
-  numberOfKeyIndividualsResponsibleForTaxMatters: Int
+  numberOfKeyIndividualsResponsibleForTaxMatters: Option[Int] = None
 )
-extends NumberOfRequiredKeyIndividuals:
+extends NumberOfPartners:
 
-  override def isValid: Boolean = numberOfKeyIndividualsResponsibleForTaxMatters >= 1 && numberOfKeyIndividualsResponsibleForTaxMatters <= 30
+  override def isValid: Boolean = numberOfKeyIndividualsResponsibleForTaxMatters.exists(n => n >= 1 && n <= 30)
 
-  def requiredPadding: Int = Math.max(0, 5 - numberOfKeyIndividualsResponsibleForTaxMatters)
+  def getNumberOfPartnersResponsibleForTaxMatters: Int = numberOfKeyIndividualsResponsibleForTaxMatters.getOrThrowExpectedDataMissing(
+    "Number of partners responsible for tax matters is missing from SixOrMore"
+  )
 
-  override def totalListSize: Int = numberOfKeyIndividualsResponsibleForTaxMatters + requiredPadding
+  def requiredPadding: Int = Math.max(0, 5 - getNumberOfPartnersResponsibleForTaxMatters)
 
-  override def numberOfIndividuals: Int = numberOfKeyIndividualsResponsibleForTaxMatters
+  override def totalListSize: Int = getNumberOfPartnersResponsibleForTaxMatters + requiredPadding
 
-object NumberOfRequiredKeyIndividuals:
+  override def numberOfIndividuals: Int = getNumberOfPartnersResponsibleForTaxMatters
 
-  def isKeyIndividualListComplete(
+object NumberOfPartners:
+
+  def isPartnersListComplete(
     listSize: Int,
-    numberOfRequiredKeyIndividuals: NumberOfRequiredKeyIndividuals
+    numberOfPartners: NumberOfPartners
   ): Boolean =
-    numberOfRequiredKeyIndividuals match
+    numberOfPartners match
       case FiveOrLess(a) => listSize === a
-      case a @ SixOrMore(_) => listSize === a.totalListSize
+      case a @ SixOrMore(Some(_)) => listSize === a.totalListSize
+      case _ => false
 
-  given Format[NumberOfRequiredKeyIndividuals] =
+  given Format[NumberOfPartners] =
     given Format[FiveOrLess] = Json.format[FiveOrLess]
     given Format[SixOrMore] = Json.format[SixOrMore]
 
     given JsonConfiguration = JsonConfig.jsonConfiguration
-    Json.format[NumberOfRequiredKeyIndividuals]
+    Json.format[NumberOfPartners]
 
 // =======================================================
 // Companies House Officers
@@ -141,7 +147,7 @@ object NumberOfIndividuals:
     numberOfIndividuals: Option[NumberOfIndividuals]
   ): Boolean =
     numberOfIndividuals match
-      case Some(a: NumberOfRequiredKeyIndividuals) => NumberOfRequiredKeyIndividuals.isKeyIndividualListComplete(listSize, a)
+      case Some(a: NumberOfPartners) => NumberOfPartners.isPartnersListComplete(listSize, a)
       case Some(a: NumberOfCompaniesHouseOfficers) => NumberOfCompaniesHouseOfficers.isOfficersListComplete(listSize, a)
       case None => false
 

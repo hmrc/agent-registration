@@ -124,6 +124,18 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdTime & Td
       )
     ).assertDataIntegrity()
 
+    val afterSixOrMoreChosen: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(SixOrMore())
+    ).assertDataIntegrity()
+
+    val afterSixOrMorePopulated: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
+      numberOfIndividuals = Some(
+        SixOrMore(
+          numberOfKeyIndividualsResponsibleForTaxMatters = Some(3)
+        )
+      )
+    ).assertDataIntegrity()
+
     val afterZeroKeyIndividuals: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         FiveOrLess(
@@ -144,7 +156,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdTime & Td
     val afterHowManyKeyIndividualsNeedsNoPadding: AgentApplicationGeneralPartnership = afterHmrcStandardForAgentsAgreed.copy(
       numberOfIndividuals = Some(
         SixOrMore(
-          numberOfKeyIndividualsResponsibleForTaxMatters = 6
+          numberOfKeyIndividualsResponsibleForTaxMatters = Some(6)
         )
       )
     ).assertDataIntegrity()
@@ -169,7 +181,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdTime & Td
       .copy(
         numberOfIndividuals = Some(
           SixOrMore(
-            numberOfKeyIndividualsResponsibleForTaxMatters = 2
+            numberOfKeyIndividualsResponsibleForTaxMatters = Some(2)
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
@@ -189,7 +201,7 @@ trait TdAgentApplicationGeneralPartnership { dependencies: (TdBase & TdTime & Td
       .copy(
         numberOfIndividuals = Some(
           SixOrMore(
-            numberOfKeyIndividualsResponsibleForTaxMatters = 6
+            numberOfKeyIndividualsResponsibleForTaxMatters = Some(6)
           )
         ),
         hasOtherRelevantIndividuals = Some(false)
