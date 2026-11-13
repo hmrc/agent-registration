@@ -34,6 +34,7 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationReference
 import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
 import java.time.Instant
@@ -45,14 +46,14 @@ extends ISpec:
   private lazy val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
 
   "updateManyApplicationStateByReference should set the state in all selected applications and leave others untouched" in:
-    val record: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking
-    val record2: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking.copy(
+    val record: AgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted
+    val record2: AgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted.copy(
       _id = AgentApplicationId("agent-application-id-23456"),
       applicationReference = ApplicationReference("APPREF234"),
       internalUserId = InternalUserId("internal-user-id-23456"),
       linkId = LinkId("link-id-23456")
     )
-    val record3: AgentApplication = tdAll.agentApplicationLlp.afterSentForRisking.copy(
+    val record3: AgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted.copy(
       _id = AgentApplicationId("agent-application-id-34567"),
       applicationReference = ApplicationReference("APPREF345"),
       internalUserId = InternalUserId("internal-user-id-34567"),
@@ -73,23 +74,24 @@ extends ISpec:
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
 
+  // TODO: this has to be revisited - only the first two cases are overdue, the rest are submitted applications with no deadline (WG)
   private def expiredApplicationInState(state: ApplicationState): AgentApplication =
     state match
-      case Started => tdAll.agentApplicationLlp.afterStartedExpired
-      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceivedExpired
-      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case Started => tdAll.agentApplicationLlp.afterStarted.makeOverdue
+      case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue
+      case SentForRisking => tdAll.agentApplicationLlp.afterDeclarationSubmitted
       case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
-      case Expired => tdAll.agentApplicationLlp.afterExpired
+      case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired
 
   private def notYetExpiredApplicationInState(state: ApplicationState): AgentApplication =
     state match
       case Started => tdAll.agentApplicationLlp.afterStarted
       case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
-      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentForRisking => tdAll.agentApplicationLlp.afterDeclarationSubmitted
       case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
-      case Expired => tdAll.agentApplicationLlp.afterExpired
+      case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired
 
   "updateManyToExpiredForUnsubmitted has an explicitly defined outcome for every ApplicationState whose applicationExpiresAt has passed — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
@@ -98,22 +100,22 @@ extends ISpec:
 
       state match
         case Started | GrsDataReceived =>
-          agentApplication.applicationExpiresAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+          agentApplication.applicationExpiresAt.value.isBefore(tdAll.now) shouldBe true withClue
             s"precondition: state=$state must have applicationExpiresAt in the past"
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           agentApplication.applicationExpiresAt shouldBe None withClue
             s"precondition: state=$state cannot have applicationExpiresAt"
 
       repo.upsert(agentApplication).futureValue
-      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.nowAsInstant, tdAll.postExpiryGracePeriodEndsAtAsInstant).futureValue
+      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.now, tdAll.postExpiryGracePeriodEndsAt).futureValue
 
       state match
         case Started | GrsDataReceived =>
           modifiedCount shouldBe 1L withClue s"state=$state should have been moved to Expired"
           val expiredAgentApplication: AgentApplication = repo.findById(agentApplication.agentApplicationId).futureValue.value
           expiredAgentApplication.applicationState shouldBe Expired
-          expiredAgentApplication.postExpiryGracePeriodEndsAt shouldBe Some(tdAll.postExpiryGracePeriodEndsAtAsInstant)
-          expiredAgentApplication.expiredAt shouldBe Some(tdAll.expiredAtAsInstant)
+          expiredAgentApplication.postExpiryGracePeriodEndsAt shouldBe Some(tdAll.postExpiryGracePeriodEndsAt)
+          expiredAgentApplication.expiredAt shouldBe Some(tdAll.expiredAt)
           expiredAgentApplication.applicationExpiresAt shouldBe None
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
@@ -127,14 +129,14 @@ extends ISpec:
 
       state match
         case Started | GrsDataReceived =>
-          agentApplication.applicationExpiresAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+          agentApplication.applicationExpiresAt.value.isAfter(tdAll.now) shouldBe true withClue
             s"precondition: state=$state must have applicationExpiresAt in the future"
         case SentForRisking | SentToMinerva | RiskingCompleted | Expired =>
           agentApplication.applicationExpiresAt shouldBe None withClue
             s"precondition: state=$state cannot have applicationExpiresAt"
 
       repo.upsert(agentApplication).futureValue
-      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.nowAsInstant, tdAll.postExpiryGracePeriodEndsAtAsInstant).futureValue
+      val modifiedCount: Long = repo.updateManyToExpiredForUnsubmitted(tdAll.now, tdAll.postExpiryGracePeriodEndsAt).futureValue
 
       modifiedCount shouldBe 0L withClue s"state=$state must NOT be moved to Expired"
       repo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication withClue
@@ -144,19 +146,19 @@ extends ISpec:
     state match
       case Started => tdAll.agentApplicationLlp.afterStarted
       case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
-      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentForRisking => tdAll.agentApplicationLlp.afterDeclarationSubmitted
       case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
-      case Expired => tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded
+      case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeDueForDeletion
 
   private def postExpiryGracePeriodNotEndedApplicationInState(state: ApplicationState): AgentApplication =
     state match
       case Started => tdAll.agentApplicationLlp.afterStarted
       case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived
-      case SentForRisking => tdAll.agentApplicationLlp.afterSentForRisking
+      case SentForRisking => tdAll.agentApplicationLlp.afterDeclarationSubmitted
       case SentToMinerva => tdAll.agentApplicationLlp.afterSentToMinerva
       case RiskingCompleted => tdAll.agentApplicationLlp.afterRiskingCompletedApproved
-      case Expired => tdAll.agentApplicationLlp.afterExpired
+      case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired
 
   "findIdsOfExpiredWithPostExpiryGracePeriodEnded has an explicitly defined outcome for every ApplicationState whose postExpiryGracePeriodEndsAt has passed — a new state MUST update all pattern matches below" in:
     ApplicationState.values.foreach: state =>
@@ -165,14 +167,14 @@ extends ISpec:
 
       state match
         case Expired =>
-          agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.nowAsInstant) shouldBe true withClue
+          agentApplication.postExpiryGracePeriodEndsAt.value.isBefore(tdAll.now) shouldBe true withClue
             s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the past"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
           agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
             s"precondition: state=$state cannot have postExpiryGracePeriodEndsAt"
 
       repo.upsert(agentApplication).futureValue
-      val agentApplicationIds: Seq[AgentApplicationId] = repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue
+      val agentApplicationIds: Seq[AgentApplicationId] = repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.now).futureValue
 
       state match
         case Expired => agentApplicationIds shouldBe Seq(agentApplication.agentApplicationId) withClue s"state=$state should be found for deletion"
@@ -186,7 +188,7 @@ extends ISpec:
 
       state match
         case Expired =>
-          agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.nowAsInstant) shouldBe true withClue
+          agentApplication.postExpiryGracePeriodEndsAt.value.isAfter(tdAll.now) shouldBe true withClue
             s"precondition: state=$state must have postExpiryGracePeriodEndsAt in the future"
         case Started | GrsDataReceived | SentForRisking | SentToMinerva | RiskingCompleted =>
           agentApplication.postExpiryGracePeriodEndsAt shouldBe None withClue
@@ -194,7 +196,7 @@ extends ISpec:
 
       repo.upsert(agentApplication).futureValue
 
-      repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.nowAsInstant).futureValue shouldBe empty withClue
+      repo.findIdsOfExpiredWithPostExpiryGracePeriodEnded(tdAll.now).futureValue shouldBe empty withClue
         s"state=$state must NOT be found for deletion"
 
   // the fields the Mongo format stores as BSON Date; afterStarted, afterResubmitted and afterExpired between them carry all of them
@@ -212,7 +214,7 @@ extends ISpec:
   private val recordsWithDates: Seq[(String, AgentApplication)] = Seq(
     "afterStarted" -> tdAll.agentApplicationLlp.afterStarted,
     "afterResubmitted" -> tdAll.agentApplicationLlp.afterResubmitted,
-    "afterExpired" -> tdAll.agentApplicationLlp.afterExpired
+    "afterExpired" -> tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired
   )
 
   private def rawDocument(record: AgentApplication): BsonDocument =
@@ -268,19 +270,19 @@ extends ISpec:
       description = "a started application",
       record = tdAll.agentApplicationLlp.afterStarted,
       fieldName = FieldNames.createdAt,
-      storedInstant = tdAll.nowAsInstant
+      storedInstant = tdAll.createdAt
     ),
     DateQueryCase(
       description = "a started application",
       record = tdAll.agentApplicationLlp.afterStarted,
       fieldName = FieldNames.applicationExpiresAt,
-      storedInstant = tdAll.applicationExpiresAtAsInstant
+      storedInstant = tdAll.applicationExpiresAt
     ),
     DateQueryCase(
       description = "a submitted application",
-      record = tdAll.agentApplicationLlp.afterSentForRisking,
+      record = tdAll.agentApplicationLlp.afterDeclarationSubmitted,
       fieldName = "submittedAt",
-      storedInstant = tdAll.nowAsInstant
+      storedInstant = tdAll.submittedAt
     ),
     DateQueryCase(
       description = "an application with a fixable outcome",
@@ -298,19 +300,19 @@ extends ISpec:
       description = "a resubmitted application",
       record = tdAll.agentApplicationLlp.afterResubmitted,
       fieldName = "riskingOutcomeApplication.reSubmittedAt",
-      storedInstant = tdAll.nowAsInstant
+      storedInstant = tdAll.reSubmittedAt
     ),
     DateQueryCase(
       description = "an expired application",
-      record = tdAll.agentApplicationLlp.afterExpired,
+      record = tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired,
       fieldName = FieldNames.postExpiryGracePeriodEndsAt,
-      storedInstant = tdAll.postExpiryGracePeriodEndsAtAsInstant
+      storedInstant = tdAll.postExpiryGracePeriodEndsAt
     ),
     DateQueryCase(
       description = "an expired application",
-      record = tdAll.agentApplicationLlp.afterExpired,
+      record = tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired,
       fieldName = FieldNames.expiredAt,
-      storedInstant = tdAll.expiredAtAsInstant
+      storedInstant = tdAll.expiredAt
     )
   )
 

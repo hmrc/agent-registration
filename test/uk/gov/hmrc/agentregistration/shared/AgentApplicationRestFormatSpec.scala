@@ -21,8 +21,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
-import java.time.LocalDate
-
 class AgentApplicationRestFormatSpec
 extends UnitSpec:
 
@@ -31,12 +29,7 @@ extends UnitSpec:
     AgentApplicationFormat.restFormat.writes(agentApplication) shouldBe afterResubmittedRestJson
     afterResubmittedRestJson.as[AgentApplication](using AgentApplicationFormat.restFormat) shouldBe agentApplication
 
-  private val tdAll: TdAll =
-    new TdAll:
-      // TdBase derives these dates from LocalDate.now(); the documents below need fixed values, so they are taken from the frozen time
-      override def dateOfIncorporation: LocalDate = nowAsLocalDateTime.toLocalDate.minusYears(10)
-      override def riskingCompletedDate: LocalDate = nowAsLocalDateTime.toLocalDate.minusDays(1)
-      override def correctiveActionExpiryDate: LocalDate = nowAsLocalDateTime.toLocalDate.plusDays(45)
+  private val tdAll: TdAll = TdAll.tdAll
 
   // dates as ISO strings
   private val afterResubmittedRestJson: JsValue = Json.parse(
@@ -52,8 +45,8 @@ extends UnitSpec:
       |  },
       |  "linkId": "link-id-12345",
       |  "groupId": "group-id-12345",
-      |  "createdAt": "2059-11-25T16:33:51.880Z",
-      |  "submittedAt": "2059-11-25T16:33:51.880Z",
+      |  "createdAt": "2059-11-15T16:33:51.880Z",
+      |  "submittedAt": "2059-11-18T16:33:51.880Z",
       |  "applicationState": "SentForRisking",
       |  "userRole": "Authorised",
       |  "businessDetails": {
@@ -121,7 +114,7 @@ extends UnitSpec:
       |  "riskingOutcomeApplication": {
       |    "actualDecisionDate": "2059-11-24",
       |    "correctiveActionExpiryDate": "2060-01-09",
-      |    "reSubmittedAt": "2059-11-25T16:33:51.880Z",
+      |    "reSubmittedAt": "2059-11-19T16:33:51.880Z",
       |    "outcome": "FailedFixable"
       |  },
       |  "riskingOutcomeEntity": {
