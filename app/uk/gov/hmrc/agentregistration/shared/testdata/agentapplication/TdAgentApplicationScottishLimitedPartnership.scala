@@ -21,6 +21,7 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.agentdetails.*
 import uk.gov.hmrc.agentregistration.shared.risking.RiskingOutcomeEntity
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
+import uk.gov.hmrc.agentregistration.shared.BusinessType.Partnership.ScottishLimitedPartnership
 import uk.gov.hmrc.agentregistration.shared.lists.FiveOrLessOfficers
 import uk.gov.hmrc.agentregistration.shared.testdata.TdBase
 import uk.gov.hmrc.agentregistration.shared.testdata.TdTime
@@ -100,7 +101,7 @@ trait TdAgentApplicationScottishLimitedPartnership {
     ).assertDataIntegrity()
 
     val afterAgentDetailsComplete: AgentApplicationScottishLimitedPartnership = afterContactDetailsComplete.copy(
-      agentDetails = Some(dependencies.completeAgentDetails)
+      agentDetails = Some(dependencies.getCompleteAgentDetails(ScottishLimitedPartnership))
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationScottishLimitedPartnership = afterAgentDetailsComplete.copy(
