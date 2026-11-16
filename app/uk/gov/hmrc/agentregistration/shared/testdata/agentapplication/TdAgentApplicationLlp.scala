@@ -115,11 +115,19 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdTime & TdAgentApplicatio
     ).assertDataIntegrity()
 
     val afterAgentDetailsWithUnverifiedEmail: AgentApplicationLlp = afterContactDetailsComplete.copy(
-      agentDetails = Some(dependencies.completeAgentDetails.copy(agentEmailAddress = Some(dependencies.agentUnverifiedEmailAddress)))
+      agentDetails = Some(
+        dependencies
+          .getCompleteAgentDetails(LimitedLiabilityPartnership)
+          .copy(agentEmailAddress = Some(dependencies.agentUnverifiedEmailAddress))
+      )
     ).assertDataIntegrity()
 
     val afterAgentDetailsCompleteWithOtherAgentEmail: AgentApplicationLlp = afterContactDetailsComplete.copy(
-      agentDetails = Some(dependencies.completeAgentDetails.copy(agentEmailAddress = Some(dependencies.agentVerifiedEmailAddressWithOtherEmail)))
+      agentDetails = Some(
+        dependencies
+          .getCompleteAgentDetails(LimitedLiabilityPartnership)
+          .copy(agentEmailAddress = Some(dependencies.agentVerifiedEmailAddressWithOtherEmail))
+      )
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationLlp = afterAgentDetailsComplete.copy(
