@@ -124,7 +124,7 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
     agentBusinessName = TdAgencyName.getAgencyName(businessType),
     otherAgentBusinessName = None
   )
-
+  def agentBusinessName: AgentBusinessName = AgentBusinessName(agentBusinessName = companyName, otherAgentBusinessName = None)
   def amlsCode: AmlsSupervisoryBodyCode = AmlsSupervisoryBodyCode("HMRC")
   def amlsRegistrationNumber: AmlsRegistrationNumber = AmlsRegistrationNumber("XAML00000123456")
   def vrn = Vrn("123456789")
@@ -154,6 +154,15 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
     ),
     isVerified = true
   )
+  def otherAgentEmailAddress: EmailAddress = EmailAddress("agent@test.com")
+  def agentVerifiedEmailAddressWithOtherEmail: AgentVerifiedEmailAddress = AgentVerifiedEmailAddress(
+    emailAddress = AgentEmailAddress(
+      agentEmailAddress = applicantEmailAddress,
+      otherAgentEmailAddress = Some(otherAgentEmailAddress)
+    ),
+    isVerified = true
+  )
+  def agentUnverifiedEmailAddress: AgentVerifiedEmailAddress = agentVerifiedEmailAddressWithOtherEmail.copy(isVerified = false)
   def individualVerifiedEmailAddress = IndividualVerifiedEmailAddress(individualEmailAddress, isVerified = true)
   def applicantContactDetails: ApplicantContactDetails = ApplicantContactDetails(
     applicantName = applicantName,
@@ -164,6 +173,13 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
     ))
   )
   def getCompleteAgentDetails(businessType: BusinessType): AgentDetails = AgentDetails(
+  def applicantContactDetailsWithUnverifiedEmail: ApplicantContactDetails = applicantContactDetails.copy(
+    applicantEmailAddress = Some(ApplicantEmailAddress(
+      emailAddress = applicantEmailAddress,
+      isVerified = false
+    ))
+  )
+  def completeAgentDetails: AgentDetails = AgentDetails(
     agentCorrespondenceAddress = Some(chroAddress),
     telephoneNumber = Some(agentTelephoneNumber),
     agentEmailAddress = Some(agentVerifiedEmailAddress),

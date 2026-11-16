@@ -49,6 +49,9 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdTime & TdAgentApplicatio
       submittedAt = None,
       postExpiryGracePeriodEndsAt = None,
       expiredAt = None,
+      expiryReminderEmailSentAt = None,
+      expiredEmailSentAt = None,
+      deletionEmailSentAt = None,
       applicationState = ApplicationState.Started,
       userRole = Some(UserRole.Authorised),
       businessDetails = None,
@@ -103,8 +106,20 @@ trait TdAgentApplicationLlp { dependencies: (TdBase & TdTime & TdAgentApplicatio
       applicantContactDetails = Some(dependencies.applicantContactDetails)
     ).assertDataIntegrity()
 
+    val afterContactDetailsWithUnverifiedEmail: AgentApplicationLlp = afterGlobalAsaEnrolmentCheckPass.copy(
+      applicantContactDetails = Some(dependencies.applicantContactDetailsWithUnverifiedEmail)
+    ).assertDataIntegrity()
+
     val afterAgentDetailsComplete: AgentApplicationLlp = afterContactDetailsComplete.copy(
       agentDetails = Some(dependencies.getCompleteAgentDetails(LimitedLiabilityPartnership))
+    ).assertDataIntegrity()
+
+    val afterAgentDetailsWithUnverifiedEmail: AgentApplicationLlp = afterContactDetailsComplete.copy(
+      agentDetails = Some(dependencies.completeAgentDetails.copy(agentEmailAddress = Some(dependencies.agentUnverifiedEmailAddress)))
+    ).assertDataIntegrity()
+
+    val afterAgentDetailsCompleteWithOtherAgentEmail: AgentApplicationLlp = afterContactDetailsComplete.copy(
+      agentDetails = Some(dependencies.completeAgentDetails.copy(agentEmailAddress = Some(dependencies.agentVerifiedEmailAddressWithOtherEmail)))
     ).assertDataIntegrity()
 
     val afterAmlsComplete: AgentApplicationLlp = afterAgentDetailsComplete.copy(

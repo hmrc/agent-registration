@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class EmailServiceForExpiredApplicationsSpec
@@ -46,73 +50,81 @@ extends ISpec:
     )
   )
 
-  "processEmails" - {
+  BusinessType.values.foreach: businessType =>
+    s"for a $businessType application" - {
 
-    "sends the expired email to the verified applicant email and records expiredEmailSentAt" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpired
-      EmailStubs.stubSendEmail(expectedEmail(agentApplication))
-      agentApplicationRepo.upsert(agentApplication).futureValue
+      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails sends the expired email to the verified applicant email and records it as sent" in:
+        val expired: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
+        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        EmailStubs.stubSendEmail(expectedEmail(expired))
+        agentApplicationRepo.upsert(expired).futureValue
 
-      EmailStubs.verifySendEmail(count = 1)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe
-        tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredEmailSent
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "sends the expired email to the verified agent email when agent details are complete" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmailExpired
-      EmailStubs.stubSendEmail(expectedEmail(agentApplication, tdAll.otherAgentEmailAddress))
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 1)
+        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expiredEmailSent
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails does not send the expired email to an application already sent it" in:
+        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        expiredEmailSent.expiredEmailSentAt shouldBe defined withClue "precondition: the expired email must already be recorded"
+        expiredEmailSent.shouldHaveGracePeriodEndInTheFuture
+        agentApplicationRepo.upsert(expiredEmailSent).futureValue
 
-      EmailStubs.verifySendEmail(count = 1)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe
-        tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmailExpiredEmailSent
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "does not send the expired email to an application whose grace period has already ended" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEnded
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(expiredEmailSent.agentApplicationId).futureValue.value shouldBe expiredEmailSent
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails does not send the expired email to an application with no verified email address" in:
+        val expired: AgentApplication = agentApplication.started.makeOverdue.makeExpired
+        expired.applicantContactDetails shouldBe None withClue "precondition: the application must have no applicant contact details"
+        agentApplicationRepo.upsert(expired).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "does not send the expired email a second time when expiredEmailSentAt is already recorded" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredEmailSent
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expired
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails does not send the expired email to an application that has not expired" in:
+        val notExpired: AgentApplication = agentApplication.withVerifiedEmail
+        notExpired.expiredAt shouldBe None withClue "precondition: the application must not have expired"
+        agentApplicationRepo.upsert(notExpired).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "does not send the expired email and leaves the application untouched when there is no verified email address" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpired
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(notExpired.agentApplicationId).futureValue.value shouldBe notExpired
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails does not send the expired email to an application whose grace period has ended" in:
+        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
+        dueForDeletion.shouldHaveGracePeriodEndInThePast
+        agentApplicationRepo.upsert(dueForDeletion).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "does not send the expired email to an application that has not expired" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+      "processEmails does not record the expired email as sent when the email service fails, so it is retried on the next run" in:
+        val expired: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
+        EmailStubs.stubSendEmailFailure(expectedEmail(expired))
+        agentApplicationRepo.upsert(expired).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForExpiredApplications.processEmails().futureValue
 
-    "leaves expiredEmailSentAt empty when the email service fails, so the email is retried on the next run" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpired
-      EmailStubs.stubSendEmailFailure(expectedEmail(agentApplication))
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 1)
+        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expired
+    }
 
-      emailServiceForExpiredApplications.processEmails().futureValue
+  "processEmails sends the expired email to the verified agent email when agent details are complete" in:
+    val expired: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeOverdue.makeExpired
+    val expiredEmailSent: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeOverdue.makeExpiredEmailSent
+    EmailStubs.stubSendEmail(expectedEmail(expired, tdAll.otherAgentEmailAddress))
+    agentApplicationRepo.upsert(expired).futureValue
 
-      EmailStubs.verifySendEmail(count = 1)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
-  }
+    emailServiceForExpiredApplications.processEmails().futureValue
+
+    EmailStubs.verifySendEmail(count = 1)
+    agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expiredEmailSent

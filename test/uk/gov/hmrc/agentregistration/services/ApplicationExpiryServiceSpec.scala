@@ -14,51 +14,66 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.runner
+package uk.gov.hmrc.agentregistration.services
 
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 
-import java.time.temporal.ChronoUnit
+import java.time.Duration
 
-class ExpireUnsubmittedApplicationsRunnerSpec
+class ApplicationExpiryServiceSpec
 extends ISpec:
 
-  private lazy val runner: ExpireUnsubmittedApplicationsRunner = app.injector.instanceOf[ExpireUnsubmittedApplicationsRunner]
+  private lazy val applicationExpiryService: ApplicationExpiryService = app.injector.instanceOf[ApplicationExpiryService]
   private lazy val agentApplicationRepo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
 
-  "run marks an unsubmitted application whose applicationExpiresAt has passed as Expired, recording expiredAt and postExpiryGracePeriodEndsAt from the same instant" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeOverdue
-    val expiredAgentApplication: AgentApplication = agentApplication.makeExpired
-    agentApplication.applicationExpiresAt.value.isBefore(tdAll.now) shouldBe true withClue
-      "precondition: applicationExpiresAt must be in the past"
-    agentApplicationRepo.upsert(agentApplication).futureValue
+  private given RequestHeader = tdAll.fakeBackendRequest
 
-    runner.run().futureValue
+  BusinessType.values.foreach: businessType =>
+    s"for a $businessType application" - {
 
-    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe expiredAgentApplication
+      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-  "run records a grace period of exactly post-expiry-grace-period days for an application created long before it expired, so the period never depends on createdAt" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted.makeLongOverdue
-    val expiredAgentApplication: AgentApplication = agentApplication.makeExpired
-    ChronoUnit.DAYS.between(agentApplication.createdAt, tdAll.now) should be > 73L withClue
-      "precondition: the application must have been created more than days-to-submit-application before the run"
-    agentApplicationRepo.upsert(agentApplication).futureValue
+      "processExpiry expires an application whose expiry date has passed, starting the grace period now" in:
+        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+          dropDatabase()
+          val overdue: AgentApplication = havingExpiryDate.makeOverdue
+          overdue.shouldHaveExpiryDateInThePast
+          agentApplicationRepo.upsert(overdue).futureValue
 
-    runner.run().futureValue
+          applicationExpiryService.processExpiry().futureValue
 
-    val storedAgentApplication: AgentApplication = agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value
-    storedAgentApplication shouldBe expiredAgentApplication
-    ChronoUnit.DAYS.between(storedAgentApplication.expiredAt.value, storedAgentApplication.postExpiryGracePeriodEndsAt.value) shouldBe 45L
+          agentApplicationRepo.findById(overdue.agentApplicationId).futureValue.value shouldBe overdue.makeExpired withClue
+            s"state=${havingExpiryDate.applicationState}"
 
-  "run leaves an unsubmitted application whose applicationExpiresAt is still in the future unchanged" in:
-    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterStarted
-    agentApplication.applicationExpiresAt.value.isAfter(tdAll.now) shouldBe true withClue
-      "precondition: applicationExpiresAt must be in the future"
-    agentApplicationRepo.upsert(agentApplication).futureValue
+      "processExpiry gives a long overdue application the whole grace period of 45 days, counted from now and not from its expiry date" in:
+        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+          dropDatabase()
+          val longOverdue: AgentApplication = havingExpiryDate.makeLongOverdue
+          Duration.between(longOverdue.applicationExpiresAt.value, tdAll.now) should be > tdAll.postExpiryGracePeriod withClue
+            "precondition: the expiry date must be further back than the grace period"
+          agentApplicationRepo.upsert(longOverdue).futureValue
 
-    runner.run().futureValue
+          applicationExpiryService.processExpiry().futureValue
 
-    agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+          val expired: AgentApplication = agentApplicationRepo.findById(longOverdue.agentApplicationId).futureValue.value
+          expired shouldBe longOverdue.makeExpired withClue s"state=${havingExpiryDate.applicationState}"
+          Duration.between(tdAll.now, expired.postExpiryGracePeriodEndsAt.value) shouldBe Duration.ofDays(45)
+
+      "processExpiry does not expire an application whose expiry date is in the future" in:
+        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+          dropDatabase()
+          havingExpiryDate.shouldHaveExpiryDateInTheFuture
+          agentApplicationRepo.upsert(havingExpiryDate).futureValue
+
+          applicationExpiryService.processExpiry().futureValue
+
+          agentApplicationRepo.findById(havingExpiryDate.agentApplicationId).futureValue.value shouldBe havingExpiryDate withClue
+            s"state=${havingExpiryDate.applicationState}"
+    }

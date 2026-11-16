@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,12 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.BusinessType
+import uk.gov.hmrc.agentregistration.shared.EmailAddress
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
+import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class EmailServiceForDeletedApplicationsSpec
@@ -32,8 +37,11 @@ extends ISpec:
 
   private given RequestHeader = tdAll.fakeBackendRequest
 
-  private def expectedEmail(agentApplication: AgentApplication): SendEmailRequest = SendEmailRequest(
-    to = Seq(tdAll.applicantEmailAddress),
+  private def expectedEmail(
+    agentApplication: AgentApplication,
+    emailAddress: EmailAddress = tdAll.applicantEmailAddress
+  ): SendEmailRequest = SendEmailRequest(
+    to = Seq(emailAddress),
     templateId = EmailTemplateId.ApplicationDeleted,
     parameters = Map(
       "agentName" -> tdAll.applicantName.value,
@@ -41,53 +49,73 @@ extends ISpec:
     )
   )
 
-  "processEmails" - {
+  BusinessType.values.foreach: businessType =>
+    s"for a $businessType application" - {
 
-    "sends the deletion email to the verified applicant email and records deletionEmailSentAt" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEnded
-      EmailStubs.stubSendEmail(expectedEmail(agentApplication))
-      agentApplicationRepo.upsert(agentApplication).futureValue
+      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      emailServiceForDeletedApplications.processEmails().futureValue
+      "processEmails sends the deletion email to the verified applicant email and records it as sent" in:
+        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+        val deletionEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+        EmailStubs.stubSendEmail(expectedEmail(dueForDeletion))
+        agentApplicationRepo.upsert(dueForDeletion).futureValue
 
-      EmailStubs.verifySendEmail(count = 1)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe
-        tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEndedDeletionEmailSent
+        emailServiceForDeletedApplications.processEmails().futureValue
 
-    "does not send the deletion email a second time when deletionEmailSentAt is already recorded" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEndedDeletionEmailSent
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 1)
+        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe deletionEmailSent
 
-      emailServiceForDeletedApplications.processEmails().futureValue
+      "processEmails does not send the deletion email to an application already sent it" in:
+        val deletionEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+        deletionEmailSent.deletionEmailSentAt shouldBe defined withClue "precondition: the deletion email must already be recorded"
+        deletionEmailSent.shouldHaveGracePeriodEndInThePast
+        agentApplicationRepo.upsert(deletionEmailSent).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForDeletedApplications.processEmails().futureValue
 
-    "does not send the deletion email and leaves the application untouched when there is no verified email address" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterExpiredPostExpiryGracePeriodEnded
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(deletionEmailSent.agentApplicationId).futureValue.value shouldBe deletionEmailSent
 
-      emailServiceForDeletedApplications.processEmails().futureValue
+      "processEmails does not send the deletion email to an application with no verified email address" in:
+        val dueForDeletion: AgentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion
+        dueForDeletion.applicantContactDetails shouldBe None withClue "precondition: the application must have no applicant contact details"
+        agentApplicationRepo.upsert(dueForDeletion).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForDeletedApplications.processEmails().futureValue
 
-    "does not send the deletion email while the grace period has not ended" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpired
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
 
-      emailServiceForDeletedApplications.processEmails().futureValue
+      "processEmails does not send the deletion email to an application still in the grace period" in:
+        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        expiredEmailSent.shouldHaveGracePeriodEndInTheFuture
+        agentApplicationRepo.upsert(expiredEmailSent).futureValue
 
-      EmailStubs.verifySendEmail(count = 0)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
+        emailServiceForDeletedApplications.processEmails().futureValue
 
-    "leaves deletionEmailSentAt empty when the email service fails, so the email is retried on the next run" in:
-      val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsCompleteExpiredPostExpiryGracePeriodEnded
-      EmailStubs.stubSendEmailFailure(expectedEmail(agentApplication))
-      agentApplicationRepo.upsert(agentApplication).futureValue
+        EmailStubs.verifySendEmail(count = 0)
+        agentApplicationRepo.findById(expiredEmailSent.agentApplicationId).futureValue.value shouldBe expiredEmailSent
 
-      emailServiceForDeletedApplications.processEmails().futureValue
+      "processEmails does not record the deletion email as sent when the email service fails, so it is retried on the next run" in:
+        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+        EmailStubs.stubSendEmailFailure(expectedEmail(dueForDeletion))
+        agentApplicationRepo.upsert(dueForDeletion).futureValue
 
-      EmailStubs.verifySendEmail(count = 1)
-      agentApplicationRepo.findById(agentApplication.agentApplicationId).futureValue.value shouldBe agentApplication
-  }
+        emailServiceForDeletedApplications.processEmails().futureValue
+
+        EmailStubs.verifySendEmail(count = 1)
+        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
+    }
+
+  "processEmails sends the deletion email to the verified agent email when agent details are complete" in:
+    val dueForDeletion: AgentApplication =
+      tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+    val deletionEmailSent: AgentApplication =
+      tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+    EmailStubs.stubSendEmail(expectedEmail(dueForDeletion, tdAll.otherAgentEmailAddress))
+    agentApplicationRepo.upsert(dueForDeletion).futureValue
+
+    emailServiceForDeletedApplications.processEmails().futureValue
+
+    EmailStubs.verifySendEmail(count = 1)
+    agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe deletionEmailSent

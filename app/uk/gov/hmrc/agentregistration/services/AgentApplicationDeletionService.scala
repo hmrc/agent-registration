@@ -44,7 +44,7 @@ extends RequestAwareLogging:
     val now: Instant = Instant.now(clock)
     logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForDeletion(now)
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredPastGracePeriod(now)
       (waitingForDeletionEmail, readyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
       _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}, ${waitingForDeletionEmail.size} waiting for the deletion email")
       deletedCount: Int <-

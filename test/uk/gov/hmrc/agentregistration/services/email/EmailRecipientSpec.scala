@@ -16,36 +16,48 @@
 
 package uk.gov.hmrc.agentregistration.services.email
 
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.agentdetails.AgentVerifiedEmailAddress
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll.tdAll
 
 class EmailRecipientSpec
 extends UnitSpec:
 
-  "resolve" - {
-    "returns None when there are no applicant contact details" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterStarted) shouldBe None
+  "resolve returns no recipient when there are no applicant contact details" in:
+    EmailRecipient.resolve(tdAll.agentApplicationLlp.afterStarted) shouldBe None
 
-    "returns None when the applicant email is not verified and there are no agent details" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail) shouldBe None
+  "resolve returns no recipient when the applicant email is not verified and there are no agent details" in:
+    EmailRecipient.resolve(tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail) shouldBe None
 
-    "returns the verified applicant email when there are no agent details" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterContactDetailsComplete) shouldBe Some(
-        EmailRecipient(tdAll.applicantName, tdAll.applicantEmailAddress)
-      )
+  "resolve returns the verified applicant email when there are no agent details" in:
+    EmailRecipient.resolve(tdAll.agentApplicationLlp.afterContactDetailsComplete) shouldBe Some(
+      EmailRecipient(tdAll.applicantName, tdAll.applicantEmailAddress)
+    )
 
-    "returns the verified applicant email when the agent email is not verified" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterAgentDetailsWithUnverifiedEmail) shouldBe Some(
-        EmailRecipient(tdAll.applicantName, tdAll.applicantEmailAddress)
-      )
+  "resolve returns the verified applicant email when the agent email is not verified" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsWithUnverifiedEmail
+    val agentVerifiedEmailAddress: AgentVerifiedEmailAddress = agentApplication.agentDetails.value.agentEmailAddress.value
+    agentVerifiedEmailAddress.isVerified shouldBe false withClue "precondition: the agent email must not be verified"
+    agentVerifiedEmailAddress.getEmailAddress should not be tdAll.applicantEmailAddress withClue
+      "precondition: the agent email must differ from the applicant email, or the result could not tell them apart"
 
-    "returns the verified agent email when agent details are complete" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterAgentDetailsComplete) shouldBe Some(
-        EmailRecipient(tdAll.applicantName, tdAll.agentVerifiedEmailAddress.getEmailAddress)
-      )
+    EmailRecipient.resolve(agentApplication) shouldBe Some(EmailRecipient(tdAll.applicantName, tdAll.applicantEmailAddress))
 
-    "prefers the verified agent email over the verified applicant email when both are present" in:
-      EmailRecipient.resolve(tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail) shouldBe Some(
-        EmailRecipient(tdAll.applicantName, tdAll.otherAgentEmailAddress)
-      )
-  }
+  "resolve returns the verified agent email when it is the same as the applicant email" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsComplete
+    val agentVerifiedEmailAddress: AgentVerifiedEmailAddress = agentApplication.agentDetails.value.agentEmailAddress.value
+    agentVerifiedEmailAddress.isVerified shouldBe true withClue "precondition: the agent email must be verified"
+    agentVerifiedEmailAddress.getEmailAddress shouldBe tdAll.applicantEmailAddress withClue
+      "precondition: the agent must use the applicant email"
+
+    EmailRecipient.resolve(agentApplication) shouldBe Some(EmailRecipient(tdAll.applicantName, tdAll.applicantEmailAddress))
+
+  "resolve prefers the verified agent email over the verified applicant email when they differ" in:
+    val agentApplication: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail
+    val agentVerifiedEmailAddress: AgentVerifiedEmailAddress = agentApplication.agentDetails.value.agentEmailAddress.value
+    agentVerifiedEmailAddress.isVerified shouldBe true withClue "precondition: the agent email must be verified"
+    tdAll.otherAgentEmailAddress should not be tdAll.applicantEmailAddress withClue
+      "precondition: the agent email must differ from the applicant email, or the result could not tell them apart"
+
+    EmailRecipient.resolve(agentApplication) shouldBe Some(EmailRecipient(tdAll.applicantName, tdAll.otherAgentEmailAddress))

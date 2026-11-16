@@ -138,7 +138,7 @@ extends Repo[AgentApplicationId, AgentApplication](
     )
     .toFuture()
 
-  def findReadyForDeletion(now: Instant): Future[Seq[AgentApplication]] = collection
+  def findExpiredPastGracePeriod(now: Instant): Future[Seq[AgentApplication]] = collection
     .find(
       filter = Filters.and(
         Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
