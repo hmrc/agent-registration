@@ -248,27 +248,27 @@ extends ISpec:
 
         repo.findReadyForDeletionEmail(tdAll.now).futureValue shouldBe empty
 
-      "findExpiredPastGracePeriod finds only Expired applications whose grace period has ended" in:
-        def isExpiredPastGracePeriod(agentApplication: AgentApplication): Boolean =
+      "findDueForDeletion finds only Expired applications whose grace period has ended" in:
+        def isDueForDeletion(agentApplication: AgentApplication): Boolean =
           dropDatabase()
           repo.upsert(agentApplication).futureValue
-          repo.findExpiredPastGracePeriod(tdAll.now).futureValue.contains(agentApplication)
+          repo.findDueForDeletion(tdAll.now).futureValue.contains(agentApplication)
 
         ApplicationState.values.foreach: state =>
           withClue(s"state=$state: "):
             state match
-              case Started => isExpiredPastGracePeriod(agentApplication.started) shouldBe false
-              case GrsDataReceived => isExpiredPastGracePeriod(agentApplication.grsDataReceived) shouldBe false
-              case SentForRisking => isExpiredPastGracePeriod(agentApplication.sentForRisking) shouldBe false
-              case SentToMinerva => isExpiredPastGracePeriod(agentApplication.sentToMinerva) shouldBe false
-              case RiskingCompleted => isExpiredPastGracePeriod(agentApplication.riskingCompleted) shouldBe false
-              case Expired => isExpiredPastGracePeriod(agentApplication.expired.makeDueForDeletion) shouldBe true
+              case Started => isDueForDeletion(agentApplication.started) shouldBe false
+              case GrsDataReceived => isDueForDeletion(agentApplication.grsDataReceived) shouldBe false
+              case SentForRisking => isDueForDeletion(agentApplication.sentForRisking) shouldBe false
+              case SentToMinerva => isDueForDeletion(agentApplication.sentToMinerva) shouldBe false
+              case RiskingCompleted => isDueForDeletion(agentApplication.riskingCompleted) shouldBe false
+              case Expired => isDueForDeletion(agentApplication.expired.makeDueForDeletion) shouldBe true
 
-      "findExpiredPastGracePeriod does not find an application still in the grace period" in:
+      "findDueForDeletion does not find an application still in the grace period" in:
         agentApplication.expired.shouldHaveGracePeriodEndInTheFuture
         repo.upsert(agentApplication.expired).futureValue
 
-        repo.findExpiredPastGracePeriod(tdAll.now).futureValue shouldBe empty
+        repo.findDueForDeletion(tdAll.now).futureValue shouldBe empty
     }
 
   // the fields the Mongo format stores as BSON Date; the records below between them carry all of them
