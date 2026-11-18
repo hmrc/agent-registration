@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.services.email
 
+import uk.gov.hmrc.agentregistration.config.AppConfig
+
 import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object EmailDateFormatter:
 
-  private val zoneId: ZoneId = ZoneId.of("Europe/London")
   private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.UK)
 
-  def format(instant: Instant): String = instant.atZone(zoneId).toLocalDate.format(dateTimeFormatter)
+  def format(instant: Instant): String = instant.atZone(AppConfig.zoneId).toLocalDate.format(dateTimeFormatter)
