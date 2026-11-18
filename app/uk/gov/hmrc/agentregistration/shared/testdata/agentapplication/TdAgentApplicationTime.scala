@@ -21,8 +21,10 @@ import java.time.Instant
 import java.time.LocalDate
 import uk.gov.hmrc.agentregistration.shared.testdata.TdTime
 
-/** Both mirror production config. */
+/** All three mirror production config. */
 object TdAgentApplicationTime:
+
+  val expiryReminderPeriod: Duration = Duration.ofDays(10)
 
   val daysToSubmitApplication: Duration = Duration.ofDays(73)
 

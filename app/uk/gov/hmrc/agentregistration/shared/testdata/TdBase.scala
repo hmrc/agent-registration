@@ -154,6 +154,15 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
     ),
     isVerified = true
   )
+  def otherAgentEmailAddress: EmailAddress = EmailAddress("agent@test.com")
+  def agentVerifiedEmailAddressWithOtherEmail: AgentVerifiedEmailAddress = AgentVerifiedEmailAddress(
+    emailAddress = AgentEmailAddress(
+      agentEmailAddress = applicantEmailAddress,
+      otherAgentEmailAddress = Some(otherAgentEmailAddress)
+    ),
+    isVerified = true
+  )
+  def agentUnverifiedEmailAddress: AgentVerifiedEmailAddress = agentVerifiedEmailAddressWithOtherEmail.copy(isVerified = false)
   def individualVerifiedEmailAddress = IndividualVerifiedEmailAddress(individualEmailAddress, isVerified = true)
   def applicantContactDetails: ApplicantContactDetails = ApplicantContactDetails(
     applicantName = applicantName,
@@ -161,6 +170,12 @@ trait TdBase { dependencies: (TdTime & TdAgentApplicationTime) =>
     applicantEmailAddress = Some(ApplicantEmailAddress(
       emailAddress = applicantEmailAddress,
       isVerified = true
+    ))
+  )
+  def applicantContactDetailsWithUnverifiedEmail: ApplicantContactDetails = applicantContactDetails.copy(
+    applicantEmailAddress = Some(ApplicantEmailAddress(
+      emailAddress = applicantEmailAddress,
+      isVerified = false
     ))
   )
   def getCompleteAgentDetails(businessType: BusinessType): AgentDetails = AgentDetails(

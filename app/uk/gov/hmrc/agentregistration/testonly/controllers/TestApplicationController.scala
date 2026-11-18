@@ -26,8 +26,13 @@ import uk.gov.hmrc.agentregistration.repository.FieldNames
 import uk.gov.hmrc.agentregistration.action.Actions
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.runner.DeleteExpiredApplicationsRunner
-import uk.gov.hmrc.agentregistration.runner.ExpireUnsubmittedApplicationsRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationDeletionRunner
+import uk.gov.hmrc.agentregistration.runner.ApplicationExpiryRunner
+import uk.gov.hmrc.agentregistration.services.email.EmailRecipient
+import uk.gov.hmrc.agentregistration.services.email.EmailServiceForDeletedApplications
+import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiredApplications
+import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiryReminders
+import uk.gov.hmrc.agentregistration.testonly.models.ApplicationEmails
 import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationFormat.restFormat
 import uk.gov.hmrc.agentregistration.shared.individual.*
@@ -47,8 +52,11 @@ class TestApplicationController @Inject() (
   actions: Actions,
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  expireUnsubmittedApplicationsRunner: ExpireUnsubmittedApplicationsRunner,
-  deleteExpiredApplicationsRunner: DeleteExpiredApplicationsRunner,
+  applicationExpiryRunner: ApplicationExpiryRunner,
+  applicationDeletionRunner: ApplicationDeletionRunner,
+  emailServiceForExpiryReminders: EmailServiceForExpiryReminders,
+  emailServiceForExpiredApplications: EmailServiceForExpiredApplications,
+  emailServiceForDeletedApplications: EmailServiceForDeletedApplications,
   testMongoCleanup: TestMongoCleanup
 )
 extends BackendController(cc):
@@ -76,12 +84,12 @@ extends BackendController(cc):
   def runExpiryScheduler: Action[AnyContent] = actions
     .default
     .async: _ =>
-      expireUnsubmittedApplicationsRunner.run().map(_ => Ok(""))
+      applicationExpiryRunner.run().map(_ => Ok(""))
 
   def runDeletionScheduler: Action[AnyContent] = actions
     .default
     .async: _ =>
-      deleteExpiredApplicationsRunner.run().map(_ => Ok(""))
+      applicationDeletionRunner.run().map(_ => Ok(""))
 
   def recentApplications(
     page: Int,
@@ -110,6 +118,33 @@ extends BackendController(cc):
           .map:
             case Some(agentApplication) => Ok(Json.toJson(agentApplication))
             case None => NoContent
+
+  def findApplicationEmails(applicationReference: ApplicationReference): Action[AnyContent] = actions
+    .default
+    .async:
+      implicit request =>
+        agentApplicationRepo
+          .findByApplicationReference(applicationReference)
+          .map:
+            case Some(agentApplication) => Ok(Json.toJson(applicationEmails(agentApplication)))
+            case None => NoContent
+
+  private def applicationEmails(agentApplication: AgentApplication): ApplicationEmails =
+    val maybeEmailRecipient: Option[EmailRecipient] = EmailRecipient.resolve(agentApplication)
+    ApplicationEmails(
+      recipient = maybeEmailRecipient,
+      expiryReminder =
+        for
+          emailRecipient <- maybeEmailRecipient
+          _ <- agentApplication.applicationExpiresAt
+        yield emailServiceForExpiryReminders.makeSendEmailRequest(agentApplication, emailRecipient),
+      expired =
+        for
+          emailRecipient <- maybeEmailRecipient
+          _ <- agentApplication.postExpiryGracePeriodEndsAt
+        yield emailServiceForExpiredApplications.makeSendEmailRequest(agentApplication, emailRecipient),
+      deleted = maybeEmailRecipient.map(emailRecipient => emailServiceForDeletedApplications.makeSendEmailRequest(agentApplication, emailRecipient))
+    )
 
   def findIndividuals(agentApplicationId: AgentApplicationId): Action[AnyContent] = actions
     .default
