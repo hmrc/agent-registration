@@ -39,7 +39,7 @@ import scala.concurrent.Future
 @Singleton
 class EmailConnector @Inject() (
   appConfig: AppConfig,
-  http: HttpClientV2
+  httpClient: HttpClientV2
 )(using ExecutionContext)
 extends RequestAwareLogging:
 
@@ -47,7 +47,7 @@ extends RequestAwareLogging:
 
   def sendEmail(sendEmailRequest: SendEmailRequest)(using RequestHeader): Future[Unit] =
     val url: URL = url"$baseUrl/hmrc/email"
-    http
+    httpClient
       .post(url)
       .withBody(Json.toJson(sendEmailRequest))
       .execute[HttpResponse]
