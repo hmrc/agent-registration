@@ -167,7 +167,6 @@ extends ISpec:
     private val applicationExpiryService: ApplicationExpiryService =
       new ApplicationExpiryService(
         null,
-        null,
         null
       ):
         override def processExpiry()(using RequestHeader): Future[Unit] = stubStage("processExpiry")

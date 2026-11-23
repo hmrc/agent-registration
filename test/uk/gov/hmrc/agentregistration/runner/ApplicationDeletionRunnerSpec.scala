@@ -138,7 +138,6 @@ extends ISpec:
       new AgentApplicationDeletionService(
         null,
         null,
-        null,
         null
       ):
         override def processDeletions()(using RequestHeader): Future[Unit] = stubStage("processDeletions")

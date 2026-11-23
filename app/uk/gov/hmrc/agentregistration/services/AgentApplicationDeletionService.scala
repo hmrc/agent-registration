@@ -24,8 +24,6 @@ import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
-import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -35,16 +33,14 @@ import scala.concurrent.Future
 class AgentApplicationDeletionService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
-  objectStoreService: ObjectStoreService,
-  clock: Clock
+  objectStoreService: ObjectStoreService
 )(using ec: ExecutionContext)
 extends RequestAwareLogging:
 
   def processDeletions()(using RequestHeader): Future[Unit] =
-    val now: Instant = Instant.now(clock)
-    logger.info(s"Deleting Expired applications: Started... (postExpiryGracePeriodEndsAt < $now)")
+    logger.info("Deleting Expired applications: Started...")
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findDueForDeletion(now)
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findDueForDeletion()
       (waitingForDeletionEmail, readyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
       _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}, ${waitingForDeletionEmail.size} waiting for the deletion email")
       deletedCount: Int <-

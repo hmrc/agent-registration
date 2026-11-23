@@ -21,8 +21,6 @@ import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
-import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -32,16 +30,13 @@ import scala.jdk.DurationConverters.*
 @Singleton
 class ApplicationExpiryService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
-  appConfig: AppConfig,
-  clock: Clock
+  appConfig: AppConfig
 )(using ExecutionContext)
 extends RequestAwareLogging:
 
   def processExpiry()(using RequestHeader): Future[Unit] =
-    val now: Instant = Instant.now(clock)
-    val postExpiryGracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
-    logger.info(s"Expiring unsubmitted applications: Started... (applicationExpiresAt < $now, postExpiryGracePeriodEndsAt = $postExpiryGracePeriodEndsAt)")
+    logger.info("Expiring unsubmitted applications: Started...")
     agentApplicationRepo
-      .updateManyToExpiredForUnsubmitted(now, postExpiryGracePeriodEndsAt)
+      .updateManyToExpiredForUnsubmitted(appConfig.postExpiryGracePeriod.toJava)
       .map: modifiedCount =>
         logger.info(s"Expiring unsubmitted applications: marked $modifiedCount as Expired DONE")

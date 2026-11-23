@@ -45,9 +45,8 @@ extends RequestAwareLogging:
   private val emailTemplateId: EmailTemplateId = EmailTemplateId.ApplicationExpired
 
   def processEmails()(using RequestHeader): Future[Unit] =
-    val now: Instant = Instant.now(clock)
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiredEmail(now)
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiredEmail()
       (withoutRecipient, withRecipient) = EmailRecipient.partition(agentApplications)
       _ = logger.info(
         s"Found ${agentApplications.size} expired applications due for the $emailTemplateId email, ${withoutRecipient.size} without a verified email address skipped"

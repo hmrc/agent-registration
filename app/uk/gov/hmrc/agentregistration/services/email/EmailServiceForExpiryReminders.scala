@@ -48,10 +48,8 @@ extends RequestAwareLogging:
   private val emailTemplateId: EmailTemplateId = EmailTemplateId.ApplicationExpiryReminder
 
   def processEmails()(using RequestHeader): Future[Unit] =
-    val now: Instant = Instant.now(clock)
-    val expiryReminderPeriodEndsAt: Instant = now.plus(appConfig.expiryReminderPeriod.toJava)
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiryReminderEmail(now, expiryReminderPeriodEndsAt)
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiryReminderEmail(appConfig.expiryReminderPeriod.toJava)
       (withoutRecipient, withRecipient) = EmailRecipient.partition(agentApplications)
       _ = logger.info(
         s"Found ${agentApplications.size} unsubmitted applications due for the $emailTemplateId email, ${withoutRecipient.size} without a verified email address skipped"
