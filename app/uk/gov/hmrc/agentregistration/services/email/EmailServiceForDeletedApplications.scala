@@ -45,7 +45,7 @@ extends RequestAwareLogging:
 
   def processEmails()(using RequestHeader): Future[Unit] =
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForDeletionEmail()
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredReadyForDeletionEmail()
       (agentApplicationsWithoutRecipient, agentApplicationsWithRecipient) = EmailRecipient.partition(agentApplications)
       _ = logger.info(
         s"Found ${agentApplications.size} expired applications past the grace period due for the $emailTemplateId email, ${agentApplicationsWithoutRecipient.size} without a verified email address skipped"

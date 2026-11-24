@@ -295,10 +295,10 @@ extends ISpec:
           expectedFound = false
         )
       ).foreach: testCase =>
-        s"findReadyForExpiredEmail ${testCase.description}" in:
+        s"findExpiredReadyForExpiredEmail ${testCase.description}" in:
           repo.upsert(testCase.agentApplication).futureValue
 
-          repo.findReadyForExpiredEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+          repo.findExpiredReadyForExpiredEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
       Seq(
         FindTestCase(
@@ -342,10 +342,10 @@ extends ISpec:
           expectedFound = false
         )
       ).foreach: testCase =>
-        s"findReadyForDeletionEmail ${testCase.description}" in:
+        s"findExpiredReadyForDeletionEmail ${testCase.description}" in:
           repo.upsert(testCase.agentApplication).futureValue
 
-          repo.findReadyForDeletionEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+          repo.findExpiredReadyForDeletionEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
       Seq(
         FindTestCase(
@@ -384,10 +384,10 @@ extends ISpec:
           expectedFound = false
         )
       ).foreach: testCase =>
-        s"findDueForDeletion ${testCase.description}" in:
+        s"findExpiredDueForDeletion ${testCase.description}" in:
           repo.upsert(testCase.agentApplication).futureValue
 
-          repo.findDueForDeletion().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+          repo.findExpiredDueForDeletion().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
     }
 
   // the fields the Mongo format stores as BSON Date; the records below between them carry all of them

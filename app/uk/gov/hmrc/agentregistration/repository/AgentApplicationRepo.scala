@@ -133,7 +133,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       )
       .toFuture()
 
-  def findReadyForExpiredEmail(): Future[Seq[AgentApplication]] =
+  def findExpiredReadyForExpiredEmail(): Future[Seq[AgentApplication]] =
     val now: Instant = Instant.now(clock)
     collection
       .find(
@@ -145,7 +145,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       )
       .toFuture()
 
-  def findDueForDeletion(): Future[Seq[AgentApplication]] =
+  def findExpiredDueForDeletion(): Future[Seq[AgentApplication]] =
     val now: Instant = Instant.now(clock)
     collection
       .find(
@@ -156,7 +156,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       )
       .toFuture()
 
-  def findReadyForDeletionEmail(): Future[Seq[AgentApplication]] =
+  def findExpiredReadyForDeletionEmail(): Future[Seq[AgentApplication]] =
     val now: Instant = Instant.now(clock)
     collection
       .find(

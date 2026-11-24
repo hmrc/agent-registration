@@ -40,7 +40,7 @@ extends RequestAwareLogging:
   def processDeletions()(using RequestHeader): Future[Unit] =
     logger.info("Deleting Expired applications: Started...")
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findDueForDeletion()
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredDueForDeletion()
       (agentApplicationsWaitingForDeletionEmail, agentApplicationsReadyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
       _ = logger.info(
         s"Deleting Expired applications: found ${agentApplications.size}, ${agentApplicationsWaitingForDeletionEmail.size} waiting for the deletion email"
