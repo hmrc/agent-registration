@@ -51,31 +51,31 @@ extends ISpec:
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
       Seq(
         TestCase(
           description = "deletes an application whose grace period has ended and that was sent the deletion email, together with its individuals",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
           expectedAgentApplicationAfterRun = None,
           expectedIndividualsAfterRun = List.empty
         ),
         TestCase(
           description = "deletes an application with no verified email address without waiting for a deletion email, together with its individuals",
-          agentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
           expectedAgentApplicationAfterRun = None,
           expectedIndividualsAfterRun = List.empty
         ),
         TestCase(
           description = "keeps an application with a verified email address until the deletion email is sent, together with its individuals",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-          expectedAgentApplicationAfterRun = Some(agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion),
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion),
           expectedIndividualsAfterRun = List(individualProvidedDetails)
         ),
         TestCase(
           description = "keeps an application still in the grace period, together with its individuals",
-          agentApplication = agentApplication.started.makeOverdue.makeExpired,
-          expectedAgentApplicationAfterRun = Some(agentApplication.started.makeOverdue.makeExpired),
+          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired,
+          expectedAgentApplicationAfterRun = Some(agentApplicationStates.started.makeOverdue.makeExpired),
           expectedIndividualsAfterRun = List(individualProvidedDetails)
         )
       ).foreach: testCase =>

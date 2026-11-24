@@ -38,10 +38,10 @@ extends ISpec:
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      lazy val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
       "processExpiry expires an application whose expiry date has passed, starting the grace period now" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+        agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
           dropDatabase()
           val overdue: AgentApplication = havingExpiryDate.makeOverdue
           overdue.shouldHaveExpiryDateInThePast
@@ -53,7 +53,7 @@ extends ISpec:
             s"state=${havingExpiryDate.applicationState}"
 
       "processExpiry gives a long overdue application the whole grace period of 45 days, counted from now and not from its expiry date" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+        agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
           dropDatabase()
           val longOverdue: AgentApplication = havingExpiryDate.makeLongOverdue
           Duration.between(longOverdue.applicationExpiresAt.value, tdAll.now) should be > tdAll.postExpiryGracePeriod withClue
@@ -67,7 +67,7 @@ extends ISpec:
           Duration.between(tdAll.now, expired.postExpiryGracePeriodEndsAt.value) shouldBe Duration.ofDays(45)
 
       "processExpiry does not expire an application whose expiry date is in the future" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+        agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
           dropDatabase()
           havingExpiryDate.shouldHaveExpiryDateInTheFuture
           agentApplicationRepo.upsert(havingExpiryDate).futureValue

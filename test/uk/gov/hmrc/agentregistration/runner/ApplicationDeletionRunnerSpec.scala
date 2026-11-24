@@ -59,26 +59,26 @@ extends ISpec:
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
       Seq(
         TestCase(
           description = "sends the deletion email and deletes the application in the same run",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
           emailSendSuccessfully = true,
           expectedSendEmailRequests = 1,
           expectedAgentApplicationAfterRun = None
         ),
         TestCase(
           description = "keeps the application, with no deletion email recorded, when the email service fails, so the next run retries",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
           emailSendSuccessfully = false,
           expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = Some(agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
+          expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
         ),
         TestCase(
           description = "deletes an application with no verified email address without sending the deletion email",
-          agentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
           emailSendSuccessfully = true,
           expectedSendEmailRequests = 0,
           expectedAgentApplicationAfterRun = None
@@ -87,7 +87,8 @@ extends ISpec:
         s"run ${testCase.description}" in:
           testCase.agentApplication.shouldHaveGracePeriodEndInThePast
           testCase.agentApplication.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
-          if testCase.emailSendSuccessfully then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+          if testCase.emailSendSuccessfully
+          then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
           else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
           agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 

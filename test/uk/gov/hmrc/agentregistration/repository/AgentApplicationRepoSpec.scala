@@ -99,67 +99,67 @@ extends ISpec:
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      lazy val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
       Seq(
         FindTestCase(
           description = "finds a Started application expiring within the reminder period",
-          agentApplication = agentApplication.started.makeDueForExpiry,
+          agentApplication = agentApplicationStates.started.makeDueForExpiry,
           expectedFound = true
         ),
         FindTestCase(
           description = "finds a GrsDataReceived application expiring within the reminder period",
-          agentApplication = agentApplication.grsDataReceived.makeDueForExpiry,
+          agentApplication = agentApplicationStates.grsDataReceived.makeDueForExpiry,
           expectedFound = true
         ),
         FindTestCase(
           description = "does not find a SentForRisking application",
-          agentApplication = agentApplication.sentForRisking,
+          agentApplication = agentApplicationStates.sentForRisking,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentToMinerva application",
-          agentApplication = agentApplication.sentToMinerva,
+          agentApplication = agentApplicationStates.sentToMinerva,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a RiskingCompleted application",
-          agentApplication = agentApplication.riskingCompleted,
+          agentApplication = agentApplicationStates.riskingCompleted,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find an Expired application",
-          agentApplication = agentApplication.expired,
+          agentApplication = agentApplicationStates.expired,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a Started application already sent the reminder",
-          agentApplication = agentApplication.started.makeExpiryReminderEmailSent,
+          agentApplication = agentApplicationStates.started.makeExpiryReminderEmailSent,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application already sent the reminder",
-          agentApplication = agentApplication.grsDataReceived.makeExpiryReminderEmailSent,
+          agentApplication = agentApplicationStates.grsDataReceived.makeExpiryReminderEmailSent,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a Started application expiring after the reminder period",
-          agentApplication = agentApplication.started,
+          agentApplication = agentApplicationStates.started,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application expiring after the reminder period",
-          agentApplication = agentApplication.grsDataReceived,
+          agentApplication = agentApplicationStates.grsDataReceived,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a Started application whose expiry date has passed",
-          agentApplication = agentApplication.started.makeLongOverdue,
+          agentApplication = agentApplicationStates.started.makeLongOverdue,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application whose expiry date has passed",
-          agentApplication = agentApplication.grsDataReceived.makeLongOverdue,
+          agentApplication = agentApplicationStates.grsDataReceived.makeLongOverdue,
           expectedFound = false
         )
       ).foreach: testCase =>
@@ -169,7 +169,7 @@ extends ISpec:
           repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
       "findReadyForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
+        agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
           dropDatabase()
           val dueForExpiry: AgentApplication = havingExpiryDate.makeDueForExpiry
           val expiresAt: Instant = dueForExpiry.applicationExpiresAt.value
@@ -190,51 +190,51 @@ extends ISpec:
       Seq(
         UpdateTestCase(
           description = "expires a Started application whose expiry date has passed",
-          agentApplication = agentApplication.started.makeOverdue,
+          agentApplication = agentApplicationStates.started.makeOverdue,
           expectedModifiedCount = 1L,
-          expectedAgentApplicationAfterRun = agentApplication.started.makeOverdue.makeExpired
+          expectedAgentApplicationAfterRun = agentApplicationStates.started.makeOverdue.makeExpired
         ),
         UpdateTestCase(
           description = "expires a GrsDataReceived application whose expiry date has passed",
-          agentApplication = agentApplication.grsDataReceived.makeOverdue,
+          agentApplication = agentApplicationStates.grsDataReceived.makeOverdue,
           expectedModifiedCount = 1L,
-          expectedAgentApplicationAfterRun = agentApplication.grsDataReceived.makeOverdue.makeExpired
+          expectedAgentApplicationAfterRun = agentApplicationStates.grsDataReceived.makeOverdue.makeExpired
         ),
         UpdateTestCase(
           description = "does not expire a SentForRisking application",
-          agentApplication = agentApplication.sentForRisking,
+          agentApplication = agentApplicationStates.sentForRisking,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.sentForRisking
+          expectedAgentApplicationAfterRun = agentApplicationStates.sentForRisking
         ),
         UpdateTestCase(
           description = "does not expire a SentToMinerva application",
-          agentApplication = agentApplication.sentToMinerva,
+          agentApplication = agentApplicationStates.sentToMinerva,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.sentToMinerva
+          expectedAgentApplicationAfterRun = agentApplicationStates.sentToMinerva
         ),
         UpdateTestCase(
           description = "does not expire a RiskingCompleted application",
-          agentApplication = agentApplication.riskingCompleted,
+          agentApplication = agentApplicationStates.riskingCompleted,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.riskingCompleted
+          expectedAgentApplicationAfterRun = agentApplicationStates.riskingCompleted
         ),
         UpdateTestCase(
           description = "does not change an Expired application",
-          agentApplication = agentApplication.expired,
+          agentApplication = agentApplicationStates.expired,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.expired
+          expectedAgentApplicationAfterRun = agentApplicationStates.expired
         ),
         UpdateTestCase(
           description = "does not expire a Started application whose expiry date is in the future",
-          agentApplication = agentApplication.started,
+          agentApplication = agentApplicationStates.started,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.started
+          expectedAgentApplicationAfterRun = agentApplicationStates.started
         ),
         UpdateTestCase(
           description = "does not expire a GrsDataReceived application whose expiry date is in the future",
-          agentApplication = agentApplication.grsDataReceived,
+          agentApplication = agentApplicationStates.grsDataReceived,
           expectedModifiedCount = 0L,
-          expectedAgentApplicationAfterRun = agentApplication.grsDataReceived
+          expectedAgentApplicationAfterRun = agentApplicationStates.grsDataReceived
         )
       ).foreach: testCase =>
         s"updateManyToExpiredForUnsubmitted ${testCase.description}" in:
@@ -245,7 +245,7 @@ extends ISpec:
           repo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
       "updateManyToExpiredForUnsubmitted returns the number of applications it expired" in:
-        repo.upsert(agentApplication.started.makeOverdue).futureValue
+        repo.upsert(agentApplicationStates.started.makeOverdue).futureValue
 
         repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 1L
         repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 0L withClue
@@ -254,42 +254,42 @@ extends ISpec:
       Seq(
         FindTestCase(
           description = "does not find a Started application",
-          agentApplication = agentApplication.started,
+          agentApplication = agentApplicationStates.started,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application",
-          agentApplication = agentApplication.grsDataReceived,
+          agentApplication = agentApplicationStates.grsDataReceived,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentForRisking application",
-          agentApplication = agentApplication.sentForRisking,
+          agentApplication = agentApplicationStates.sentForRisking,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentToMinerva application",
-          agentApplication = agentApplication.sentToMinerva,
+          agentApplication = agentApplicationStates.sentToMinerva,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a RiskingCompleted application",
-          agentApplication = agentApplication.riskingCompleted,
+          agentApplication = agentApplicationStates.riskingCompleted,
           expectedFound = false
         ),
         FindTestCase(
           description = "finds an Expired application still in the grace period",
-          agentApplication = agentApplication.expired,
+          agentApplication = agentApplicationStates.expired,
           expectedFound = true
         ),
         FindTestCase(
           description = "does not find an Expired application whose grace period has ended",
-          agentApplication = agentApplication.expired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.expired.makeDueForDeletion,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find an Expired application already sent the expired email",
-          agentApplication = agentApplication.started.makeOverdue.makeExpiredEmailSent,
+          agentApplication = agentApplicationStates.started.makeOverdue.makeExpiredEmailSent,
           expectedFound = false
         )
       ).foreach: testCase =>
@@ -301,42 +301,42 @@ extends ISpec:
       Seq(
         FindTestCase(
           description = "does not find a Started application",
-          agentApplication = agentApplication.started,
+          agentApplication = agentApplicationStates.started,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application",
-          agentApplication = agentApplication.grsDataReceived,
+          agentApplication = agentApplicationStates.grsDataReceived,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentForRisking application",
-          agentApplication = agentApplication.sentForRisking,
+          agentApplication = agentApplicationStates.sentForRisking,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentToMinerva application",
-          agentApplication = agentApplication.sentToMinerva,
+          agentApplication = agentApplicationStates.sentToMinerva,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a RiskingCompleted application",
-          agentApplication = agentApplication.riskingCompleted,
+          agentApplication = agentApplicationStates.riskingCompleted,
           expectedFound = false
         ),
         FindTestCase(
           description = "finds an Expired application whose grace period has ended",
-          agentApplication = agentApplication.expired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.expired.makeDueForDeletion,
           expectedFound = true
         ),
         FindTestCase(
           description = "does not find an Expired application still in the grace period",
-          agentApplication = agentApplication.expired,
+          agentApplication = agentApplicationStates.expired,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find an Expired application already sent the deletion email",
-          agentApplication = agentApplication.expired.makeDeletionEmailSent,
+          agentApplication = agentApplicationStates.expired.makeDeletionEmailSent,
           expectedFound = false
         )
       ).foreach: testCase =>
@@ -348,37 +348,37 @@ extends ISpec:
       Seq(
         FindTestCase(
           description = "does not find a Started application",
-          agentApplication = agentApplication.started,
+          agentApplication = agentApplicationStates.started,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a GrsDataReceived application",
-          agentApplication = agentApplication.grsDataReceived,
+          agentApplication = agentApplicationStates.grsDataReceived,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentForRisking application",
-          agentApplication = agentApplication.sentForRisking,
+          agentApplication = agentApplicationStates.sentForRisking,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a SentToMinerva application",
-          agentApplication = agentApplication.sentToMinerva,
+          agentApplication = agentApplicationStates.sentToMinerva,
           expectedFound = false
         ),
         FindTestCase(
           description = "does not find a RiskingCompleted application",
-          agentApplication = agentApplication.riskingCompleted,
+          agentApplication = agentApplicationStates.riskingCompleted,
           expectedFound = false
         ),
         FindTestCase(
           description = "finds an Expired application whose grace period has ended",
-          agentApplication = agentApplication.expired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.expired.makeDueForDeletion,
           expectedFound = true
         ),
         FindTestCase(
           description = "does not find an Expired application still in the grace period",
-          agentApplication = agentApplication.expired,
+          agentApplication = agentApplicationStates.expired,
           expectedFound = false
         )
       ).foreach: testCase =>

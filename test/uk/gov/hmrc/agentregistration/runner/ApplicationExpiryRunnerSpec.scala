@@ -72,63 +72,64 @@ extends ISpec:
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
-      val expiryReminderEmail: SendEmailRequest = expectedExpiryReminderEmail(agentApplication.withVerifiedEmail)
-      val expiredEmail: SendEmailRequest = expectedExpiredEmail(agentApplication.withVerifiedEmail)
+      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val expiryReminderEmail: SendEmailRequest = expectedExpiryReminderEmail(agentApplicationStates.withVerifiedEmail)
+      val expiredEmail: SendEmailRequest = expectedExpiredEmail(agentApplicationStates.withVerifiedEmail)
 
       Seq(
         TestCase(
           description = "sends the reminder to an application with 10 days left and does not expire it",
-          agentApplication = agentApplication.withVerifiedEmail.makeDueForExpiry,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
           emailSendSuccessfully = true,
           expectedEmail = Some(expiryReminderEmail),
           expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeExpiryReminderEmailSent
+          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
         ),
         TestCase(
           description = "expires an application whose expiry date has passed and sends the expired email in the same run",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
           emailSendSuccessfully = true,
           expectedEmail = Some(expiredEmail),
           expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
         ),
         TestCase(
           description = "expires a long overdue application and sends only the expired email, never a reminder",
-          agentApplication = agentApplication.withVerifiedEmail.makeLongOverdue,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
           emailSendSuccessfully = true,
           expectedEmail = Some(expiredEmail),
           expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeLongOverdue.makeExpiredEmailSent
+          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeLongOverdue.makeExpiredEmailSent
         ),
         TestCase(
           description = "expires the application, with no expired email recorded, when the email service fails, so the next run retries",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
           emailSendSuccessfully = false,
           expectedEmail = Some(expiredEmail),
           expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
+          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired
         ),
         TestCase(
           description = "expires an application with no verified email address without sending any email",
-          agentApplication = agentApplication.started.makeLongOverdue,
+          agentApplication = agentApplicationStates.started.makeLongOverdue,
           emailSendSuccessfully = true,
           expectedEmail = None,
           expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplication.started.makeLongOverdue.makeExpired
+          expectedAgentApplicationAfterRun = agentApplicationStates.started.makeLongOverdue.makeExpired
         ),
         TestCase(
           description = "does not send the expired email to an application whose grace period has ended, as the deletion email is due",
-          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
+          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
           emailSendSuccessfully = true,
           expectedEmail = None,
           expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
+          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
         )
       ).foreach: testCase =>
         s"run ${testCase.description}" in:
           testCase.expectedEmail.foreach: expectedEmail =>
-            if testCase.emailSendSuccessfully then EmailStubs.stubSendEmail(expectedEmail)
+            if testCase.emailSendSuccessfully
+            then EmailStubs.stubSendEmail(expectedEmail)
             else EmailStubs.stubSendEmailFailure(expectedEmail)
           agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
