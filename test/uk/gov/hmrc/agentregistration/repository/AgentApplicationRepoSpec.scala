@@ -24,22 +24,16 @@ import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.crypto.Hasher
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Expired
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.GrsDataReceived
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.RiskingCompleted
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
-import uk.gov.hmrc.agentregistration.shared.ApplicationState.Started
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.ApplicationReference
-import uk.gov.hmrc.agentregistration.shared.ApplicationState
 import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
 import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 
 import java.time.Clock
@@ -89,26 +83,90 @@ extends ISpec:
     val updatedRecord3 = repo.findByApplicationReference(record3.applicationReference).futureValue.value
     updatedRecord3 shouldBe record3 withClue "application state for record 3 should be untouched"
 
+  private final case class FindTestCase(
+    description: String,
+    agentApplication: AgentApplication,
+    expectedFound: Boolean
+  )
+
+  private final case class UpdateTestCase(
+    description: String,
+    agentApplication: AgentApplication,
+    expectedModifiedCount: Long,
+    expectedAgentApplicationAfterRun: AgentApplication
+  )
+
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
       lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      "findReadyForExpiryReminderEmail finds only Started and GrsDataReceived applications expiring within the reminder period" in:
-        def isReadyForExpiryReminderEmail(agentApplication: AgentApplication): Boolean =
-          dropDatabase()
-          repo.upsert(agentApplication).futureValue
-          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue.contains(agentApplication)
+      Seq(
+        FindTestCase(
+          description = "finds a Started application expiring within the reminder period",
+          agentApplication = agentApplication.started.makeDueForExpiry,
+          expectedFound = true
+        ),
+        FindTestCase(
+          description = "finds a GrsDataReceived application expiring within the reminder period",
+          agentApplication = agentApplication.grsDataReceived.makeDueForExpiry,
+          expectedFound = true
+        ),
+        FindTestCase(
+          description = "does not find a SentForRisking application",
+          agentApplication = agentApplication.sentForRisking,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentToMinerva application",
+          agentApplication = agentApplication.sentToMinerva,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a RiskingCompleted application",
+          agentApplication = agentApplication.riskingCompleted,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find an Expired application",
+          agentApplication = agentApplication.expired,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a Started application already sent the reminder",
+          agentApplication = agentApplication.started.makeExpiryReminderEmailSent,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application already sent the reminder",
+          agentApplication = agentApplication.grsDataReceived.makeExpiryReminderEmailSent,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a Started application expiring after the reminder period",
+          agentApplication = agentApplication.started,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application expiring after the reminder period",
+          agentApplication = agentApplication.grsDataReceived,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a Started application whose expiry date has passed",
+          agentApplication = agentApplication.started.makeLongOverdue,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application whose expiry date has passed",
+          agentApplication = agentApplication.grsDataReceived.makeLongOverdue,
+          expectedFound = false
+        )
+      ).foreach: testCase =>
+        s"findReadyForExpiryReminderEmail ${testCase.description}" in:
+          repo.upsert(testCase.agentApplication).futureValue
 
-        ApplicationState.values.foreach: state =>
-          withClue(s"state=$state: "):
-            state match
-              case Started => isReadyForExpiryReminderEmail(agentApplication.started.makeDueForExpiry) shouldBe true
-              case GrsDataReceived => isReadyForExpiryReminderEmail(agentApplication.grsDataReceived.makeDueForExpiry) shouldBe true
-              case SentForRisking => isReadyForExpiryReminderEmail(agentApplication.sentForRisking) shouldBe false
-              case SentToMinerva => isReadyForExpiryReminderEmail(agentApplication.sentToMinerva) shouldBe false
-              case RiskingCompleted => isReadyForExpiryReminderEmail(agentApplication.riskingCompleted) shouldBe false
-              case Expired => isReadyForExpiryReminderEmail(agentApplication.expired) shouldBe false
+          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
       "findReadyForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
         agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
@@ -129,67 +187,62 @@ extends ISpec:
             isReadyForExpiryReminderEmail(now = expiresAt) shouldBe true withClue "expiring now, the last moment of the reminder period"
             isReadyForExpiryReminderEmail(now = expiresAt.plusSeconds(1)) shouldBe false withClue "expiry date passed, too late for a reminder"
 
-      "findReadyForExpiryReminderEmail does not find an application already sent the reminder" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
-          dropDatabase()
-          val expiryReminderEmailSent: AgentApplication = havingExpiryDate.makeExpiryReminderEmailSent
-          expiryReminderEmailSent.expiryReminderEmailSentAt shouldBe defined withClue "precondition: the reminder must already be recorded"
-          expiryReminderEmailSent.shouldHaveExpiryDateWithinReminderPeriod
-          repo.upsert(expiryReminderEmailSent).futureValue
+      Seq(
+        UpdateTestCase(
+          description = "expires a Started application whose expiry date has passed",
+          agentApplication = agentApplication.started.makeOverdue,
+          expectedModifiedCount = 1L,
+          expectedAgentApplicationAfterRun = agentApplication.started.makeOverdue.makeExpired
+        ),
+        UpdateTestCase(
+          description = "expires a GrsDataReceived application whose expiry date has passed",
+          agentApplication = agentApplication.grsDataReceived.makeOverdue,
+          expectedModifiedCount = 1L,
+          expectedAgentApplicationAfterRun = agentApplication.grsDataReceived.makeOverdue.makeExpired
+        ),
+        UpdateTestCase(
+          description = "does not expire a SentForRisking application",
+          agentApplication = agentApplication.sentForRisking,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.sentForRisking
+        ),
+        UpdateTestCase(
+          description = "does not expire a SentToMinerva application",
+          agentApplication = agentApplication.sentToMinerva,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.sentToMinerva
+        ),
+        UpdateTestCase(
+          description = "does not expire a RiskingCompleted application",
+          agentApplication = agentApplication.riskingCompleted,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.riskingCompleted
+        ),
+        UpdateTestCase(
+          description = "does not change an Expired application",
+          agentApplication = agentApplication.expired,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.expired
+        ),
+        UpdateTestCase(
+          description = "does not expire a Started application whose expiry date is in the future",
+          agentApplication = agentApplication.started,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.started
+        ),
+        UpdateTestCase(
+          description = "does not expire a GrsDataReceived application whose expiry date is in the future",
+          agentApplication = agentApplication.grsDataReceived,
+          expectedModifiedCount = 0L,
+          expectedAgentApplicationAfterRun = agentApplication.grsDataReceived
+        )
+      ).foreach: testCase =>
+        s"updateManyToExpiredForUnsubmitted ${testCase.description}" in:
+          repo.upsert(testCase.agentApplication).futureValue
 
-          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue shouldBe empty withClue
-            s"state=${havingExpiryDate.applicationState}"
+          repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe testCase.expectedModifiedCount
 
-      "findReadyForExpiryReminderEmail does not find an application expiring after the reminder period" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
-          dropDatabase()
-          havingExpiryDate.shouldHaveExpiryDateAfterReminderPeriod
-          repo.upsert(havingExpiryDate).futureValue
-
-          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue shouldBe empty withClue
-            s"state=${havingExpiryDate.applicationState}"
-
-      "findReadyForExpiryReminderEmail does not find an application whose expiry date has passed" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
-          dropDatabase()
-          val longOverdue: AgentApplication = havingExpiryDate.makeLongOverdue
-          longOverdue.shouldHaveExpiryDateInThePast
-          longOverdue.expiryReminderEmailSentAt shouldBe None withClue "precondition: the reminder must not be recorded, so only the date keeps it out"
-          repo.upsert(longOverdue).futureValue
-
-          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue shouldBe empty withClue
-            s"state=${havingExpiryDate.applicationState}"
-
-      "updateManyToExpiredForUnsubmitted expires only Started and GrsDataReceived applications whose expiry date has passed" in:
-        def afterUpdateManyToExpiredForUnsubmitted(agentApplication: AgentApplication): AgentApplication =
-          dropDatabase()
-          repo.upsert(agentApplication).futureValue
-          repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue
-          repo.findById(agentApplication.agentApplicationId).futureValue.value
-
-        val overdueStarted: AgentApplication = agentApplication.started.makeOverdue
-        val overdueGrsDataReceived: AgentApplication = agentApplication.grsDataReceived.makeOverdue
-
-        ApplicationState.values.foreach: state =>
-          withClue(s"state=$state: "):
-            state match
-              case Started => afterUpdateManyToExpiredForUnsubmitted(overdueStarted) shouldBe overdueStarted.makeExpired
-              case GrsDataReceived => afterUpdateManyToExpiredForUnsubmitted(overdueGrsDataReceived) shouldBe overdueGrsDataReceived.makeExpired
-              case SentForRisking => afterUpdateManyToExpiredForUnsubmitted(agentApplication.sentForRisking) shouldBe agentApplication.sentForRisking
-              case SentToMinerva => afterUpdateManyToExpiredForUnsubmitted(agentApplication.sentToMinerva) shouldBe agentApplication.sentToMinerva
-              case RiskingCompleted => afterUpdateManyToExpiredForUnsubmitted(agentApplication.riskingCompleted) shouldBe agentApplication.riskingCompleted
-              case Expired => afterUpdateManyToExpiredForUnsubmitted(agentApplication.expired) shouldBe agentApplication.expired
-
-      "updateManyToExpiredForUnsubmitted does not expire an application whose expiry date is in the future" in:
-        agentApplication.havingExpiryDate.foreach: havingExpiryDate =>
-          dropDatabase()
-          havingExpiryDate.shouldHaveExpiryDateInTheFuture
-          repo.upsert(havingExpiryDate).futureValue
-
-          repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 0L withClue
-            s"state=${havingExpiryDate.applicationState}"
-
-          repo.findById(havingExpiryDate.agentApplicationId).futureValue.value shouldBe havingExpiryDate
+          repo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
       "updateManyToExpiredForUnsubmitted returns the number of applications it expired" in:
         repo.upsert(agentApplication.started.makeOverdue).futureValue
@@ -198,88 +251,141 @@ extends ISpec:
         repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 0L withClue
           "a second run has nothing left to expire"
 
-      "findReadyForExpiredEmail finds only Expired applications still in the grace period" in:
-        def isReadyForExpiredEmail(agentApplication: AgentApplication): Boolean =
-          dropDatabase()
-          repo.upsert(agentApplication).futureValue
-          repo.findReadyForExpiredEmail().futureValue.contains(agentApplication)
+      Seq(
+        FindTestCase(
+          description = "does not find a Started application",
+          agentApplication = agentApplication.started,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application",
+          agentApplication = agentApplication.grsDataReceived,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentForRisking application",
+          agentApplication = agentApplication.sentForRisking,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentToMinerva application",
+          agentApplication = agentApplication.sentToMinerva,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a RiskingCompleted application",
+          agentApplication = agentApplication.riskingCompleted,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "finds an Expired application still in the grace period",
+          agentApplication = agentApplication.expired,
+          expectedFound = true
+        ),
+        FindTestCase(
+          description = "does not find an Expired application whose grace period has ended",
+          agentApplication = agentApplication.expired.makeDueForDeletion,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find an Expired application already sent the expired email",
+          agentApplication = agentApplication.started.makeOverdue.makeExpiredEmailSent,
+          expectedFound = false
+        )
+      ).foreach: testCase =>
+        s"findReadyForExpiredEmail ${testCase.description}" in:
+          repo.upsert(testCase.agentApplication).futureValue
 
-        ApplicationState.values.foreach: state =>
-          withClue(s"state=$state: "):
-            state match
-              case Started => isReadyForExpiredEmail(agentApplication.started) shouldBe false
-              case GrsDataReceived => isReadyForExpiredEmail(agentApplication.grsDataReceived) shouldBe false
-              case SentForRisking => isReadyForExpiredEmail(agentApplication.sentForRisking) shouldBe false
-              case SentToMinerva => isReadyForExpiredEmail(agentApplication.sentToMinerva) shouldBe false
-              case RiskingCompleted => isReadyForExpiredEmail(agentApplication.riskingCompleted) shouldBe false
-              case Expired => isReadyForExpiredEmail(agentApplication.expired) shouldBe true
+          repo.findReadyForExpiredEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
-      "findReadyForExpiredEmail does not find an application whose grace period has ended" in:
-        val dueForDeletion: AgentApplication = agentApplication.expired.makeDueForDeletion
-        dueForDeletion.shouldHaveGracePeriodEndInThePast
-        repo.upsert(dueForDeletion).futureValue
+      Seq(
+        FindTestCase(
+          description = "does not find a Started application",
+          agentApplication = agentApplication.started,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application",
+          agentApplication = agentApplication.grsDataReceived,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentForRisking application",
+          agentApplication = agentApplication.sentForRisking,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentToMinerva application",
+          agentApplication = agentApplication.sentToMinerva,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a RiskingCompleted application",
+          agentApplication = agentApplication.riskingCompleted,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "finds an Expired application whose grace period has ended",
+          agentApplication = agentApplication.expired.makeDueForDeletion,
+          expectedFound = true
+        ),
+        FindTestCase(
+          description = "does not find an Expired application still in the grace period",
+          agentApplication = agentApplication.expired,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find an Expired application already sent the deletion email",
+          agentApplication = agentApplication.expired.makeDeletionEmailSent,
+          expectedFound = false
+        )
+      ).foreach: testCase =>
+        s"findReadyForDeletionEmail ${testCase.description}" in:
+          repo.upsert(testCase.agentApplication).futureValue
 
-        repo.findReadyForExpiredEmail().futureValue shouldBe empty
+          repo.findReadyForDeletionEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
-      "findReadyForExpiredEmail does not find an application already sent the expired email" in:
-        val expiredEmailSent: AgentApplication = agentApplication.started.makeOverdue.makeExpiredEmailSent
-        expiredEmailSent.expiredEmailSentAt shouldBe defined withClue "precondition: the expired email must already be recorded"
-        expiredEmailSent.shouldHaveGracePeriodEndInTheFuture
-        repo.upsert(expiredEmailSent).futureValue
+      Seq(
+        FindTestCase(
+          description = "does not find a Started application",
+          agentApplication = agentApplication.started,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a GrsDataReceived application",
+          agentApplication = agentApplication.grsDataReceived,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentForRisking application",
+          agentApplication = agentApplication.sentForRisking,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a SentToMinerva application",
+          agentApplication = agentApplication.sentToMinerva,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "does not find a RiskingCompleted application",
+          agentApplication = agentApplication.riskingCompleted,
+          expectedFound = false
+        ),
+        FindTestCase(
+          description = "finds an Expired application whose grace period has ended",
+          agentApplication = agentApplication.expired.makeDueForDeletion,
+          expectedFound = true
+        ),
+        FindTestCase(
+          description = "does not find an Expired application still in the grace period",
+          agentApplication = agentApplication.expired,
+          expectedFound = false
+        )
+      ).foreach: testCase =>
+        s"findDueForDeletion ${testCase.description}" in:
+          repo.upsert(testCase.agentApplication).futureValue
 
-        repo.findReadyForExpiredEmail().futureValue shouldBe empty
-
-      "findReadyForDeletionEmail finds only Expired applications whose grace period has ended" in:
-        def isReadyForDeletionEmail(agentApplication: AgentApplication): Boolean =
-          dropDatabase()
-          repo.upsert(agentApplication).futureValue
-          repo.findReadyForDeletionEmail().futureValue.contains(agentApplication)
-
-        ApplicationState.values.foreach: state =>
-          withClue(s"state=$state: "):
-            state match
-              case Started => isReadyForDeletionEmail(agentApplication.started) shouldBe false
-              case GrsDataReceived => isReadyForDeletionEmail(agentApplication.grsDataReceived) shouldBe false
-              case SentForRisking => isReadyForDeletionEmail(agentApplication.sentForRisking) shouldBe false
-              case SentToMinerva => isReadyForDeletionEmail(agentApplication.sentToMinerva) shouldBe false
-              case RiskingCompleted => isReadyForDeletionEmail(agentApplication.riskingCompleted) shouldBe false
-              case Expired => isReadyForDeletionEmail(agentApplication.expired.makeDueForDeletion) shouldBe true
-
-      "findReadyForDeletionEmail does not find an application still in the grace period" in:
-        agentApplication.expired.shouldHaveGracePeriodEndInTheFuture
-        repo.upsert(agentApplication.expired).futureValue
-
-        repo.findReadyForDeletionEmail().futureValue shouldBe empty
-
-      "findReadyForDeletionEmail does not find an application already sent the deletion email" in:
-        val deletionEmailSent: AgentApplication = agentApplication.expired.makeDeletionEmailSent
-        deletionEmailSent.deletionEmailSentAt shouldBe defined withClue "precondition: the deletion email must already be recorded"
-        deletionEmailSent.shouldHaveGracePeriodEndInThePast
-        repo.upsert(deletionEmailSent).futureValue
-
-        repo.findReadyForDeletionEmail().futureValue shouldBe empty
-
-      "findDueForDeletion finds only Expired applications whose grace period has ended" in:
-        def isDueForDeletion(agentApplication: AgentApplication): Boolean =
-          dropDatabase()
-          repo.upsert(agentApplication).futureValue
-          repo.findDueForDeletion().futureValue.contains(agentApplication)
-
-        ApplicationState.values.foreach: state =>
-          withClue(s"state=$state: "):
-            state match
-              case Started => isDueForDeletion(agentApplication.started) shouldBe false
-              case GrsDataReceived => isDueForDeletion(agentApplication.grsDataReceived) shouldBe false
-              case SentForRisking => isDueForDeletion(agentApplication.sentForRisking) shouldBe false
-              case SentToMinerva => isDueForDeletion(agentApplication.sentToMinerva) shouldBe false
-              case RiskingCompleted => isDueForDeletion(agentApplication.riskingCompleted) shouldBe false
-              case Expired => isDueForDeletion(agentApplication.expired.makeDueForDeletion) shouldBe true
-
-      "findDueForDeletion does not find an application still in the grace period" in:
-        agentApplication.expired.shouldHaveGracePeriodEndInTheFuture
-        repo.upsert(agentApplication.expired).futureValue
-
-        repo.findDueForDeletion().futureValue shouldBe empty
+          repo.findDueForDeletion().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
     }
 
   // the fields the Mongo format stores as BSON Date; the records below between them carry all of them
