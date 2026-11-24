@@ -69,13 +69,8 @@ extends RequestAwareLogging:
       _ = logger.info(s"Sent $emailTemplateId email for ${agentApplication.applicationReference.value}")
     yield ()
 
-  private def markEmailSent(agentApplication: AgentApplication)(using RequestHeader): Future[Unit] = agentApplicationRepo
-    .findById(agentApplication.agentApplicationId)
-    .flatMap:
-      case Some(latestAgentApplication) => agentApplicationRepo.upsert(latestAgentApplication.modify(_.expiredEmailSentAt).setTo(Some(Instant.now(clock))))
-      case None =>
-        logger.warn(s"Application ${agentApplication.applicationReference.value} no longer exists, expiredEmailSentAt not recorded")
-        Future.successful(())
+  private def markEmailSent(agentApplication: AgentApplication): Future[Unit] = agentApplicationRepo
+    .upsert(agentApplication.modify(_.expiredEmailSentAt).setTo(Some(Instant.now(clock))))
 
   def makeSendEmailRequest(
     agentApplication: AgentApplication,
