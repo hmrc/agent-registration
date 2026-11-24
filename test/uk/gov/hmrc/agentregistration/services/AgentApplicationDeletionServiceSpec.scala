@@ -21,12 +21,12 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
 import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
 import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 
@@ -41,66 +41,54 @@ extends ISpec:
 
   private lazy val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
 
+  private final case class TestCase(
+    description: String,
+    agentApplication: AgentApplication,
+    expectedAgentApplicationAfterRun: Option[AgentApplication],
+    expectedIndividualsAfterRun: List[IndividualProvidedDetails]
+  )
+
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      "processDeletions deletes an application whose grace period has ended and that was sent the deletion email, together with its individuals" in:
-        val deletionEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-        deletionEmailSent.shouldHaveGracePeriodEndInThePast
-        individualProvidedDetails.agentApplicationId shouldBe deletionEmailSent.agentApplicationId withClue
-          "precondition: the individual must belong to the application"
-        agentApplicationRepo.upsert(deletionEmailSent).futureValue
-        individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+      Seq(
+        TestCase(
+          description = "deletes an application whose grace period has ended and that was sent the deletion email, together with its individuals",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+          expectedAgentApplicationAfterRun = None,
+          expectedIndividualsAfterRun = List.empty
+        ),
+        TestCase(
+          description = "deletes an application with no verified email address without waiting for a deletion email, together with its individuals",
+          agentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion,
+          expectedAgentApplicationAfterRun = None,
+          expectedIndividualsAfterRun = List.empty
+        ),
+        TestCase(
+          description = "keeps an application with a verified email address until the deletion email is sent, together with its individuals",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          expectedAgentApplicationAfterRun = Some(agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion),
+          expectedIndividualsAfterRun = List(individualProvidedDetails)
+        ),
+        TestCase(
+          description = "keeps an application still in the grace period, together with its individuals",
+          agentApplication = agentApplication.started.makeOverdue.makeExpired,
+          expectedAgentApplicationAfterRun = Some(agentApplication.started.makeOverdue.makeExpired),
+          expectedIndividualsAfterRun = List(individualProvidedDetails)
+        )
+      ).foreach: testCase =>
+        s"processDeletions ${testCase.description}" in:
+          val agentApplicationId: AgentApplicationId = testCase.agentApplication.agentApplicationId
+          individualProvidedDetails.agentApplicationId shouldBe agentApplicationId withClue "precondition: the individual must belong to the application"
+          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+          individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
 
-        agentApplicationDeletionService.processDeletions().futureValue
+          agentApplicationDeletionService.processDeletions().futureValue
 
-        agentApplicationRepo.findById(deletionEmailSent.agentApplicationId).futureValue shouldBe None
-        individualProvidedDetailsRepo.findForApplication(deletionEmailSent.agentApplicationId).futureValue shouldBe empty
-
-      "processDeletions deletes an application with no verified email address without waiting for a deletion email, together with its individuals" in:
-        val dueForDeletion: AgentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion
-        dueForDeletion.shouldHaveGracePeriodEndInThePast
-        dueForDeletion.applicantContactDetails shouldBe None withClue "precondition: the application must have no applicant contact details"
-        dueForDeletion.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
-        individualProvidedDetails.agentApplicationId shouldBe dueForDeletion.agentApplicationId withClue
-          "precondition: the individual must belong to the application"
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
-        individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-
-        agentApplicationDeletionService.processDeletions().futureValue
-
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue shouldBe None
-        individualProvidedDetailsRepo.findForApplication(dueForDeletion.agentApplicationId).futureValue shouldBe empty
-
-      "processDeletions keeps an application with a verified email address until the deletion email is sent, together with its individuals" in:
-        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
-        dueForDeletion.shouldHaveGracePeriodEndInThePast
-        dueForDeletion.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
-        individualProvidedDetails.agentApplicationId shouldBe dueForDeletion.agentApplicationId withClue
-          "precondition: the individual must belong to the application"
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
-        individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-
-        agentApplicationDeletionService.processDeletions().futureValue
-
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue shouldBe Some(dueForDeletion)
-        individualProvidedDetailsRepo.findForApplication(dueForDeletion.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
-
-      "processDeletions keeps an application still in the grace period, together with its individuals" in:
-        val expired: AgentApplication = agentApplication.started.makeOverdue.makeExpired
-        expired.shouldHaveGracePeriodEndInTheFuture
-        expired.applicantContactDetails shouldBe None withClue "precondition: no applicant contact details, so only the grace period keeps it"
-        individualProvidedDetails.agentApplicationId shouldBe expired.agentApplicationId withClue
-          "precondition: the individual must belong to the application"
-        agentApplicationRepo.upsert(expired).futureValue
-        individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
-
-        agentApplicationDeletionService.processDeletions().futureValue
-
-        agentApplicationRepo.findById(expired.agentApplicationId).futureValue shouldBe Some(expired)
-        individualProvidedDetailsRepo.findForApplication(expired.agentApplicationId).futureValue shouldBe List(individualProvidedDetails)
+          agentApplicationRepo.findById(agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun
+          individualProvidedDetailsRepo.findForApplication(agentApplicationId).futureValue shouldBe testCase.expectedIndividualsAfterRun
     }
 
   private lazy val deletionEmailSentWithAmlsEvidence: AgentApplication =

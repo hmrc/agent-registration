@@ -33,8 +33,12 @@ extends RequestAwareLogging:
     given RequestHeader = EmptyRequest.emptyRequestHeader
     logger.info(s"$runnerName: Started...")
     stages
-      .foldLeft(Future.unit): (previousStages, stage) =>
-        previousStages.flatMap(_ => runStage(runnerName, stage))
+      .foldLeft(Future.unit):
+        (
+          previousStages,
+          stage
+        ) =>
+          previousStages.flatMap(_ => runStage(runnerName, stage))
       .map(_ => logger.info(s"$runnerName: DONE"))
 
   private def runStage(

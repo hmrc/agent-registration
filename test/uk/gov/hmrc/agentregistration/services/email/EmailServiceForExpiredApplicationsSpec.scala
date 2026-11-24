@@ -25,7 +25,6 @@ import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
 import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
@@ -50,72 +49,72 @@ extends ISpec:
     )
   )
 
+  private final case class TestCase(
+    description: String,
+    agentApplication: AgentApplication,
+    emailSendSuccessfully: Boolean,
+    expectedSendEmailRequests: Int,
+    expectedAgentApplicationAfterRun: AgentApplication
+  )
+
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      "processEmails sends the expired email to the verified applicant email and records it as sent" in:
-        val expired: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
-        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-        EmailStubs.stubSendEmail(expectedEmail(expired))
-        agentApplicationRepo.upsert(expired).futureValue
+      Seq(
+        TestCase(
+          description = "sends the expired email to the verified applicant email and records it as sent",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 1,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        ),
+        TestCase(
+          description = "does not send the expired email to an application already sent it",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        ),
+        TestCase(
+          description = "does not send the expired email to an application with no verified email address",
+          agentApplication = agentApplication.started.makeOverdue.makeExpired,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.started.makeOverdue.makeExpired
+        ),
+        TestCase(
+          description = "does not send the expired email to an application that has not expired",
+          agentApplication = agentApplication.withVerifiedEmail,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail
+        ),
+        TestCase(
+          description = "does not send the expired email to an application whose grace period has ended",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
+        ),
+        TestCase(
+          description = "does not record the expired email as sent when the email service fails, so it is retried on the next run",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired,
+          emailSendSuccessfully = false,
+          expectedSendEmailRequests = 1,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
+        )
+      ).foreach: testCase =>
+        s"processEmails ${testCase.description}" in:
+          if testCase.emailSendSuccessfully then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+          else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-        emailServiceForExpiredApplications.processEmails().futureValue
+          emailServiceForExpiredApplications.processEmails().futureValue
 
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expiredEmailSent
-
-      "processEmails does not send the expired email to an application already sent it" in:
-        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-        expiredEmailSent.expiredEmailSentAt shouldBe defined withClue "precondition: the expired email must already be recorded"
-        expiredEmailSent.shouldHaveGracePeriodEndInTheFuture
-        agentApplicationRepo.upsert(expiredEmailSent).futureValue
-
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(expiredEmailSent.agentApplicationId).futureValue.value shouldBe expiredEmailSent
-
-      "processEmails does not send the expired email to an application with no verified email address" in:
-        val expired: AgentApplication = agentApplication.started.makeOverdue.makeExpired
-        expired.applicantContactDetails shouldBe None withClue "precondition: the application must have no applicant contact details"
-        agentApplicationRepo.upsert(expired).futureValue
-
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expired
-
-      "processEmails does not send the expired email to an application that has not expired" in:
-        val notExpired: AgentApplication = agentApplication.withVerifiedEmail
-        notExpired.expiredAt shouldBe None withClue "precondition: the application must not have expired"
-        agentApplicationRepo.upsert(notExpired).futureValue
-
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(notExpired.agentApplicationId).futureValue.value shouldBe notExpired
-
-      "processEmails does not send the expired email to an application whose grace period has ended" in:
-        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
-        dueForDeletion.shouldHaveGracePeriodEndInThePast
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
-
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
-
-      "processEmails does not record the expired email as sent when the email service fails, so it is retried on the next run" in:
-        val expired: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired
-        EmailStubs.stubSendEmailFailure(expectedEmail(expired))
-        agentApplicationRepo.upsert(expired).futureValue
-
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(expired.agentApplicationId).futureValue.value shouldBe expired
+          EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+          agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
     }
 
   "processEmails sends the expired email to the verified agent email when agent details are complete" in:

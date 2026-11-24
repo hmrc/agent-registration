@@ -56,7 +56,11 @@ extends UnitSpec:
 
     RunnerHelper.run(runnerName, stages).futureValue shouldBe ()
 
-    startedStageNames.get() shouldBe Seq("first", "second", "third")
+    startedStageNames.get() shouldBe Seq(
+      "first",
+      "second",
+      "third"
+    )
 
   "run starts a stage only after the previous stage has finished" in:
     val startedStageNames: AtomicReference[Seq[String]] = new AtomicReference(Seq.empty)
@@ -117,7 +121,11 @@ extends UnitSpec:
 
     RunnerHelper.run(runnerName, stages).futureValue shouldBe ()
 
-    startedStageNames.get() shouldBe Seq("first", "second", "third")
+    startedStageNames.get() shouldBe Seq(
+      "first",
+      "second",
+      "third"
+    )
 
   "run still runs the remaining stages when a stage throws an exception instead of returning a failed Future" in:
     val startedStageNames: AtomicReference[Seq[String]] = new AtomicReference(Seq.empty)
@@ -147,7 +155,11 @@ extends UnitSpec:
 
     RunnerHelper.run(runnerName, stages).futureValue shouldBe ()
 
-    startedStageNames.get() shouldBe Seq("first", "second", "third")
+    startedStageNames.get() shouldBe Seq(
+      "first",
+      "second",
+      "third"
+    )
 
   "run succeeds even when every stage fails, so the scheduler is never broken" in:
     val startedStageNames: AtomicReference[Seq[String]] = new AtomicReference(Seq.empty)
@@ -177,4 +189,8 @@ extends UnitSpec:
 
     RunnerHelper.run(runnerName, stages).futureValue shouldBe ()
 
-    startedStageNames.get() shouldBe Seq("first", "second", "third")
+    startedStageNames.get() shouldBe Seq(
+      "first",
+      "second",
+      "third"
+    )

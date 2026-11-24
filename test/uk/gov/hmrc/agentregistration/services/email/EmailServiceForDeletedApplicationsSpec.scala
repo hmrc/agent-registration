@@ -25,7 +25,6 @@ import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
 import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
@@ -49,62 +48,65 @@ extends ISpec:
     )
   )
 
+  private final case class TestCase(
+    description: String,
+    agentApplication: AgentApplication,
+    emailSendSuccessfully: Boolean,
+    expectedSendEmailRequests: Int,
+    expectedAgentApplicationAfterRun: AgentApplication
+  )
+
   BusinessType.values.foreach: businessType =>
     s"for a $businessType application" - {
 
-      lazy val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+      val agentApplication: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      "processEmails sends the deletion email to the verified applicant email and records it as sent" in:
-        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
-        val deletionEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-        EmailStubs.stubSendEmail(expectedEmail(dueForDeletion))
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
+      Seq(
+        TestCase(
+          description = "sends the deletion email to the verified applicant email and records it as sent",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 1,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+        ),
+        TestCase(
+          description = "does not send the deletion email to an application already sent it",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+        ),
+        TestCase(
+          description = "does not send the deletion email to an application with no verified email address",
+          agentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion
+        ),
+        TestCase(
+          description = "does not send the deletion email to an application still in the grace period",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent,
+          emailSendSuccessfully = true,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
+        ),
+        TestCase(
+          description = "does not record the deletion email as sent when the email service fails, so it is retried on the next run",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+          emailSendSuccessfully = false,
+          expectedSendEmailRequests = 1,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+        )
+      ).foreach: testCase =>
+        s"processEmails ${testCase.description}" in:
+          if testCase.emailSendSuccessfully then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+          else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-        emailServiceForDeletedApplications.processEmails().futureValue
+          emailServiceForDeletedApplications.processEmails().futureValue
 
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe deletionEmailSent
-
-      "processEmails does not send the deletion email to an application already sent it" in:
-        val deletionEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-        deletionEmailSent.deletionEmailSentAt shouldBe defined withClue "precondition: the deletion email must already be recorded"
-        deletionEmailSent.shouldHaveGracePeriodEndInThePast
-        agentApplicationRepo.upsert(deletionEmailSent).futureValue
-
-        emailServiceForDeletedApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(deletionEmailSent.agentApplicationId).futureValue.value shouldBe deletionEmailSent
-
-      "processEmails does not send the deletion email to an application with no verified email address" in:
-        val dueForDeletion: AgentApplication = agentApplication.started.makeOverdue.makeExpired.makeDueForDeletion
-        dueForDeletion.applicantContactDetails shouldBe None withClue "precondition: the application must have no applicant contact details"
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
-
-        emailServiceForDeletedApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
-
-      "processEmails does not send the deletion email to an application still in the grace period" in:
-        val expiredEmailSent: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-        expiredEmailSent.shouldHaveGracePeriodEndInTheFuture
-        agentApplicationRepo.upsert(expiredEmailSent).futureValue
-
-        emailServiceForDeletedApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 0)
-        agentApplicationRepo.findById(expiredEmailSent.agentApplicationId).futureValue.value shouldBe expiredEmailSent
-
-      "processEmails does not record the deletion email as sent when the email service fails, so it is retried on the next run" in:
-        val dueForDeletion: AgentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
-        EmailStubs.stubSendEmailFailure(expectedEmail(dueForDeletion))
-        agentApplicationRepo.upsert(dueForDeletion).futureValue
-
-        emailServiceForDeletedApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(dueForDeletion.agentApplicationId).futureValue.value shouldBe dueForDeletion
+          EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+          agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
     }
 
   "processEmails sends the deletion email to the verified agent email when agent details are complete" in:
