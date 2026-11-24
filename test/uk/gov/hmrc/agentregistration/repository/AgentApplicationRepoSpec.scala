@@ -22,6 +22,7 @@ import org.bson.BsonValue
 import org.bson.conversions.Bson
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
@@ -51,7 +52,8 @@ extends ISpec:
       mongoComponent = mongoComponent,
       agentApplicationMongoFormats = app.injector.instanceOf[AgentApplicationMongoFormats],
       hasher = app.injector.instanceOf[Hasher],
-      clock = Clock.fixed(now, ZoneOffset.UTC)
+      clock = Clock.fixed(now, ZoneOffset.UTC),
+      appConfig = app.injector.instanceOf[AppConfig]
     )
 
   "updateManyApplicationStateByReference should set the state in all selected applications and leave others untouched" in:
@@ -163,12 +165,12 @@ extends ISpec:
           expectedFound = false
         )
       ).foreach: testCase =>
-        s"findReadyForExpiryReminderEmail ${testCase.description}" in:
+        s"findUnsubmittedApplicationsForExpiryReminderEmail ${testCase.description}" in:
           repo.upsert(testCase.agentApplication).futureValue
 
-          repo.findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod).futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+          repo.findUnsubmittedApplicationsForExpiryReminderEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
-      "findReadyForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
+      "findUnsubmittedApplicationsForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
         agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
           dropDatabase()
           val dueForExpiry: AgentApplication = havingExpiryDate.makeDueForExpiry
@@ -176,7 +178,7 @@ extends ISpec:
           repo.upsert(dueForExpiry).futureValue
 
           def isReadyForExpiryReminderEmail(now: Instant): Boolean = repoWithClockAt(now)
-            .findReadyForExpiryReminderEmail(tdAll.expiryReminderPeriod)
+            .findUnsubmittedApplicationsForExpiryReminderEmail()
             .futureValue
             .contains(dueForExpiry)
 
@@ -237,18 +239,18 @@ extends ISpec:
           expectedAgentApplicationAfterRun = agentApplicationStates.grsDataReceived
         )
       ).foreach: testCase =>
-        s"updateManyToExpiredForUnsubmitted ${testCase.description}" in:
+        s"expireUnsubmittedApplications ${testCase.description}" in:
           repo.upsert(testCase.agentApplication).futureValue
 
-          repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe testCase.expectedModifiedCount
+          repo.expireUnsubmittedApplications().futureValue shouldBe testCase.expectedModifiedCount
 
           repo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
-      "updateManyToExpiredForUnsubmitted returns the number of applications it expired" in:
+      "expireUnsubmittedApplications returns the number of applications it expired" in:
         repo.upsert(agentApplicationStates.started.makeOverdue).futureValue
 
-        repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 1L
-        repo.updateManyToExpiredForUnsubmitted(tdAll.postExpiryGracePeriod).futureValue shouldBe 0L withClue
+        repo.expireUnsubmittedApplications().futureValue shouldBe 1L
+        repo.expireUnsubmittedApplications().futureValue shouldBe 0L withClue
           "a second run has nothing left to expire"
 
       Seq(

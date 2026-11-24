@@ -49,7 +49,7 @@ extends RequestAwareLogging:
 
   def processEmails()(using RequestHeader): Future[Unit] =
     for
-      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiryReminderEmail(appConfig.expiryReminderPeriod.toJava)
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findUnsubmittedApplicationsForExpiryReminderEmail()
       (agentApplicationsWithoutRecipient, agentApplicationsWithRecipient) = EmailRecipient.partition(agentApplications)
       _ = logger.info(
         s"Found ${agentApplications.size} unsubmitted applications due for the $emailTemplateId email, ${agentApplicationsWithoutRecipient.size} without a verified email address skipped"

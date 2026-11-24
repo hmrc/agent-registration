@@ -22,6 +22,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.model.Updates
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
@@ -36,12 +37,12 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.jdk.DurationConverters.*
 import AgentApplicationRepoHelp.given
 
 @Singleton
@@ -49,7 +50,8 @@ final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
   agentApplicationMongoFormats: AgentApplicationMongoFormats,
   hasher: Hasher,
-  clock: Clock
+  clock: Clock,
+  appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
@@ -90,9 +92,9 @@ extends Repo[AgentApplicationId, AgentApplication](
     .toFuture()
     .map(_ => ())
 
-  def updateManyToExpiredForUnsubmitted(postExpiryGracePeriod: Duration): Future[Long] =
+  def expireUnsubmittedApplications(): Future[Long] =
     val now: Instant = Instant.now(clock)
-    val postExpiryGracePeriodEndsAt: Instant = now.plus(postExpiryGracePeriod)
+    val postExpiryGracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
     collection
       .updateMany(
         filter = Filters.and(
@@ -113,9 +115,9 @@ extends Repo[AgentApplicationId, AgentApplication](
       .toFuture()
       .map(_.getModifiedCount)
 
-  def findReadyForExpiryReminderEmail(expiryReminderPeriod: Duration): Future[Seq[AgentApplication]] =
+  def findUnsubmittedApplicationsForExpiryReminderEmail(): Future[Seq[AgentApplication]] =
     val now: Instant = Instant.now(clock)
-    val expiryReminderPeriodEndsAt: Instant = now.plus(expiryReminderPeriod)
+    val expiryReminderPeriodEndsAt: Instant = now.plus(appConfig.expiryReminderPeriod.toJava)
     collection
       .find(
         filter = Filters.and(

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentregistration.services
 
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
@@ -25,18 +24,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.jdk.DurationConverters.*
 
 @Singleton
 class ApplicationExpiryService @Inject() (
-  agentApplicationRepo: AgentApplicationRepo,
-  appConfig: AppConfig
+  agentApplicationRepo: AgentApplicationRepo
 )(using ExecutionContext)
 extends RequestAwareLogging:
 
   def processExpiry()(using RequestHeader): Future[Unit] =
     logger.info("Expiring unsubmitted applications: Started...")
     agentApplicationRepo
-      .updateManyToExpiredForUnsubmitted(appConfig.postExpiryGracePeriod.toJava)
+      .expireUnsubmittedApplications()
       .map: modifiedCount =>
         logger.info(s"Expiring unsubmitted applications: marked $modifiedCount as Expired DONE")
