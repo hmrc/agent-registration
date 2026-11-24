@@ -16,12 +16,9 @@
 
 package uk.gov.hmrc.agentregistration.runner
 
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.services.ApplicationExpiryService
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiredApplications
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiryReminders
-import uk.gov.hmrc.agentregistration.util.EmptyRequest
-import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,23 +30,12 @@ class ApplicationExpiryRunner @Inject() (
   applicationExpiryService: ApplicationExpiryService,
   emailServiceForExpiryReminders: EmailServiceForExpiryReminders,
   emailServiceForExpiredApplications: EmailServiceForExpiredApplications
-)(using ec: ExecutionContext)
-extends RequestAwareLogging:
+)(using ec: ExecutionContext):
 
-  private val runnerName: String = "ApplicationExpiryRunner"
+  val stages: Seq[Stage] = Seq(
+    Stage(name = "ApplicationExpiryService.processExpiry", run = applicationExpiryService.processExpiry()),
+    Stage(name = "EmailServiceForExpiryReminders.processEmails", run = emailServiceForExpiryReminders.processEmails()),
+    Stage(name = "EmailServiceForExpiredApplications.processEmails", run = emailServiceForExpiredApplications.processEmails())
+  )
 
-  def run(): Future[Unit] =
-    given RequestHeader = EmptyRequest.emptyRequestHeader
-    logger.info(s"$runnerName: Started...")
-    (for
-      _ <- stage("ApplicationExpiryService.processExpiry")(applicationExpiryService.processExpiry())
-      _ <- stage("EmailServiceForExpiryReminders.processEmails")(emailServiceForExpiryReminders.processEmails())
-      _ <- stage("EmailServiceForExpiredApplications.processEmails")(emailServiceForExpiredApplications.processEmails())
-    yield logger.info(s"$runnerName: DONE")).recover { case throwable => logger.error(s"$runnerName: Error processing application expiry", throwable) }
-
-  private def stage(name: String)(runStage: => Future[Unit])(using RequestHeader): Future[Unit] =
-    logger.info(s"$runnerName: Stage started: $name")
-    runStage
-      .map { _ => logger.info(s"$runnerName: Stage completed: $name") }
-      .recover:
-        case throwable => logger.error(s"$runnerName: Stage failed: $name, continuing with remaining stages", throwable)
+  def run(): Future[Unit] = RunnerHelper.run(runnerName = "ApplicationExpiryRunner", stages = stages)
