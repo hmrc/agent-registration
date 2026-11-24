@@ -116,6 +116,14 @@ extends ISpec:
           expectedEmail = None,
           expectedSendEmailRequests = 0,
           expectedAgentApplicationAfterRun = agentApplication.started.makeLongOverdue.makeExpired
+        ),
+        TestCase(
+          description = "does not send the expired email to an application whose grace period has ended, as the deletion email is due",
+          agentApplication = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
+          emailSendSuccessfully = true,
+          expectedEmail = None,
+          expectedSendEmailRequests = 0,
+          expectedAgentApplicationAfterRun = agentApplication.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
         )
       ).foreach: testCase =>
         s"run ${testCase.description}" in:
