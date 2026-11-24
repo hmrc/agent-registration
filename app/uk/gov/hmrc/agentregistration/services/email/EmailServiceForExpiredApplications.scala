@@ -47,16 +47,16 @@ extends RequestAwareLogging:
   def processEmails()(using RequestHeader): Future[Unit] =
     for
       agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findReadyForExpiredEmail()
-      (withoutRecipient, withRecipient) = EmailRecipient.partition(agentApplications)
+      (agentApplicationsWithoutRecipient, agentApplicationsWithRecipient) = EmailRecipient.partition(agentApplications)
       _ = logger.info(
-        s"Found ${agentApplications.size} expired applications due for the $emailTemplateId email, ${withoutRecipient.size} without a verified email address skipped"
+        s"Found ${agentApplications.size} expired applications due for the $emailTemplateId email, ${agentApplicationsWithoutRecipient.size} without a verified email address skipped"
       )
       emailsSentSuccessCount: Int <-
         ProcessInSequence
-          .processAllInSequence(withRecipient)(process):
+          .processAllInSequence(agentApplicationsWithRecipient)(process):
             case (throwable, agentApplicationWithRecipient) =>
               logger.error(s"Failed to send $emailTemplateId email for ${agentApplicationWithRecipient.agentApplication.applicationReference.value}", throwable)
-      _ = logger.info(s"Sent $emailsSentSuccessCount/${withRecipient.size} $emailTemplateId emails")
+      _ = logger.info(s"Sent $emailsSentSuccessCount/${agentApplicationsWithRecipient.size} $emailTemplateId emails")
     yield ()
 
   private def process(agentApplicationWithRecipient: AgentApplicationWithRecipient)(using RequestHeader): Future[Unit] =

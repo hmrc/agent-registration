@@ -41,14 +41,16 @@ extends RequestAwareLogging:
     logger.info("Deleting Expired applications: Started...")
     for
       agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findDueForDeletion()
-      (waitingForDeletionEmail, readyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
-      _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}, ${waitingForDeletionEmail.size} waiting for the deletion email")
+      (agentApplicationsWaitingForDeletionEmail, agentApplicationsReadyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
+      _ = logger.info(
+        s"Deleting Expired applications: found ${agentApplications.size}, ${agentApplicationsWaitingForDeletionEmail.size} waiting for the deletion email"
+      )
       deletedCount: Int <-
         ProcessInSequence
-          .processAllInSequence(readyForDeletion)(deleteWithIndividualsAndAmlsEvidence):
+          .processAllInSequence(agentApplicationsReadyForDeletion)(deleteWithIndividualsAndAmlsEvidence):
             case (throwable, agentApplication) =>
               logger.error(s"Deleting Expired applications: FAILED for ${agentApplication.applicationReference.value}", throwable)
-      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${readyForDeletion.size} DONE")
+      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${agentApplicationsReadyForDeletion.size} DONE")
     yield ()
 
   private def isWaitingForDeletionEmail(agentApplication: AgentApplication): Boolean =

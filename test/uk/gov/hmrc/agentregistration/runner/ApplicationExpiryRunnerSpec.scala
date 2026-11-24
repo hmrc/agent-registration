@@ -73,15 +73,15 @@ extends ISpec:
     s"for a $businessType application" - {
 
       val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
-      val expiryReminderEmail: SendEmailRequest = expectedExpiryReminderEmail(agentApplicationStates.withVerifiedEmail)
-      val expiredEmail: SendEmailRequest = expectedExpiredEmail(agentApplicationStates.withVerifiedEmail)
+      val expiryReminderSendEmailRequest: SendEmailRequest = expectedExpiryReminderEmail(agentApplicationStates.withVerifiedEmail)
+      val expiredSendEmailRequest: SendEmailRequest = expectedExpiredEmail(agentApplicationStates.withVerifiedEmail)
 
       Seq(
         TestCase(
           description = "sends the reminder to an application with 10 days left and does not expire it",
           agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
           emailSendSuccessfully = true,
-          expectedEmail = Some(expiryReminderEmail),
+          expectedEmail = Some(expiryReminderSendEmailRequest),
           expectedSendEmailRequests = 1,
           expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
         ),
@@ -89,7 +89,7 @@ extends ISpec:
           description = "expires an application whose expiry date has passed and sends the expired email in the same run",
           agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
           emailSendSuccessfully = true,
-          expectedEmail = Some(expiredEmail),
+          expectedEmail = Some(expiredSendEmailRequest),
           expectedSendEmailRequests = 1,
           expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
         ),
@@ -97,7 +97,7 @@ extends ISpec:
           description = "expires a long overdue application and sends only the expired email, never a reminder",
           agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
           emailSendSuccessfully = true,
-          expectedEmail = Some(expiredEmail),
+          expectedEmail = Some(expiredSendEmailRequest),
           expectedSendEmailRequests = 1,
           expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeLongOverdue.makeExpiredEmailSent
         ),
@@ -105,7 +105,7 @@ extends ISpec:
           description = "expires the application, with no expired email recorded, when the email service fails, so the next run retries",
           agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
           emailSendSuccessfully = false,
-          expectedEmail = Some(expiredEmail),
+          expectedEmail = Some(expiredSendEmailRequest),
           expectedSendEmailRequests = 1,
           expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired
         ),
