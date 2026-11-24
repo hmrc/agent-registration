@@ -16,9 +16,13 @@
 
 package uk.gov.hmrc.agentregistration.runner
 
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.services.ApplicationExpiryService
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiredApplications
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiryReminders
+import uk.gov.hmrc.agentregistration.util.EmptyRequest
+import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,7 +34,8 @@ class ApplicationExpiryRunner @Inject() (
   applicationExpiryService: ApplicationExpiryService,
   emailServiceForExpiryReminders: EmailServiceForExpiryReminders,
   emailServiceForExpiredApplications: EmailServiceForExpiredApplications
-)(using ec: ExecutionContext):
+)(using ec: ExecutionContext)
+extends RequestAwareLogging:
 
   val stages: Seq[Stage] = Seq(
     Stage(name = "ApplicationExpiryService.processExpiry", run = applicationExpiryService.processExpiry()),
@@ -38,4 +43,14 @@ class ApplicationExpiryRunner @Inject() (
     Stage(name = "EmailServiceForExpiredApplications.processEmails", run = emailServiceForExpiredApplications.processEmails())
   )
 
-  def run(): Future[Unit] = RunnerHelper.run(runnerName = "ApplicationExpiryRunner", stages = stages)
+  def run(): Future[Unit] =
+    given RequestHeader = EmptyRequest.emptyRequestHeader
+    logger.info("ApplicationExpiryRunner: Started...")
+    ProcessInSequence
+      .processAllInSequence(stages)(stage => runStage(stage)):
+        case (throwable, stage) => logger.error(s"ApplicationExpiryRunner: Stage failed: ${stage.name}, continuing with remaining stages", throwable)
+      .map(_ => logger.info("ApplicationExpiryRunner: DONE"))
+
+  private def runStage(stage: Stage)(using RequestHeader): Future[Unit] =
+    logger.info(s"ApplicationExpiryRunner: Stage started: ${stage.name}")
+    stage.run.map(_ => logger.info(s"ApplicationExpiryRunner: Stage completed: ${stage.name}"))

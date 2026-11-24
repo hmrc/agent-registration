@@ -16,8 +16,12 @@
 
 package uk.gov.hmrc.agentregistration.runner
 
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForDeletedApplications
+import uk.gov.hmrc.agentregistration.util.EmptyRequest
+import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,11 +32,22 @@ import scala.concurrent.Future
 class ApplicationDeletionRunner @Inject() (
   emailServiceForDeletedApplications: EmailServiceForDeletedApplications,
   agentApplicationDeletionService: AgentApplicationDeletionService
-)(using ec: ExecutionContext):
+)(using ec: ExecutionContext)
+extends RequestAwareLogging:
 
   val stages: Seq[Stage] = Seq(
     Stage(name = "EmailServiceForDeletedApplications.processEmails", run = emailServiceForDeletedApplications.processEmails()),
     Stage(name = "AgentApplicationDeletionService.processDeletions", run = agentApplicationDeletionService.processDeletions())
   )
 
-  def run(): Future[Unit] = RunnerHelper.run(runnerName = "ApplicationDeletionRunner", stages = stages)
+  def run(): Future[Unit] =
+    given RequestHeader = EmptyRequest.emptyRequestHeader
+    logger.info("ApplicationDeletionRunner: Started...")
+    ProcessInSequence
+      .processAllInSequence(stages)(stage => runStage(stage)):
+        case (throwable, stage) => logger.error(s"ApplicationDeletionRunner: Stage failed: ${stage.name}, continuing with remaining stages", throwable)
+      .map(_ => logger.info("ApplicationDeletionRunner: DONE"))
+
+  private def runStage(stage: Stage)(using RequestHeader): Future[Unit] =
+    logger.info(s"ApplicationDeletionRunner: Stage started: ${stage.name}")
+    stage.run.map(_ => logger.info(s"ApplicationDeletionRunner: Stage completed: ${stage.name}"))
