@@ -57,43 +57,40 @@ extends ISpec:
     )
 
   BusinessType.values.foreach: businessType =>
-    s"for a $businessType application" - {
+    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+    Seq(
+      TestCase(
+        description = "sends the deletion email and deletes the application in the same run",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 1,
+        expectedAgentApplicationAfterRun = None
+      ),
+      TestCase(
+        description = "keeps the application, with no deletion email recorded, when the email service fails, so the next run retries",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+        emailSendSuccessfully = false,
+        expectedSendEmailRequests = 1,
+        expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
+      ),
+      TestCase(
+        description = "deletes an application with no verified email address without sending the deletion email",
+        agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 0,
+        expectedAgentApplicationAfterRun = None
+      )
+    ).foreach: testCase =>
+      s"run ${testCase.description} ($businessType)" in:
+        testCase.agentApplication.shouldHaveGracePeriodEndInThePast
+        testCase.agentApplication.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
+        if testCase.emailSendSuccessfully
+        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-      Seq(
-        TestCase(
-          description = "sends the deletion email and deletes the application in the same run",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = None
-        ),
-        TestCase(
-          description = "keeps the application, with no deletion email recorded, when the email service fails, so the next run retries",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-          emailSendSuccessfully = false,
-          expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
-        ),
-        TestCase(
-          description = "deletes an application with no verified email address without sending the deletion email",
-          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = None
-        )
-      ).foreach: testCase =>
-        s"run ${testCase.description}" in:
-          testCase.agentApplication.shouldHaveGracePeriodEndInThePast
-          testCase.agentApplication.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
-          if testCase.emailSendSuccessfully
-          then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-          else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+        applicationDeletionRunner.run().futureValue
 
-          applicationDeletionRunner.run().futureValue
-
-          EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
-          agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun
-    }
+        EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun

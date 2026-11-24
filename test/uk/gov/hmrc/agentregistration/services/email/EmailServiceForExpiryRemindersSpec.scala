@@ -59,66 +59,63 @@ extends ISpec:
   )
 
   BusinessType.values.foreach: businessType =>
-    s"for a $businessType application" - {
+    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+    Seq(
+      TestCase(
+        description = "sends the reminder to the verified applicant email and records it as sent",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 1,
+        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
+      ),
+      TestCase(
+        description = "does not send the reminder to an application already sent it",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 0,
+        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
+      ),
+      TestCase(
+        description = "does not send the reminder to an application with no verified email address",
+        agentApplication = agentApplicationStates.started.makeDueForExpiry,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 0,
+        expectedAgentApplicationAfterRun = agentApplicationStates.started.makeDueForExpiry
+      ),
+      TestCase(
+        description = "does not send the reminder to an application expiring after the reminder period",
+        agentApplication = agentApplicationStates.withVerifiedEmail,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 0,
+        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail
+      ),
+      // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
+      TestCase(
+        description = "does not send the reminder to an application whose expiry date has passed, so a long overdue application expires without one",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
+        emailSendSuccessfully = true,
+        expectedSendEmailRequests = 0,
+        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeLongOverdue
+      ),
+      TestCase(
+        description = "does not record the reminder as sent when the email service fails, so it is retried on the next run",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
+        emailSendSuccessfully = false,
+        expectedSendEmailRequests = 1,
+        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeDueForExpiry
+      )
+    ).foreach: testCase =>
+      s"processEmails ${testCase.description} ($businessType)" in:
+        if testCase.emailSendSuccessfully
+        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-      Seq(
-        TestCase(
-          description = "sends the reminder to the verified applicant email and records it as sent",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
-        ),
-        TestCase(
-          description = "does not send the reminder to an application already sent it",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
-        ),
-        TestCase(
-          description = "does not send the reminder to an application with no verified email address",
-          agentApplication = agentApplicationStates.started.makeDueForExpiry,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplicationStates.started.makeDueForExpiry
-        ),
-        TestCase(
-          description = "does not send the reminder to an application expiring after the reminder period",
-          agentApplication = agentApplicationStates.withVerifiedEmail,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail
-        ),
-        // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
-        TestCase(
-          description = "does not send the reminder to an application whose expiry date has passed, so a long overdue application expires without one",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
-          emailSendSuccessfully = true,
-          expectedSendEmailRequests = 0,
-          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeLongOverdue
-        ),
-        TestCase(
-          description = "does not record the reminder as sent when the email service fails, so it is retried on the next run",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-          emailSendSuccessfully = false,
-          expectedSendEmailRequests = 1,
-          expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeDueForExpiry
-        )
-      ).foreach: testCase =>
-        s"processEmails ${testCase.description}" in:
-          if testCase.emailSendSuccessfully
-          then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-          else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+        emailServiceForExpiryReminders.processEmails().futureValue
 
-          emailServiceForExpiryReminders.processEmails().futureValue
-
-          EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
-          agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
-    }
+        EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
   "processEmails sends the reminder to the verified agent email when agent details are complete" in:
     val dueForExpiry: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeDueForExpiry

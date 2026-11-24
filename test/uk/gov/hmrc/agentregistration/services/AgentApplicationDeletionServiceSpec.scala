@@ -49,47 +49,44 @@ extends ISpec:
   )
 
   BusinessType.values.foreach: businessType =>
-    s"for a $businessType application" - {
+    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
 
-      val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+    Seq(
+      TestCase(
+        description = "deletes an application whose grace period has ended and that was sent the deletion email, together with its individuals",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+        expectedAgentApplicationAfterRun = None,
+        expectedIndividualsAfterRun = List.empty
+      ),
+      TestCase(
+        description = "deletes an application with no verified email address without waiting for a deletion email, together with its individuals",
+        agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
+        expectedAgentApplicationAfterRun = None,
+        expectedIndividualsAfterRun = List.empty
+      ),
+      TestCase(
+        description = "keeps an application with a verified email address until the deletion email is sent, together with its individuals",
+        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+        expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion),
+        expectedIndividualsAfterRun = List(individualProvidedDetails)
+      ),
+      TestCase(
+        description = "keeps an application still in the grace period, together with its individuals",
+        agentApplication = agentApplicationStates.started.makeOverdue.makeExpired,
+        expectedAgentApplicationAfterRun = Some(agentApplicationStates.started.makeOverdue.makeExpired),
+        expectedIndividualsAfterRun = List(individualProvidedDetails)
+      )
+    ).foreach: testCase =>
+      s"processDeletions ${testCase.description} ($businessType)" in:
+        val agentApplicationId: AgentApplicationId = testCase.agentApplication.agentApplicationId
+        individualProvidedDetails.agentApplicationId shouldBe agentApplicationId withClue "precondition: the individual must belong to the application"
+        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+        individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
 
-      Seq(
-        TestCase(
-          description = "deletes an application whose grace period has ended and that was sent the deletion email, together with its individuals",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
-          expectedAgentApplicationAfterRun = None,
-          expectedIndividualsAfterRun = List.empty
-        ),
-        TestCase(
-          description = "deletes an application with no verified email address without waiting for a deletion email, together with its individuals",
-          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
-          expectedAgentApplicationAfterRun = None,
-          expectedIndividualsAfterRun = List.empty
-        ),
-        TestCase(
-          description = "keeps an application with a verified email address until the deletion email is sent, together with its individuals",
-          agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-          expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion),
-          expectedIndividualsAfterRun = List(individualProvidedDetails)
-        ),
-        TestCase(
-          description = "keeps an application still in the grace period, together with its individuals",
-          agentApplication = agentApplicationStates.started.makeOverdue.makeExpired,
-          expectedAgentApplicationAfterRun = Some(agentApplicationStates.started.makeOverdue.makeExpired),
-          expectedIndividualsAfterRun = List(individualProvidedDetails)
-        )
-      ).foreach: testCase =>
-        s"processDeletions ${testCase.description}" in:
-          val agentApplicationId: AgentApplicationId = testCase.agentApplication.agentApplicationId
-          individualProvidedDetails.agentApplicationId shouldBe agentApplicationId withClue "precondition: the individual must belong to the application"
-          agentApplicationRepo.upsert(testCase.agentApplication).futureValue
-          individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+        agentApplicationDeletionService.processDeletions().futureValue
 
-          agentApplicationDeletionService.processDeletions().futureValue
-
-          agentApplicationRepo.findById(agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun
-          individualProvidedDetailsRepo.findForApplication(agentApplicationId).futureValue shouldBe testCase.expectedIndividualsAfterRun
-    }
+        agentApplicationRepo.findById(agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun
+        individualProvidedDetailsRepo.findForApplication(agentApplicationId).futureValue shouldBe testCase.expectedIndividualsAfterRun
 
   private lazy val deletionEmailSentWithAmlsEvidence: AgentApplication =
     tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent

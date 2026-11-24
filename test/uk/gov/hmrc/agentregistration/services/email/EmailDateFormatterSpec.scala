@@ -23,10 +23,8 @@ import java.time.Instant
 class EmailDateFormatterSpec
 extends UnitSpec:
 
-  "format" - {
-    "renders the date as day, full month and year" in:
-      EmailDateFormatter.format(Instant.parse("2026-11-19T10:00:00Z")) shouldBe "19 November 2026"
+  "format renders the date as day, full month and year" in:
+    EmailDateFormatter.format(Instant.parse("2026-11-19T10:00:00Z")) shouldBe "19 November 2026"
 
-    "renders the date in UTC" in:
-      EmailDateFormatter.format(Instant.parse("2026-07-31T23:30:00Z")) shouldBe "31 July 2026"
-  }
+  "format renders the date in UTC" in:
+    EmailDateFormatter.format(Instant.parse("2026-07-31T23:30:00Z")) shouldBe "31 July 2026"
