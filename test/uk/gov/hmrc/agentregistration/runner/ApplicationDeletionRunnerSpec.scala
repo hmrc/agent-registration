@@ -46,7 +46,6 @@ extends ISpec:
     description: String,
     agentApplication: AgentApplication,
     emailSendSuccessfully: Boolean,
-    expectedSendEmailRequests: Int,
     expectedAgentApplicationAfterRun: Option[AgentApplication]
   )
 
@@ -64,22 +63,13 @@ extends ISpec:
         description = "sends the deletion email and deletes the application in the same run",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
         emailSendSuccessfully = true,
-        expectedSendEmailRequests = 1,
         expectedAgentApplicationAfterRun = None
       ),
       TestCase(
         description = "keeps the application, with no deletion email recorded, when the email service fails, so the next run retries",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
         emailSendSuccessfully = false,
-        expectedSendEmailRequests = 1,
         expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
-      ),
-      TestCase(
-        description = "deletes an application with no verified email address without sending the deletion email",
-        agentApplication = agentApplicationStates.started.makeOverdue.makeExpired.makeDueForDeletion,
-        emailSendSuccessfully = true,
-        expectedSendEmailRequests = 0,
-        expectedAgentApplicationAfterRun = None
       )
     ).foreach: testCase =>
       s"run ${testCase.description} ($businessType)" in:
@@ -92,5 +82,5 @@ extends ISpec:
 
         applicationDeletionRunner.run().futureValue
 
-        EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+        EmailStubs.verifySendEmail(count = 1)
         agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun

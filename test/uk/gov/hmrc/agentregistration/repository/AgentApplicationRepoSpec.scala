@@ -148,6 +148,7 @@ extends ISpec:
         agentApplication = agentApplicationStates.withVerifiedEmail,
         expectedFound = false
       ),
+      // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
       FindTestCase(
         description = "does not find an application whose expiry date has passed",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,

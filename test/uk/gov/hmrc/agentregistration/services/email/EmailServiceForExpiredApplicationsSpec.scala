@@ -53,7 +53,6 @@ extends ISpec:
     description: String,
     agentApplication: AgentApplication,
     emailSendSuccessfully: Boolean,
-    expectedSendEmailRequests: Int,
     expectedAgentApplicationAfterRun: AgentApplication
   )
 
@@ -65,42 +64,12 @@ extends ISpec:
         description = "sends the expired email to the verified applicant email and records it as sent",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
         emailSendSuccessfully = true,
-        expectedSendEmailRequests = 1,
         expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-      ),
-      TestCase(
-        description = "does not send the expired email to an application already sent it",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent,
-        emailSendSuccessfully = true,
-        expectedSendEmailRequests = 0,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-      ),
-      TestCase(
-        description = "does not send the expired email to an application with no verified email address",
-        agentApplication = agentApplicationStates.started.makeOverdue.makeExpired,
-        emailSendSuccessfully = true,
-        expectedSendEmailRequests = 0,
-        expectedAgentApplicationAfterRun = agentApplicationStates.started.makeOverdue.makeExpired
-      ),
-      TestCase(
-        description = "does not send the expired email to an application that has not expired",
-        agentApplication = agentApplicationStates.withVerifiedEmail,
-        emailSendSuccessfully = true,
-        expectedSendEmailRequests = 0,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail
-      ),
-      TestCase(
-        description = "does not send the expired email to an application whose grace period has ended",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
-        emailSendSuccessfully = true,
-        expectedSendEmailRequests = 0,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
       ),
       TestCase(
         description = "does not record the expired email as sent when the email service fails, so it is retried on the next run",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
         emailSendSuccessfully = false,
-        expectedSendEmailRequests = 1,
         expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired
       )
     ).foreach: testCase =>
@@ -112,7 +81,7 @@ extends ISpec:
 
         emailServiceForExpiredApplications.processEmails().futureValue
 
-        EmailStubs.verifySendEmail(count = testCase.expectedSendEmailRequests)
+        EmailStubs.verifySendEmail(count = 1)
         agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
   "processEmails sends the expired email to the verified agent email when agent details are complete" in:

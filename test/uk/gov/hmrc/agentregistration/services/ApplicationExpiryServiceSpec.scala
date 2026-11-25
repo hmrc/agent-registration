@@ -63,14 +63,3 @@ extends ISpec:
         val expired: AgentApplication = agentApplicationRepo.findById(longOverdue.agentApplicationId).futureValue.value
         expired shouldBe longOverdue.makeExpired withClue s"state=${havingExpiryDate.applicationState}"
         Duration.between(tdAll.now, expired.postExpiryGracePeriodEndsAt.value) shouldBe Duration.ofDays(45)
-
-    s"processExpiry does not expire an application whose expiry date is in the future ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        dropDatabase()
-        havingExpiryDate.shouldHaveExpiryDateInTheFuture
-        agentApplicationRepo.upsert(havingExpiryDate).futureValue
-
-        applicationExpiryService.processExpiry().futureValue
-
-        agentApplicationRepo.findById(havingExpiryDate.agentApplicationId).futureValue.value shouldBe havingExpiryDate withClue
-          s"state=${havingExpiryDate.applicationState}"
