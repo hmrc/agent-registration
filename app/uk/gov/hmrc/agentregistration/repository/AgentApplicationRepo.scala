@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonDateTime
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
@@ -128,7 +129,8 @@ extends Repo[AgentApplicationId, AgentApplication](
           ),
           Filters.gte(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli)),
           Filters.lte(FieldNames.applicationExpiresAt, BsonDateTime(expiryReminderPeriodEndsAt.toEpochMilli)),
-          Filters.exists(FieldNames.expiryReminderEmailSentAt, false)
+          Filters.exists(FieldNames.expiryReminderEmailSentAt, false),
+          hasVerifiedEmailAddress
         )
       )
       .toFuture()
@@ -140,18 +142,8 @@ extends Repo[AgentApplicationId, AgentApplication](
         filter = Filters.and(
           Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
           Filters.gte(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
-          Filters.exists(FieldNames.expiredEmailSentAt, false)
-        )
-      )
-      .toFuture()
-
-  def findExpiredDueForDeletion(): Future[Seq[AgentApplication]] =
-    val now: Instant = Instant.now(clock)
-    collection
-      .find(
-        filter = Filters.and(
-          Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
-          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
+          Filters.exists(FieldNames.expiredEmailSentAt, false),
+          hasVerifiedEmailAddress
         )
       )
       .toFuture()
@@ -163,10 +155,34 @@ extends Repo[AgentApplicationId, AgentApplication](
         filter = Filters.and(
           Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
           Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
-          Filters.exists(FieldNames.deletionEmailSentAt, false)
+          Filters.exists(FieldNames.deletionEmailSentAt, false),
+          hasVerifiedEmailAddress
         )
       )
       .toFuture()
+
+  def findExpiredDueForDeletion(): Future[Seq[AgentApplication]] =
+    val now: Instant = Instant.now(clock)
+    collection
+      .find(
+        filter = Filters.and(
+          Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+          Filters.or(
+            Filters.exists(FieldNames.deletionEmailSentAt),
+            Filters.nor(hasVerifiedEmailAddress)
+          )
+        )
+      )
+      .toFuture()
+
+  private val hasVerifiedEmailAddress: Bson = Filters.and(
+    Filters.exists(FieldNames.applicantContactDetails),
+    Filters.or(
+      Filters.eq(FieldNames.agentEmailAddressIsVerified, true),
+      Filters.eq(FieldNames.applicantEmailAddressIsVerified, true)
+    )
+  )
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"

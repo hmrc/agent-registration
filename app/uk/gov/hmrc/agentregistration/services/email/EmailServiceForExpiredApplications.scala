@@ -47,22 +47,19 @@ extends RequestAwareLogging:
   def processEmails()(using RequestHeader): Future[Unit] =
     for
       agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredReadyForExpiredEmail()
-      (agentApplicationsWithoutRecipient, agentApplicationsWithRecipient) = EmailRecipient.partition(agentApplications)
-      _ = logger.info(
-        s"Found ${agentApplications.size} expired applications due for the $emailTemplateId email, ${agentApplicationsWithoutRecipient.size} without a verified email address skipped"
-      )
+      _ = logger.info(s"Found ${agentApplications.size} expired applications due for the $emailTemplateId email")
       emailsSentSuccessCount: Int <-
         ProcessInSequence
-          .processAllInSequence(agentApplicationsWithRecipient)(process):
-            case (throwable, agentApplicationWithRecipient) =>
-              logger.error(s"Failed to send $emailTemplateId email for ${agentApplicationWithRecipient.agentApplication.applicationReference.value}", throwable)
-      _ = logger.info(s"Sent $emailsSentSuccessCount/${agentApplicationsWithRecipient.size} $emailTemplateId emails")
+          .processAllInSequence(agentApplications)(process):
+            case (throwable, agentApplication) =>
+              logger.error(s"Failed to send $emailTemplateId email for ${agentApplication.applicationReference.value}", throwable)
+      _ = logger.info(s"Sent $emailsSentSuccessCount/${agentApplications.size} $emailTemplateId emails")
     yield ()
 
-  private def process(agentApplicationWithRecipient: AgentApplicationWithRecipient)(using RequestHeader): Future[Unit] =
-    val agentApplication: AgentApplication = agentApplicationWithRecipient.agentApplication
+  private def process(agentApplication: AgentApplication)(using RequestHeader): Future[Unit] =
+    val emailRecipient: EmailRecipient = EmailRecipient.resolve(agentApplication).getOrThrowExpectedDataMissing("emailRecipient")
     for
-      sendEmailRequest: SendEmailRequest <- Future.successful(makeSendEmailRequest(agentApplication, agentApplicationWithRecipient.emailRecipient))
+      sendEmailRequest: SendEmailRequest <- Future.successful(makeSendEmailRequest(agentApplication, emailRecipient))
       _ = logger.info(s"Sending $emailTemplateId email for ${agentApplication.applicationReference.value}")
       _ <- emailConnector.sendEmail(sendEmailRequest)
       _ <- markEmailSent(agentApplication)

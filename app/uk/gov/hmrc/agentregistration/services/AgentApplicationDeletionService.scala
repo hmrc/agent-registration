@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentregistration.services
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
-import uk.gov.hmrc.agentregistration.services.email.EmailRecipient
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
@@ -41,20 +40,14 @@ extends RequestAwareLogging:
     logger.info("Deleting Expired applications: Started...")
     for
       agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredDueForDeletion()
-      (agentApplicationsWaitingForDeletionEmail, agentApplicationsReadyForDeletion) = agentApplications.partition(isWaitingForDeletionEmail)
-      _ = logger.info(
-        s"Deleting Expired applications: found ${agentApplications.size}, ${agentApplicationsWaitingForDeletionEmail.size} waiting for the deletion email"
-      )
+      _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}")
       deletedCount: Int <-
         ProcessInSequence
-          .processAllInSequence(agentApplicationsReadyForDeletion)(deleteWithIndividualsAndAmlsEvidence):
+          .processAllInSequence(agentApplications)(deleteWithIndividualsAndAmlsEvidence):
             case (throwable, agentApplication) =>
               logger.error(s"Deleting Expired applications: FAILED for ${agentApplication.applicationReference.value}", throwable)
-      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${agentApplicationsReadyForDeletion.size} DONE")
+      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${agentApplications.size} DONE")
     yield ()
-
-  private def isWaitingForDeletionEmail(agentApplication: AgentApplication): Boolean =
-    agentApplication.deletionEmailSentAt.isEmpty && EmailRecipient.resolve(agentApplication).isDefined
 
   def deleteWithIndividuals(agentApplication: AgentApplication): Future[Unit] =
     for

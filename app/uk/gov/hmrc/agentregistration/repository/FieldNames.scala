@@ -20,6 +20,9 @@ object FieldNames:
 
   val _id: String = "_id"
   val agentApplicationId: String = "agentApplicationId"
+  val agentEmailAddressIsVerified: String = "agentDetails.agentEmailAddress.isVerified"
+  val applicantContactDetails: String = "applicantContactDetails"
+  val applicantEmailAddressIsVerified: String = "applicantContactDetails.applicantEmailAddress.isVerified"
   val applicationExpiresAt: String = "applicationExpiresAt"
   val applicationReference: String = "applicationReference"
   val applicationState: String = "applicationState"

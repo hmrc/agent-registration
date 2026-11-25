@@ -28,10 +28,6 @@ final case class EmailRecipient(
 
 object EmailRecipient:
 
-  def partition(agentApplications: Seq[AgentApplication]): (Seq[AgentApplication], Seq[AgentApplicationWithRecipient]) = agentApplications.partitionMap:
-    agentApplication =>
-      resolve(agentApplication).toRight(agentApplication).map(emailRecipient => AgentApplicationWithRecipient(agentApplication, emailRecipient))
-
   def resolve(agentApplication: AgentApplication): Option[EmailRecipient] = agentApplication.applicantContactDetails.flatMap: applicantContactDetails =>
     verifiedEmailAddress(agentApplication, applicantContactDetails)
       .map(emailAddress => EmailRecipient(applicantContactDetails.applicantName, emailAddress))
