@@ -19,7 +19,9 @@ package uk.gov.hmrc.agentregistration.repository
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.model.Filters
+import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationLlp
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
 class AgentApplicationFleSpec
@@ -88,3 +90,23 @@ extends ISpec:
     val record: AgentApplicationLlp = tdAll.agentApplicationLlp.afterAgentDetailsComplete
     repo.upsert(record).futureValue
     repo.findByApplicationReference(record.applicationReference).futureValue.value shouldBe record
+
+  "with FLE enabled findExpiredReadyForExpiredEmail still finds an application with a verified email address (isVerified stays plaintext)" in:
+    val expired: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsComplete.makeOverdue.makeExpired
+    repo.upsert(expired).futureValue
+    repo.findExpiredReadyForExpiredEmail().futureValue shouldBe Seq(expired)
+
+  "with FLE enabled findExpiredReadyForExpiredEmail still does not find an application with an unverified email address" in:
+    val expired: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail.makeOverdue.makeExpired
+    repo.upsert(expired).futureValue
+    repo.findExpiredReadyForExpiredEmail().futureValue shouldBe empty
+
+  "with FLE enabled findExpiredDueForDeletion still finds an application with an unverified email address" in:
+    val dueForDeletion: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
+    repo.upsert(dueForDeletion).futureValue
+    repo.findExpiredDueForDeletion().futureValue shouldBe Seq(dueForDeletion)
+
+  "with FLE enabled findExpiredDueForDeletion still does not find an application with a verified email address not yet sent the deletion email" in:
+    val dueForDeletion: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsComplete.makeOverdue.makeExpired.makeDueForDeletion
+    repo.upsert(dueForDeletion).futureValue
+    repo.findExpiredDueForDeletion().futureValue shouldBe empty
