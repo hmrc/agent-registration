@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentregistration.util
+package uk.gov.hmrc.agentregistration.shared.util
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global

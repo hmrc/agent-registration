@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentregistration.services.ApplicationExpiryService
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiredApplications
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForExpiryReminders
 import uk.gov.hmrc.agentregistration.util.EmptyRequest
-import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject

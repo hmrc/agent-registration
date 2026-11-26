@@ -20,7 +20,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.services.AgentApplicationDeletionService
 import uk.gov.hmrc.agentregistration.services.email.EmailServiceForDeletedApplications
 import uk.gov.hmrc.agentregistration.util.EmptyRequest
-import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject
