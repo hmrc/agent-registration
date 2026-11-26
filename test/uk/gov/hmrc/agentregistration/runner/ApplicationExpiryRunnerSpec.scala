@@ -20,10 +20,8 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class ApplicationExpiryRunnerSpec
@@ -68,48 +66,43 @@ extends ISpec:
       "EmailServiceForExpiredApplications.processEmails"
     )
 
-  BusinessType.values.foreach: businessType =>
-    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
-    val expiryReminderSendEmailRequest: SendEmailRequest = expectedExpiryReminderEmail(agentApplicationStates.withVerifiedEmail)
-    val expiredSendEmailRequest: SendEmailRequest = expectedExpiredEmail(agentApplicationStates.withVerifiedEmail)
+  Seq(
+    TestCase(
+      description = "sends the reminder to an application with 10 days left and does not expire it",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry,
+      emailSendSuccessfully = true,
+      expectedEmail = expectedExpiryReminderEmail(tdAll.agentApplicationLlp.afterContactDetailsComplete),
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeExpiryReminderEmailSent
+    ),
+    TestCase(
+      description = "expires an application whose expiry date has passed and sends the expired email in the same run",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue,
+      emailSendSuccessfully = true,
+      expectedEmail = expectedExpiredEmail(tdAll.agentApplicationLlp.afterContactDetailsComplete),
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent
+    ),
+    TestCase(
+      description = "expires a long overdue application and sends only the expired email, never a reminder",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeLongOverdue,
+      emailSendSuccessfully = true,
+      expectedEmail = expectedExpiredEmail(tdAll.agentApplicationLlp.afterContactDetailsComplete),
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeLongOverdue.makeExpiredEmailSent
+    ),
+    TestCase(
+      description = "expires the application, with no expired email recorded, when the email service fails, so the next run retries",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue,
+      emailSendSuccessfully = false,
+      expectedEmail = expectedExpiredEmail(tdAll.agentApplicationLlp.afterContactDetailsComplete),
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired
+    )
+  ).foreach: testCase =>
+    s"run ${testCase.description}" in:
+      if testCase.emailSendSuccessfully
+      then EmailStubs.stubSendEmail(testCase.expectedEmail)
+      else EmailStubs.stubSendEmailFailure(testCase.expectedEmail)
+      agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      TestCase(
-        description = "sends the reminder to an application with 10 days left and does not expire it",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-        emailSendSuccessfully = true,
-        expectedEmail = expiryReminderSendEmailRequest,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
-      ),
-      TestCase(
-        description = "expires an application whose expiry date has passed and sends the expired email in the same run",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
-        emailSendSuccessfully = true,
-        expectedEmail = expiredSendEmailRequest,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-      ),
-      TestCase(
-        description = "expires a long overdue application and sends only the expired email, never a reminder",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
-        emailSendSuccessfully = true,
-        expectedEmail = expiredSendEmailRequest,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeLongOverdue.makeExpiredEmailSent
-      ),
-      TestCase(
-        description = "expires the application, with no expired email recorded, when the email service fails, so the next run retries",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue,
-        emailSendSuccessfully = false,
-        expectedEmail = expiredSendEmailRequest,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired
-      )
-    ).foreach: testCase =>
-      s"run ${testCase.description} ($businessType)" in:
-        if testCase.emailSendSuccessfully
-        then EmailStubs.stubSendEmail(testCase.expectedEmail)
-        else EmailStubs.stubSendEmailFailure(testCase.expectedEmail)
-        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+      applicationExpiryRunner.run().futureValue
 
-        applicationExpiryRunner.run().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
+      EmailStubs.verifySendEmail(count = 1)
+      agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun

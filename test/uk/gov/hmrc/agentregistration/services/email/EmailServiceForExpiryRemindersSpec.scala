@@ -21,11 +21,9 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class EmailServiceForExpiryRemindersSpec
@@ -57,33 +55,30 @@ extends ISpec:
     expectedAgentApplicationAfterRun: AgentApplication
   )
 
-  BusinessType.values.foreach: businessType =>
-    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  Seq(
+    TestCase(
+      description = "sends the reminder to the verified applicant email and records it as sent",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry,
+      emailSendSuccessfully = true,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeExpiryReminderEmailSent
+    ),
+    TestCase(
+      description = "does not record the reminder as sent when the email service fails, so it is retried on the next run",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry,
+      emailSendSuccessfully = false,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry
+    )
+  ).foreach: testCase =>
+    s"processEmails ${testCase.description}" in:
+      if testCase.emailSendSuccessfully
+      then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+      else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+      agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      TestCase(
-        description = "sends the reminder to the verified applicant email and records it as sent",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-        emailSendSuccessfully = true,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent
-      ),
-      TestCase(
-        description = "does not record the reminder as sent when the email service fails, so it is retried on the next run",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-        emailSendSuccessfully = false,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeDueForExpiry
-      )
-    ).foreach: testCase =>
-      s"processEmails ${testCase.description} ($businessType)" in:
-        if testCase.emailSendSuccessfully
-        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+      emailServiceForExpiryReminders.processEmails().futureValue
 
-        emailServiceForExpiryReminders.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
+      EmailStubs.verifySendEmail(count = 1)
+      agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
   "processEmails sends the reminder to the verified agent email when agent details are complete" in:
     val dueForExpiry: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeDueForExpiry

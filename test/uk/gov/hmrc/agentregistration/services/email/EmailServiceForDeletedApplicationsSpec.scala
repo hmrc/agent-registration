@@ -21,11 +21,9 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class EmailServiceForDeletedApplicationsSpec
@@ -55,33 +53,30 @@ extends ISpec:
     expectedAgentApplicationAfterRun: AgentApplication
   )
 
-  BusinessType.values.foreach: businessType =>
-    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  Seq(
+    TestCase(
+      description = "sends the deletion email to the verified applicant email and records it as sent",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+      emailSendSuccessfully = true,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+    ),
+    TestCase(
+      description = "does not record the deletion email as sent when the email service fails",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+      emailSendSuccessfully = false,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+    )
+  ).foreach: testCase =>
+    s"processEmails ${testCase.description}" in:
+      if testCase.emailSendSuccessfully
+      then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+      else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+      agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      TestCase(
-        description = "sends the deletion email to the verified applicant email and records it as sent",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = true,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-      ),
-      TestCase(
-        description = "does not record the deletion email as sent when the email service fails",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = false,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
-      )
-    ).foreach: testCase =>
-      s"processEmails ${testCase.description} ($businessType)" in:
-        if testCase.emailSendSuccessfully
-        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+      emailServiceForDeletedApplications.processEmails().futureValue
 
-        emailServiceForDeletedApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
+      EmailStubs.verifySendEmail(count = 1)
+      agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
   "processEmails sends the deletion email to the verified agent email when agent details are complete" in:
     val dueForDeletion: AgentApplication =

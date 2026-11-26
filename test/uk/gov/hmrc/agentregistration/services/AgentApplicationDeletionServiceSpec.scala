@@ -22,12 +22,10 @@ import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
 import uk.gov.hmrc.agentregistration.shared.AgentApplicationId
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
 import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.ObjectStoreStubs
 
 class AgentApplicationDeletionServiceSpec
@@ -41,20 +39,17 @@ extends ISpec:
 
   private lazy val individualProvidedDetails: IndividualProvidedDetails = tdAll.providedDetails.afterStarted
 
-  BusinessType.values.foreach: businessType =>
-    lazy val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  "processDeletions deletes an application sent the deletion email whose grace period has ended, together with its individuals" in:
+    val deletionEmailSent: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+    val agentApplicationId: AgentApplicationId = deletionEmailSent.agentApplicationId
+    individualProvidedDetails.agentApplicationId shouldBe agentApplicationId withClue "precondition: the individual must belong to the application"
+    agentApplicationRepo.upsert(deletionEmailSent).futureValue
+    individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
 
-    s"processDeletions deletes an application sent the deletion email whose grace period has ended, together with its individuals ($businessType)" in:
-      val deletionEmailSent: AgentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-      val agentApplicationId: AgentApplicationId = deletionEmailSent.agentApplicationId
-      individualProvidedDetails.agentApplicationId shouldBe agentApplicationId withClue "precondition: the individual must belong to the application"
-      agentApplicationRepo.upsert(deletionEmailSent).futureValue
-      individualProvidedDetailsRepo.upsert(individualProvidedDetails).futureValue
+    agentApplicationDeletionService.processDeletions().futureValue
 
-      agentApplicationDeletionService.processDeletions().futureValue
-
-      agentApplicationRepo.findById(agentApplicationId).futureValue shouldBe None
-      individualProvidedDetailsRepo.findForApplication(agentApplicationId).futureValue shouldBe empty
+    agentApplicationRepo.findById(agentApplicationId).futureValue shouldBe None
+    individualProvidedDetailsRepo.findForApplication(agentApplicationId).futureValue shouldBe empty
 
   private lazy val deletionEmailSentWithAmlsEvidence: AgentApplication =
     tdAll.agentApplicationLlp.afterAmlsCompleteWithEvidence.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent

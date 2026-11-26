@@ -26,245 +26,236 @@ import uk.gov.hmrc.agentregistration.shared.ApplicationState.*
 import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.UnitSpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.testdata.TdAll
 
 class ExpiryTransformationsSpec
 extends UnitSpec:
 
-  BusinessType.values.foreach: businessType =>
-    lazy val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  "the applications having an expiry date are a Started and a GrsDataReceived application of every business type" in:
+    agentApplicationsHavingExpiryDate.map(havingExpiryDate => (havingExpiryDate.businessType, havingExpiryDate.applicationState)).toSet shouldBe
+      BusinessType.values.flatMap(businessType => Seq((businessType, Started), (businessType, GrsDataReceived))).toSet
 
-    s"AgentApplicationStates gives an application of this business type in each state ($businessType)" in:
-      agentApplicationStates.started.applicationState shouldBe Started
-      agentApplicationStates.grsDataReceived.applicationState shouldBe GrsDataReceived
-      agentApplicationStates.sentForRisking.applicationState shouldBe SentForRisking
-      agentApplicationStates.sentToMinerva.applicationState shouldBe SentToMinerva
-      agentApplicationStates.riskingCompleted.applicationState shouldBe RiskingCompleted
-      agentApplicationStates.expired.applicationState shouldBe Expired
-      agentApplicationStates.all.map(_.businessType).distinct shouldBe Seq(businessType)
+  "makeDueForExpiry sets the expiry date the reminder period ahead, so the reminder job picks the application up" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val dueForExpiry: AgentApplication = havingExpiryDate.makeDueForExpiry
+        val expiresAt: Instant = now.plus(expiryReminderPeriod)
+        dueForExpiry.applicationExpiresAt.value shouldBe expiresAt
+        dueForExpiry.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
+        dueForExpiry.applicationState shouldBe havingExpiryDate.applicationState
 
-    s"makeDueForExpiry sets the expiry date the reminder period ahead, so the reminder job picks the application up ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val dueForExpiry: AgentApplication = havingExpiryDate.makeDueForExpiry
-          val expiresAt: Instant = now.plus(expiryReminderPeriod)
-          dueForExpiry.applicationExpiresAt.value shouldBe expiresAt
-          dueForExpiry.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
-          dueForExpiry.applicationState shouldBe havingExpiryDate.applicationState
+  "makeDueForExpiry works only for Started and GrsDataReceived applications, the ones having an expiry date" in:
+    val refusal: String = "still has a deadline"
 
-    s"makeDueForExpiry works only for Started and GrsDataReceived applications, the ones having an expiry date ($businessType)" in:
-      val refusal: String = "still has a deadline"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeDueForExpiry.applicationState shouldBe Started
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeDueForExpiry.applicationState shouldBe GrsDataReceived
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeDueForExpiry) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeDueForExpiry) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeDueForExpiry) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeDueForExpiry) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeDueForExpiry.applicationState shouldBe Started
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeDueForExpiry.applicationState shouldBe GrsDataReceived
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeDueForExpiry) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeDueForExpiry) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeDueForExpiry) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeDueForExpiry) should include(refusal)
+  "makeExpiryReminderEmailSent is due for expiry with the reminder sent now" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val expiryReminderEmailSent: AgentApplication = havingExpiryDate.makeExpiryReminderEmailSent
+        val expiresAt: Instant = now.plus(expiryReminderPeriod)
+        expiryReminderEmailSent.applicationExpiresAt.value shouldBe expiresAt
+        expiryReminderEmailSent.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
+        expiryReminderEmailSent.expiryReminderEmailSentAt.value shouldBe now
+        expiryReminderEmailSent.applicationState shouldBe havingExpiryDate.applicationState
 
-    s"makeExpiryReminderEmailSent is due for expiry with the reminder sent now ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val expiryReminderEmailSent: AgentApplication = havingExpiryDate.makeExpiryReminderEmailSent
-          val expiresAt: Instant = now.plus(expiryReminderPeriod)
-          expiryReminderEmailSent.applicationExpiresAt.value shouldBe expiresAt
-          expiryReminderEmailSent.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
-          expiryReminderEmailSent.expiryReminderEmailSentAt.value shouldBe now
-          expiryReminderEmailSent.applicationState shouldBe havingExpiryDate.applicationState
+  "makeExpiryReminderEmailSent works only for Started and GrsDataReceived applications, the ones having an expiry date" in:
+    val refusal: String = "still has a deadline"
 
-    s"makeExpiryReminderEmailSent works only for Started and GrsDataReceived applications, the ones having an expiry date ($businessType)" in:
-      val refusal: String = "still has a deadline"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeExpiryReminderEmailSent.applicationState shouldBe Started
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeExpiryReminderEmailSent.applicationState shouldBe GrsDataReceived
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeExpiryReminderEmailSent) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeExpiryReminderEmailSent) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeExpiryReminderEmailSent) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeExpiryReminderEmailSent) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeExpiryReminderEmailSent.applicationState shouldBe Started
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeExpiryReminderEmailSent.applicationState shouldBe GrsDataReceived
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeExpiryReminderEmailSent) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeExpiryReminderEmailSent) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeExpiryReminderEmailSent) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeExpiryReminderEmailSent) should include(refusal)
+  "makeOverdue sets the expiry date in the past, so the expiry job picks the application up, with the reminder already sent" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val overdue: AgentApplication = havingExpiryDate.makeOverdue
+        val expiresAt: Instant = overdue.applicationExpiresAt.value
+        expiresAt should be < now
+        overdue.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
+        overdue.expiryReminderEmailSentAt.value shouldBe expiresAt.minus(expiryReminderPeriod)
+        overdue.applicationState shouldBe havingExpiryDate.applicationState
 
-    s"makeOverdue sets the expiry date in the past, so the expiry job picks the application up, with the reminder already sent ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val overdue: AgentApplication = havingExpiryDate.makeOverdue
-          val expiresAt: Instant = overdue.applicationExpiresAt.value
-          expiresAt should be < now
-          overdue.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
-          overdue.expiryReminderEmailSentAt.value shouldBe expiresAt.minus(expiryReminderPeriod)
-          overdue.applicationState shouldBe havingExpiryDate.applicationState
+  "makeOverdue works only for Started and GrsDataReceived applications, the ones having an expiry date" in:
+    val refusal: String = "still has a deadline"
 
-    s"makeOverdue works only for Started and GrsDataReceived applications, the ones having an expiry date ($businessType)" in:
-      val refusal: String = "still has a deadline"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeOverdue.applicationState shouldBe Started
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue.applicationState shouldBe GrsDataReceived
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeOverdue) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeOverdue) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeOverdue) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeOverdue) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeOverdue.applicationState shouldBe Started
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeOverdue.applicationState shouldBe GrsDataReceived
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeOverdue) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeOverdue) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeOverdue) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeOverdue) should include(refusal)
+  "makeLongOverdue sets the expiry date further back than the grace period, with no reminder sent" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val longOverdue: AgentApplication = havingExpiryDate.makeLongOverdue
+        val expiresAt: Instant = longOverdue.applicationExpiresAt.value
+        Duration.between(expiresAt, now) should be > postExpiryGracePeriod
+        longOverdue.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
+        longOverdue.expiryReminderEmailSentAt shouldBe None
+        longOverdue.applicationState shouldBe havingExpiryDate.applicationState
 
-    s"makeLongOverdue sets the expiry date further back than the grace period, with no reminder sent ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val longOverdue: AgentApplication = havingExpiryDate.makeLongOverdue
-          val expiresAt: Instant = longOverdue.applicationExpiresAt.value
-          Duration.between(expiresAt, now) should be > postExpiryGracePeriod
-          longOverdue.createdAt shouldBe expiresAt.minus(daysToSubmitApplication)
-          longOverdue.expiryReminderEmailSentAt shouldBe None
-          longOverdue.applicationState shouldBe havingExpiryDate.applicationState
+  "makeLongOverdue works only for Started and GrsDataReceived applications, the ones having an expiry date" in:
+    val refusal: String = "still has a deadline"
 
-    s"makeLongOverdue works only for Started and GrsDataReceived applications, the ones having an expiry date ($businessType)" in:
-      val refusal: String = "still has a deadline"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeLongOverdue.applicationState shouldBe Started
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeLongOverdue.applicationState shouldBe GrsDataReceived
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeLongOverdue) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeLongOverdue) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeLongOverdue) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeLongOverdue) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeLongOverdue.applicationState shouldBe Started
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeLongOverdue.applicationState shouldBe GrsDataReceived
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeLongOverdue) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeLongOverdue) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeLongOverdue) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeLongOverdue) should include(refusal)
+  "makeExpired clears the expiry date, sets expiredAt to now and starts the grace period, keeping the reminder" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val expired: AgentApplication = havingExpiryDate.makeOverdue.makeExpired
+        val deadline: Instant = expired.createdAt.plus(daysToSubmitApplication)
+        expired.applicationState shouldBe ApplicationState.Expired
+        expired.applicationExpiresAt shouldBe None
+        expired.expiredAt.value shouldBe now
+        expired.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
+        expired.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
 
-    s"makeExpired clears the expiry date, sets expiredAt to now and starts the grace period, keeping the reminder ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val expired: AgentApplication = havingExpiryDate.makeOverdue.makeExpired
-          val deadline: Instant = expired.createdAt.plus(daysToSubmitApplication)
-          expired.applicationState shouldBe ApplicationState.Expired
-          expired.applicationExpiresAt shouldBe None
-          expired.expiredAt.value shouldBe now
-          expired.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
-          expired.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
+  "makeExpired gives a long overdue application the whole grace period" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val expired: AgentApplication = havingExpiryDate.makeLongOverdue.makeExpired
+        expired.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
+        expired.postExpiryGracePeriodEndsAt.value should be > now
 
-    s"makeExpired gives a long overdue application the whole grace period ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val expired: AgentApplication = havingExpiryDate.makeLongOverdue.makeExpired
-          expired.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
-          expired.postExpiryGracePeriodEndsAt.value should be > now
+  "makeExpired refuses an application that is not overdue" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        refusalMessage(havingExpiryDate.makeExpired) should include("only an overdue application can be expired")
 
-    s"makeExpired refuses an application that is not overdue ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          refusalMessage(havingExpiryDate.makeExpired) should include("only an overdue application can be expired")
+  "makeExpired works only for overdue Started and GrsDataReceived applications" in:
+    val refusal: String = "only an overdue application can be expired"
 
-    s"makeExpired works only for overdue Started and GrsDataReceived applications ($businessType)" in:
-      val refusal: String = "only an overdue application can be expired"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.applicationState shouldBe Expired
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue.makeExpired.applicationState shouldBe Expired
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeExpired) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeExpired) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeExpired) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeExpired) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeOverdue.makeExpired.applicationState shouldBe Expired
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeOverdue.makeExpired.applicationState shouldBe Expired
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeExpired) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeExpired) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeExpired) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeExpired) should include(refusal)
+  "makeExpiredEmailSent is expired with the expired email sent now" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val expiredEmailSent: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent
+        val deadline: Instant = expiredEmailSent.createdAt.plus(daysToSubmitApplication)
+        expiredEmailSent.applicationState shouldBe ApplicationState.Expired
+        expiredEmailSent.applicationExpiresAt shouldBe None
+        expiredEmailSent.expiredAt.value shouldBe now
+        expiredEmailSent.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
+        expiredEmailSent.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
+        expiredEmailSent.expiredEmailSentAt.value shouldBe now
 
-    s"makeExpiredEmailSent is expired with the expired email sent now ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val expiredEmailSent: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent
-          val deadline: Instant = expiredEmailSent.createdAt.plus(daysToSubmitApplication)
-          expiredEmailSent.applicationState shouldBe ApplicationState.Expired
-          expiredEmailSent.applicationExpiresAt shouldBe None
-          expiredEmailSent.expiredAt.value shouldBe now
-          expiredEmailSent.postExpiryGracePeriodEndsAt.value shouldBe now.plus(postExpiryGracePeriod)
-          expiredEmailSent.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
-          expiredEmailSent.expiredEmailSentAt.value shouldBe now
+  "makeExpiredEmailSent refuses an application that is not overdue" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        refusalMessage(havingExpiryDate.makeExpiredEmailSent) should include("only an overdue application can be expired")
 
-    s"makeExpiredEmailSent refuses an application that is not overdue ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          refusalMessage(havingExpiryDate.makeExpiredEmailSent) should include("only an overdue application can be expired")
+  "makeExpiredEmailSent works only for overdue Started and GrsDataReceived applications" in:
+    val refusal: String = "only an overdue application can be expired"
 
-    s"makeExpiredEmailSent works only for overdue Started and GrsDataReceived applications ($businessType)" in:
-      val refusal: String = "only an overdue application can be expired"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpiredEmailSent.applicationState shouldBe Expired
+          case GrsDataReceived => tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue.makeExpiredEmailSent.applicationState shouldBe Expired
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeExpiredEmailSent) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeExpiredEmailSent) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeExpiredEmailSent) should include(refusal)
+          case Expired => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeExpiredEmailSent) should include(refusal)
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => agentApplicationStates.started.makeOverdue.makeExpiredEmailSent.applicationState shouldBe Expired
-            case GrsDataReceived => agentApplicationStates.grsDataReceived.makeOverdue.makeExpiredEmailSent.applicationState shouldBe Expired
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeExpiredEmailSent) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeExpiredEmailSent) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeExpiredEmailSent) should include(refusal)
-            case Expired => refusalMessage(agentApplicationStates.expired.makeExpiredEmailSent) should include(refusal)
+  "makeDueForDeletion puts the end of the grace period in the past, by moving the sweep rather than the end" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpired.makeDueForDeletion
+        dueForDeletion.postExpiryGracePeriodEndsAt.value should be < now
+        dueForDeletion.expiredAt.value shouldBe dueForDeletion.postExpiryGracePeriodEndsAt.value.minus(postExpiryGracePeriod)
+        dueForDeletion.applicationState shouldBe ApplicationState.Expired
 
-    s"makeDueForDeletion puts the end of the grace period in the past, by moving the sweep rather than the end ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpired.makeDueForDeletion
-          dueForDeletion.postExpiryGracePeriodEndsAt.value should be < now
-          dueForDeletion.expiredAt.value shouldBe dueForDeletion.postExpiryGracePeriodEndsAt.value.minus(postExpiryGracePeriod)
-          dueForDeletion.applicationState shouldBe ApplicationState.Expired
+  "makeDueForDeletion leaves the application a full submission window older than its sweep" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpired.makeDueForDeletion
+        dueForDeletion.createdAt shouldBe dueForDeletion.expiredAt.value.minus(daysToSubmitApplication)
 
-    s"makeDueForDeletion leaves the application a full submission window older than its sweep ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpired.makeDueForDeletion
-          dueForDeletion.createdAt shouldBe dueForDeletion.expiredAt.value.minus(daysToSubmitApplication)
+  "makeDueForDeletion moves the emails already sent back with expiredAt" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
+        val expiredAt: Instant = dueForDeletion.expiredAt.value
+        val deadline: Instant = dueForDeletion.createdAt.plus(daysToSubmitApplication)
+        dueForDeletion.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
+        dueForDeletion.expiredEmailSentAt.value shouldBe expiredAt
+        dueForDeletion.deletionEmailSentAt shouldBe None
+        dueForDeletion.applicationState shouldBe ApplicationState.Expired
 
-    s"makeDueForDeletion moves the emails already sent back with expiredAt ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val dueForDeletion: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent.makeDueForDeletion
-          val expiredAt: Instant = dueForDeletion.expiredAt.value
-          val deadline: Instant = dueForDeletion.createdAt.plus(daysToSubmitApplication)
-          dueForDeletion.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
-          dueForDeletion.expiredEmailSentAt.value shouldBe expiredAt
-          dueForDeletion.deletionEmailSentAt shouldBe None
-          dueForDeletion.applicationState shouldBe ApplicationState.Expired
+  "makeDueForDeletion works only for Expired applications, and refuses even an overdue one that has not expired" in:
+    val refusal: String = "only an expired application can be due for deletion"
 
-    s"makeDueForDeletion works only for Expired applications, and refuses even an overdue one that has not expired ($businessType)" in:
-      val refusal: String = "only an expired application can be due for deletion"
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeDueForDeletion) should include(refusal)
+          case GrsDataReceived => refusalMessage(tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue.makeDueForDeletion) should include(refusal)
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeDueForDeletion) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeDueForDeletion) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeDueForDeletion) should include(refusal)
+          case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeDueForDeletion.applicationState shouldBe Expired
 
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => refusalMessage(agentApplicationStates.started.makeOverdue.makeDueForDeletion) should include(refusal)
-            case GrsDataReceived => refusalMessage(agentApplicationStates.grsDataReceived.makeOverdue.makeDueForDeletion) should include(refusal)
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeDueForDeletion) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeDueForDeletion) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeDueForDeletion) should include(refusal)
-            case Expired => agentApplicationStates.expired.makeDueForDeletion.applicationState shouldBe Expired
+  "makeDeletionEmailSent is due for deletion with the deletion email sent now" in:
+    agentApplicationsHavingExpiryDate.foreach: havingExpiryDate =>
+      withClue(s"businessType=${havingExpiryDate.businessType} state=${havingExpiryDate.applicationState}: "):
+        val deletionEmailSent: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
+        val expiredAt: Instant = deletionEmailSent.expiredAt.value
+        val deadline: Instant = deletionEmailSent.createdAt.plus(daysToSubmitApplication)
+        deletionEmailSent.postExpiryGracePeriodEndsAt.value should be < now
+        deletionEmailSent.postExpiryGracePeriodEndsAt.value shouldBe expiredAt.plus(postExpiryGracePeriod)
+        deletionEmailSent.createdAt shouldBe expiredAt.minus(daysToSubmitApplication)
+        deletionEmailSent.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
+        deletionEmailSent.expiredEmailSentAt.value shouldBe expiredAt
+        deletionEmailSent.deletionEmailSentAt.value shouldBe now
+        deletionEmailSent.applicationState shouldBe ApplicationState.Expired
 
-    s"makeDeletionEmailSent is due for deletion with the deletion email sent now ($businessType)" in:
-      agentApplicationStates.havingExpiryDate.foreach: havingExpiryDate =>
-        withClue(s"state=${havingExpiryDate.applicationState}: "):
-          val deletionEmailSent: AgentApplication = havingExpiryDate.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
-          val expiredAt: Instant = deletionEmailSent.expiredAt.value
-          val deadline: Instant = deletionEmailSent.createdAt.plus(daysToSubmitApplication)
-          deletionEmailSent.postExpiryGracePeriodEndsAt.value should be < now
-          deletionEmailSent.postExpiryGracePeriodEndsAt.value shouldBe expiredAt.plus(postExpiryGracePeriod)
-          deletionEmailSent.createdAt shouldBe expiredAt.minus(daysToSubmitApplication)
-          deletionEmailSent.expiryReminderEmailSentAt.value shouldBe deadline.minus(expiryReminderPeriod)
-          deletionEmailSent.expiredEmailSentAt.value shouldBe expiredAt
-          deletionEmailSent.deletionEmailSentAt.value shouldBe now
-          deletionEmailSent.applicationState shouldBe ApplicationState.Expired
+  "makeDeletionEmailSent works only for Expired applications, and refuses even an overdue one that has not expired" in:
+    val refusal: String = "only an expired application can be due for deletion"
 
-    s"makeDeletionEmailSent works only for Expired applications, and refuses even an overdue one that has not expired ($businessType)" in:
-      val refusal: String = "only an expired application can be due for deletion"
-
-      ApplicationState.values.foreach: state =>
-        withClue(s"state=$state: "):
-          state match
-            case Started => refusalMessage(agentApplicationStates.started.makeOverdue.makeDeletionEmailSent) should include(refusal)
-            case GrsDataReceived => refusalMessage(agentApplicationStates.grsDataReceived.makeOverdue.makeDeletionEmailSent) should include(refusal)
-            case SentForRisking => refusalMessage(agentApplicationStates.sentForRisking.makeDeletionEmailSent) should include(refusal)
-            case SentToMinerva => refusalMessage(agentApplicationStates.sentToMinerva.makeDeletionEmailSent) should include(refusal)
-            case RiskingCompleted => refusalMessage(agentApplicationStates.riskingCompleted.makeDeletionEmailSent) should include(refusal)
-            case Expired => agentApplicationStates.expired.makeDeletionEmailSent.applicationState shouldBe Expired
+    ApplicationState.values.foreach: state =>
+      withClue(s"state=$state: "):
+        state match
+          case Started => refusalMessage(tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeDeletionEmailSent) should include(refusal)
+          case GrsDataReceived => refusalMessage(tdAll.agentApplicationLlp.afterGrsDataReceived.makeOverdue.makeDeletionEmailSent) should include(refusal)
+          case SentForRisking => refusalMessage(tdAll.agentApplicationLlp.afterDeclarationSubmitted.makeDeletionEmailSent) should include(refusal)
+          case SentToMinerva => refusalMessage(tdAll.agentApplicationLlp.afterSentToMinerva.makeDeletionEmailSent) should include(refusal)
+          case RiskingCompleted => refusalMessage(tdAll.agentApplicationLlp.afterRiskingCompletedApproved.makeDeletionEmailSent) should include(refusal)
+          case Expired => tdAll.agentApplicationLlp.afterStarted.makeOverdue.makeExpired.makeDeletionEmailSent.applicationState shouldBe Expired
 
   "gives back the type it was given, so a transformed Llp is still an Llp" in:
     // the ascriptions are the test: were the type widened to AgentApplication, this would not compile
@@ -294,6 +285,23 @@ extends UnitSpec:
     )
 
   private lazy val tdAll: TdAll = TdAll.tdAll
+
+  private lazy val agentApplicationsHavingExpiryDate: Seq[AgentApplication] = Seq(
+    tdAll.agentApplicationSoleTrader.afterStarted,
+    tdAll.agentApplicationSoleTrader.afterGrsDataReceived,
+    tdAll.agentApplicationLimitedCompany.afterStarted,
+    tdAll.agentApplicationLimitedCompany.afterGrsDataReceived,
+    tdAll.agentApplicationGeneralPartnership.afterStarted,
+    tdAll.agentApplicationGeneralPartnership.afterGrsDataReceived,
+    tdAll.agentApplicationLlp.afterStarted,
+    tdAll.agentApplicationLlp.afterGrsDataReceived,
+    tdAll.agentApplicationLimitedPartnership.afterStarted,
+    tdAll.agentApplicationLimitedPartnership.afterGrsDataReceived,
+    tdAll.agentApplicationScottishLimitedPartnership.afterStarted,
+    tdAll.agentApplicationScottishLimitedPartnership.afterGrsDataReceived,
+    tdAll.agentApplicationScottishPartnership.afterStarted,
+    tdAll.agentApplicationScottishPartnership.afterGrsDataReceived
+  )
 
   private def now: Instant = tdAll.now
 

@@ -20,11 +20,9 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationPreconditions.*
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class ApplicationDeletionRunnerSpec
@@ -54,30 +52,27 @@ extends ISpec:
       "AgentApplicationDeletionService.processDeletions"
     )
 
-  BusinessType.values.foreach: businessType =>
-    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  Seq(
+    TestCase(
+      description = "sends the deletion email and deletes the application in the same run",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+      emailSendSuccessfully = true
+    ),
+    TestCase(
+      description = "deletes the application even when the email service fails",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+      emailSendSuccessfully = false
+    )
+  ).foreach: testCase =>
+    s"run ${testCase.description}" in:
+      testCase.agentApplication.shouldHaveGracePeriodEndInThePast
+      testCase.agentApplication.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
+      if testCase.emailSendSuccessfully
+      then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+      else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+      agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      TestCase(
-        description = "sends the deletion email and deletes the application in the same run",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = true
-      ),
-      TestCase(
-        description = "deletes the application even when the email service fails",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = false
-      )
-    ).foreach: testCase =>
-      s"run ${testCase.description} ($businessType)" in:
-        testCase.agentApplication.shouldHaveGracePeriodEndInThePast
-        testCase.agentApplication.deletionEmailSentAt shouldBe None withClue "precondition: the deletion email must not be recorded"
-        if testCase.emailSendSuccessfully
-        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+      applicationDeletionRunner.run().futureValue
 
-        applicationDeletionRunner.run().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe None
+      EmailStubs.verifySendEmail(count = 1)
+      agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe None

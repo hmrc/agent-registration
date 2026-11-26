@@ -21,11 +21,9 @@ import uk.gov.hmrc.agentregistration.connectors.email.EmailTemplateId
 import uk.gov.hmrc.agentregistration.connectors.email.SendEmailRequest
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
-import uk.gov.hmrc.agentregistration.shared.BusinessType
 import uk.gov.hmrc.agentregistration.shared.EmailAddress
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 import uk.gov.hmrc.agentregistration.testsupport.wiremock.stubs.EmailStubs
 
 class EmailServiceForExpiredApplicationsSpec
@@ -56,33 +54,30 @@ extends ISpec:
     expectedAgentApplicationAfterRun: AgentApplication
   )
 
-  BusinessType.values.foreach: businessType =>
-    val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  Seq(
+    TestCase(
+      description = "sends the expired email to the verified applicant email and records it as sent",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired,
+      emailSendSuccessfully = true,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent
+    ),
+    TestCase(
+      description = "does not record the expired email as sent when the email service fails, so it is retried on the next run",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired,
+      emailSendSuccessfully = false,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired
+    )
+  ).foreach: testCase =>
+    s"processEmails ${testCase.description}" in:
+      if testCase.emailSendSuccessfully
+      then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
+      else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
+      agentApplicationRepo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      TestCase(
-        description = "sends the expired email to the verified applicant email and records it as sent",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
-        emailSendSuccessfully = true,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent
-      ),
-      TestCase(
-        description = "does not record the expired email as sent when the email service fails, so it is retried on the next run",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
-        emailSendSuccessfully = false,
-        expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired
-      )
-    ).foreach: testCase =>
-      s"processEmails ${testCase.description} ($businessType)" in:
-        if testCase.emailSendSuccessfully
-        then EmailStubs.stubSendEmail(expectedEmail(testCase.agentApplication))
-        else EmailStubs.stubSendEmailFailure(expectedEmail(testCase.agentApplication))
-        agentApplicationRepo.upsert(testCase.agentApplication).futureValue
+      emailServiceForExpiredApplications.processEmails().futureValue
 
-        emailServiceForExpiredApplications.processEmails().futureValue
-
-        EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
+      EmailStubs.verifySendEmail(count = 1)
+      agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
   "processEmails sends the expired email to the verified agent email when agent details are complete" in:
     val expired: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsCompleteWithOtherAgentEmail.makeOverdue.makeExpired
