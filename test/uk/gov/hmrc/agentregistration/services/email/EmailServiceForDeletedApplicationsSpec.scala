@@ -66,7 +66,7 @@ extends ISpec:
         expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
       ),
       TestCase(
-        description = "does not record the deletion email as sent when the email service fails, so it is retried on the next run",
+        description = "does not record the deletion email as sent when the email service fails",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
         emailSendSuccessfully = false,
         expectedAgentApplicationAfterRun = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion

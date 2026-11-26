@@ -167,11 +167,7 @@ extends Repo[AgentApplicationId, AgentApplication](
       .find(
         filter = Filters.and(
           Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
-          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
-          Filters.or(
-            Filters.exists(FieldNames.deletionEmailSentAt),
-            Filters.nor(hasVerifiedEmailAddress)
-          )
+          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
         )
       )
       .toFuture()

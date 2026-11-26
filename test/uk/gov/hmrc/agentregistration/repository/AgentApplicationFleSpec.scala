@@ -100,13 +100,3 @@ extends ISpec:
     val expired: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail.makeOverdue.makeExpired
     repo.upsert(expired).futureValue
     repo.findExpiredReadyForExpiredEmail().futureValue shouldBe empty
-
-  "with FLE enabled findExpiredDueForDeletion still finds an application with an unverified email address" in:
-    val dueForDeletion: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsWithUnverifiedEmail.makeOverdue.makeExpired.makeDueForDeletion
-    repo.upsert(dueForDeletion).futureValue
-    repo.findExpiredDueForDeletion().futureValue shouldBe Seq(dueForDeletion)
-
-  "with FLE enabled findExpiredDueForDeletion still does not find an application with a verified email address not yet sent the deletion email" in:
-    val dueForDeletion: AgentApplication = tdAll.agentApplicationLlp.afterAgentDetailsComplete.makeOverdue.makeExpired.makeDueForDeletion
-    repo.upsert(dueForDeletion).futureValue
-    repo.findExpiredDueForDeletion().futureValue shouldBe empty

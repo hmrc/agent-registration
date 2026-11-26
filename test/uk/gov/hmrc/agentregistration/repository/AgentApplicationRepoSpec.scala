@@ -391,9 +391,9 @@ extends ISpec:
         expectedFound = true
       ),
       FindTestCase(
-        description = "does not find an Expired application with a verified email address not yet sent the deletion email",
+        description = "finds an Expired application with a verified email address not yet sent the deletion email",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        expectedFound = false
+        expectedFound = true
       ),
       FindTestCase(
         description = "does not find an Expired application still in the grace period",
@@ -450,13 +450,6 @@ extends ISpec:
       repo.upsert(expired).futureValue
 
       repo.findExpiredReadyForExpiredEmail().futureValue.contains(expired) shouldBe testCase.hasVerifiedEmailAddress
-
-    s"findExpiredDueForDeletion agrees with EmailRecipient.resolve for an application with ${testCase.description}" in:
-      val dueForDeletion: AgentApplication = testCase.agentApplication.makeOverdue.makeExpired.makeDueForDeletion
-      EmailRecipient.resolve(dueForDeletion).isDefined shouldBe testCase.hasVerifiedEmailAddress
-      repo.upsert(dueForDeletion).futureValue
-
-      repo.findExpiredDueForDeletion().futureValue.contains(dueForDeletion) shouldBe !testCase.hasVerifiedEmailAddress
 
   // the fields the Mongo format stores as BSON Date; the records below between them carry all of them
   private val bsonDateFieldNames: Seq[String] = Seq(

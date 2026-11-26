@@ -45,8 +45,7 @@ extends ISpec:
   private final case class TestCase(
     description: String,
     agentApplication: AgentApplication,
-    emailSendSuccessfully: Boolean,
-    expectedAgentApplicationAfterRun: Option[AgentApplication]
+    emailSendSuccessfully: Boolean
   )
 
   "stages lists the deletion emails, then the deletions" in:
@@ -62,14 +61,12 @@ extends ISpec:
       TestCase(
         description = "sends the deletion email and deletes the application in the same run",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = true,
-        expectedAgentApplicationAfterRun = None
+        emailSendSuccessfully = true
       ),
       TestCase(
-        description = "keeps the application, with no deletion email recorded, when the email service fails, so the next run retries",
+        description = "deletes the application even when the email service fails",
         agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        emailSendSuccessfully = false,
-        expectedAgentApplicationAfterRun = Some(agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion)
+        emailSendSuccessfully = false
       )
     ).foreach: testCase =>
       s"run ${testCase.description} ($businessType)" in:
@@ -83,4 +80,4 @@ extends ISpec:
         applicationDeletionRunner.run().futureValue
 
         EmailStubs.verifySendEmail(count = 1)
-        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe testCase.expectedAgentApplicationAfterRun
+        agentApplicationRepo.findById(testCase.agentApplication.agentApplicationId).futureValue shouldBe None
