@@ -36,7 +36,6 @@ import uk.gov.hmrc.agentregistration.shared.InternalUserId
 import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
-import uk.gov.hmrc.agentregistration.testsupport.testdata.AgentApplicationStates
 
 import java.time.Clock
 import java.time.Duration
@@ -99,312 +98,75 @@ extends ISpec:
     expectedAgentApplicationAfterRun: AgentApplication
   )
 
-  BusinessType.values.foreach: businessType =>
-    lazy val agentApplicationStates: AgentApplicationStates = AgentApplicationStates.forBusinessType(businessType)
+  findUnsubmittedApplicationsForExpiryReminderEmailTestCases.foreach: testCase =>
+    s"findUnsubmittedApplicationsForExpiryReminderEmail ${testCase.description}" in:
+      repo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      FindTestCase(
-        description = "finds an application with a verified email address expiring within the reminder period",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "does not find a Started application with no verified email address",
-        agentApplication = agentApplicationStates.started.makeDueForExpiry,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a GrsDataReceived application with no verified email address",
-        agentApplication = agentApplicationStates.grsDataReceived.makeDueForExpiry,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentForRisking application",
-        agentApplication = agentApplicationStates.sentForRisking,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentToMinerva application",
-        agentApplication = agentApplicationStates.sentToMinerva,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a RiskingCompleted application",
-        agentApplication = agentApplicationStates.riskingCompleted,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an Expired application",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an application already sent the reminder",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeExpiryReminderEmailSent,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an application expiring after the reminder period",
-        agentApplication = agentApplicationStates.withVerifiedEmail,
-        expectedFound = false
-      ),
-      // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
-      FindTestCase(
-        description = "does not find an application whose expiry date has passed",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeLongOverdue,
-        expectedFound = false
-      )
-    ).foreach: testCase =>
-      s"findUnsubmittedApplicationsForExpiryReminderEmail ${testCase.description} ($businessType)" in:
-        repo.upsert(testCase.agentApplication).futureValue
+      repo.findUnsubmittedApplicationsForExpiryReminderEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
-        repo.findUnsubmittedApplicationsForExpiryReminderEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+  "findUnsubmittedApplicationsForExpiryReminderEmail test cases contain all business types" in:
+    findUnsubmittedApplicationsForExpiryReminderEmailTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
 
-    s"findUnsubmittedApplicationsForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date ($businessType)" in:
-      val dueForExpiry: AgentApplication = agentApplicationStates.withVerifiedEmail.makeDueForExpiry
-      val expiresAt: Instant = dueForExpiry.applicationExpiresAt.value
-      repo.upsert(dueForExpiry).futureValue
+  "findUnsubmittedApplicationsForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
+    val dueForExpiry: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry
+    val expiresAt: Instant = dueForExpiry.applicationExpiresAt.value
+    repo.upsert(dueForExpiry).futureValue
 
-      def isReadyForExpiryReminderEmail(now: Instant): Boolean = repoWithClockAt(now)
-        .findUnsubmittedApplicationsForExpiryReminderEmail()
-        .futureValue
-        .contains(dueForExpiry)
+    def isReadyForExpiryReminderEmail(now: Instant): Boolean = repoWithClockAt(now)
+      .findUnsubmittedApplicationsForExpiryReminderEmail()
+      .futureValue
+      .contains(dueForExpiry)
 
-      isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(11))) shouldBe false withClue "11 days left, too early for a reminder"
-      isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(10))) shouldBe true withClue "10 days left, the reminder period starts"
-      isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(3))) shouldBe true withClue "3 days left, inside the reminder period"
-      isReadyForExpiryReminderEmail(now = expiresAt) shouldBe true withClue "expiring now, the last moment of the reminder period"
-      isReadyForExpiryReminderEmail(now = expiresAt.plusSeconds(1)) shouldBe false withClue "expiry date passed, too late for a reminder"
+    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(11))) shouldBe false withClue "11 days left, too early for a reminder"
+    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(10))) shouldBe true withClue "10 days left, the reminder period starts"
+    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(3))) shouldBe true withClue "3 days left, inside the reminder period"
+    isReadyForExpiryReminderEmail(now = expiresAt) shouldBe true withClue "expiring now, the last moment of the reminder period"
+    isReadyForExpiryReminderEmail(now = expiresAt.plusSeconds(1)) shouldBe false withClue "expiry date passed, too late for a reminder"
 
-    Seq(
-      UpdateTestCase(
-        description = "expires a Started application whose expiry date has passed",
-        agentApplication = agentApplicationStates.started.makeOverdue,
-        expectedModifiedCount = 1L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.started.makeOverdue.makeExpired
-      ),
-      UpdateTestCase(
-        description = "expires a GrsDataReceived application whose expiry date has passed",
-        agentApplication = agentApplicationStates.grsDataReceived.makeOverdue,
-        expectedModifiedCount = 1L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.grsDataReceived.makeOverdue.makeExpired
-      ),
-      UpdateTestCase(
-        description = "does not expire a SentForRisking application",
-        agentApplication = agentApplicationStates.sentForRisking,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.sentForRisking
-      ),
-      UpdateTestCase(
-        description = "does not expire a SentToMinerva application",
-        agentApplication = agentApplicationStates.sentToMinerva,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.sentToMinerva
-      ),
-      UpdateTestCase(
-        description = "does not expire a RiskingCompleted application",
-        agentApplication = agentApplicationStates.riskingCompleted,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.riskingCompleted
-      ),
-      UpdateTestCase(
-        description = "does not change an Expired application",
-        agentApplication = agentApplicationStates.expired,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.expired
-      ),
-      UpdateTestCase(
-        description = "does not expire a Started application whose expiry date is in the future",
-        agentApplication = agentApplicationStates.started,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.started
-      ),
-      UpdateTestCase(
-        description = "does not expire a GrsDataReceived application whose expiry date is in the future",
-        agentApplication = agentApplicationStates.grsDataReceived,
-        expectedModifiedCount = 0L,
-        expectedAgentApplicationAfterRun = agentApplicationStates.grsDataReceived
-      )
-    ).foreach: testCase =>
-      s"expireUnsubmittedApplications ${testCase.description} ($businessType)" in:
-        repo.upsert(testCase.agentApplication).futureValue
+  expireUnsubmittedApplicationsTestCases.foreach: testCase =>
+    s"expireUnsubmittedApplications ${testCase.description}" in:
+      repo.upsert(testCase.agentApplication).futureValue
 
-        repo.expireUnsubmittedApplications().futureValue shouldBe testCase.expectedModifiedCount
+      repo.expireUnsubmittedApplications().futureValue shouldBe testCase.expectedModifiedCount
 
-        repo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
+      repo.findById(testCase.agentApplication.agentApplicationId).futureValue.value shouldBe testCase.expectedAgentApplicationAfterRun
 
-    s"expireUnsubmittedApplications returns the number of applications it expired ($businessType)" in:
-      repo.upsert(agentApplicationStates.started.makeOverdue).futureValue
+  "expireUnsubmittedApplications test cases contain all business types" in:
+    expireUnsubmittedApplicationsTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
 
-      repo.expireUnsubmittedApplications().futureValue shouldBe 1L
-      repo.expireUnsubmittedApplications().futureValue shouldBe 0L withClue
-        "a second run has nothing left to expire"
+  "expireUnsubmittedApplications returns the number of applications it expired" in:
+    repo.upsert(tdAll.agentApplicationLlp.afterStarted.makeOverdue).futureValue
 
-    Seq(
-      FindTestCase(
-        description = "does not find a Started application",
-        agentApplication = agentApplicationStates.started,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a GrsDataReceived application",
-        agentApplication = agentApplicationStates.grsDataReceived,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentForRisking application",
-        agentApplication = agentApplicationStates.sentForRisking,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentToMinerva application",
-        agentApplication = agentApplicationStates.sentToMinerva,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a RiskingCompleted application",
-        agentApplication = agentApplicationStates.riskingCompleted,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an unsubmitted application with a verified email address",
-        agentApplication = agentApplicationStates.withVerifiedEmail,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "finds an Expired application with a verified email address still in the grace period",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "does not find an Expired application with no verified email address",
-        agentApplication = agentApplicationStates.expired,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an Expired application whose grace period has ended",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an Expired application already sent the expired email",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent,
-        expectedFound = false
-      )
-    ).foreach: testCase =>
-      s"findExpiredReadyForExpiredEmail ${testCase.description} ($businessType)" in:
-        repo.upsert(testCase.agentApplication).futureValue
+    repo.expireUnsubmittedApplications().futureValue shouldBe 1L
+    repo.expireUnsubmittedApplications().futureValue shouldBe 0L withClue
+      "a second run has nothing left to expire"
 
-        repo.findExpiredReadyForExpiredEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+  findExpiredReadyForExpiredEmailTestCases.foreach: testCase =>
+    s"findExpiredReadyForExpiredEmail ${testCase.description}" in:
+      repo.upsert(testCase.agentApplication).futureValue
 
-    Seq(
-      FindTestCase(
-        description = "does not find a Started application",
-        agentApplication = agentApplicationStates.started,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a GrsDataReceived application",
-        agentApplication = agentApplicationStates.grsDataReceived,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentForRisking application",
-        agentApplication = agentApplicationStates.sentForRisking,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentToMinerva application",
-        agentApplication = agentApplicationStates.sentToMinerva,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a RiskingCompleted application",
-        agentApplication = agentApplicationStates.riskingCompleted,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an unsubmitted application with a verified email address",
-        agentApplication = agentApplicationStates.withVerifiedEmail,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "finds an Expired application with a verified email address whose grace period has ended",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired.makeDueForDeletion,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "does not find an Expired application with no verified email address",
-        agentApplication = agentApplicationStates.expired.makeDueForDeletion,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an Expired application still in the grace period",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpired,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find an Expired application already sent the deletion email",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
-        expectedFound = false
-      )
-    ).foreach: testCase =>
-      s"findExpiredReadyForDeletionEmail ${testCase.description} ($businessType)" in:
-        repo.upsert(testCase.agentApplication).futureValue
+      repo.findExpiredReadyForExpiredEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
 
-        repo.findExpiredReadyForDeletionEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+  "findExpiredReadyForExpiredEmail test cases contain all business types" in:
+    findExpiredReadyForExpiredEmailTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
 
-    Seq(
-      FindTestCase(
-        description = "does not find a Started application",
-        agentApplication = agentApplicationStates.started,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a GrsDataReceived application",
-        agentApplication = agentApplicationStates.grsDataReceived,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentForRisking application",
-        agentApplication = agentApplicationStates.sentForRisking,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a SentToMinerva application",
-        agentApplication = agentApplicationStates.sentToMinerva,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "does not find a RiskingCompleted application",
-        agentApplication = agentApplicationStates.riskingCompleted,
-        expectedFound = false
-      ),
-      FindTestCase(
-        description = "finds an Expired application sent the deletion email",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "finds an Expired application with no verified email address whose grace period has ended",
-        agentApplication = agentApplicationStates.expired.makeDueForDeletion,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "finds an Expired application with a verified email address not yet sent the deletion email",
-        agentApplication = agentApplicationStates.withVerifiedEmail.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
-        expectedFound = true
-      ),
-      FindTestCase(
-        description = "does not find an Expired application still in the grace period",
-        agentApplication = agentApplicationStates.expired,
-        expectedFound = false
-      )
-    ).foreach: testCase =>
-      s"findExpiredDueForDeletion ${testCase.description} ($businessType)" in:
-        repo.upsert(testCase.agentApplication).futureValue
+  findExpiredReadyForDeletionEmailTestCases.foreach: testCase =>
+    s"findExpiredReadyForDeletionEmail ${testCase.description}" in:
+      repo.upsert(testCase.agentApplication).futureValue
 
-        repo.findExpiredDueForDeletion().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+      repo.findExpiredReadyForDeletionEmail().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+
+  "findExpiredReadyForDeletionEmail test cases contain all business types" in:
+    findExpiredReadyForDeletionEmailTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
+
+  findExpiredDueForDeletionTestCases.foreach: testCase =>
+    s"findExpiredDueForDeletion ${testCase.description}" in:
+      repo.upsert(testCase.agentApplication).futureValue
+
+      repo.findExpiredDueForDeletion().futureValue.contains(testCase.agentApplication) shouldBe testCase.expectedFound
+
+  "findExpiredDueForDeletion test cases contain all business types" in:
+    findExpiredDueForDeletionTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
 
   private final case class VerifiedEmailTestCase(
     description: String,
@@ -606,3 +368,262 @@ extends ISpec:
 
       countWhere(Filters.lt(dateQueryCase.fieldName, dateQueryCase.storedInstant.plusMillis(1))) shouldBe 1L withClue "a later date matches"
       countWhere(Filters.lt(dateQueryCase.fieldName, dateQueryCase.storedInstant)) shouldBe 0L withClue "the stored date itself is not less than itself"
+
+  private lazy val findUnsubmittedApplicationsForExpiryReminderEmailTestCases: Seq[FindTestCase] = Seq(
+    FindTestCase(
+      description = "finds an application with a verified email address expiring within the reminder period",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterContactDetailsComplete.makeDueForExpiry,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "does not find a Started application with no verified email address",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterStarted.makeDueForExpiry,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a GrsDataReceived application with no verified email address",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterGrsDataReceived.makeDueForExpiry,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentForRisking application",
+      agentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentToMinerva application",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterSentToMinerva,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a RiskingCompleted application",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterRiskingCompletedApproved,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an Expired application",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterContactDetailsComplete.makeOverdue.makeExpired,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an application already sent the reminder",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterContactDetailsComplete.makeExpiryReminderEmailSent,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an application expiring after the reminder period",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterContactDetailsComplete,
+      expectedFound = false
+    ),
+    // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
+    FindTestCase(
+      description = "does not find an application whose expiry date has passed",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterContactDetailsComplete.makeLongOverdue,
+      expectedFound = false
+    )
+  )
+
+  private lazy val expireUnsubmittedApplicationsTestCases: Seq[UpdateTestCase] = Seq(
+    UpdateTestCase(
+      description = "expires a Started application whose expiry date has passed",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterStarted.makeOverdue,
+      expectedModifiedCount = 1L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLimitedCompany.afterStarted.makeOverdue.makeExpired
+    ),
+    UpdateTestCase(
+      description = "expires a GrsDataReceived application whose expiry date has passed",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterGrsDataReceived.makeOverdue,
+      expectedModifiedCount = 1L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationGeneralPartnership.afterGrsDataReceived.makeOverdue.makeExpired
+    ),
+    UpdateTestCase(
+      description = "does not expire a SentForRisking application",
+      agentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLlp.afterDeclarationSubmitted
+    ),
+    UpdateTestCase(
+      description = "does not expire a SentToMinerva application",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterSentToMinerva,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLimitedPartnership.afterSentToMinerva
+    ),
+    UpdateTestCase(
+      description = "does not expire a RiskingCompleted application",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterRiskingCompletedApproved,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationScottishLimitedPartnership.afterRiskingCompletedApproved
+    ),
+    UpdateTestCase(
+      description = "does not change an Expired application",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterStarted.makeOverdue.makeExpired,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationScottishPartnership.afterStarted.makeOverdue.makeExpired
+    ),
+    UpdateTestCase(
+      description = "does not expire a Started application whose expiry date is in the future",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterStarted,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationSoleTrader.afterStarted
+    ),
+    UpdateTestCase(
+      description = "does not expire a GrsDataReceived application whose expiry date is in the future",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterGrsDataReceived,
+      expectedModifiedCount = 0L,
+      expectedAgentApplicationAfterRun = tdAll.agentApplicationLimitedCompany.afterGrsDataReceived
+    )
+  )
+
+  private lazy val findExpiredReadyForExpiredEmailTestCases: Seq[FindTestCase] = Seq(
+    FindTestCase(
+      description = "does not find a Started application",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterStarted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a GrsDataReceived application",
+      agentApplication = tdAll.agentApplicationLlp.afterGrsDataReceived,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentForRisking application",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterDeclarationSubmitted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentToMinerva application",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterSentToMinerva,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a RiskingCompleted application",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterRiskingCompletedApproved,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an unsubmitted application with a verified email address",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterContactDetailsComplete,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "finds an Expired application with a verified email address still in the grace period",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterContactDetailsComplete.makeOverdue.makeExpired,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "does not find an Expired application with no verified email address",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterStarted.makeOverdue.makeExpired,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an Expired application whose grace period has ended",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired.makeDueForDeletion,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an Expired application already sent the expired email",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent,
+      expectedFound = false
+    )
+  )
+
+  private lazy val findExpiredReadyForDeletionEmailTestCases: Seq[FindTestCase] = Seq(
+    FindTestCase(
+      description = "does not find a Started application",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterStarted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a GrsDataReceived application",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterGrsDataReceived,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentForRisking application",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterDeclarationSubmitted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentToMinerva application",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterSentToMinerva,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a RiskingCompleted application",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterRiskingCompletedApproved,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an unsubmitted application with a verified email address",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterContactDetailsComplete,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "finds an Expired application with a verified email address whose grace period has ended",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpired.makeDueForDeletion,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "does not find an Expired application with no verified email address",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterStarted.makeOverdue.makeExpired.makeDueForDeletion,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an Expired application still in the grace period",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterContactDetailsComplete.makeOverdue.makeExpired,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find an Expired application already sent the deletion email",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+      expectedFound = false
+    )
+  )
+
+  private lazy val findExpiredDueForDeletionTestCases: Seq[FindTestCase] = Seq(
+    FindTestCase(
+      description = "does not find a Started application",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterStarted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a GrsDataReceived application",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterGrsDataReceived,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentForRisking application",
+      agentApplication = tdAll.agentApplicationSoleTrader.afterDeclarationSubmitted,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a SentToMinerva application",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterSentToMinerva,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "does not find a RiskingCompleted application",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterRiskingCompletedApproved,
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "finds an Expired application sent the deletion email",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "finds an Expired application with no verified email address whose grace period has ended",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterStarted.makeOverdue.makeExpired.makeDueForDeletion,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "finds an Expired application with a verified email address not yet sent the deletion email",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterContactDetailsComplete.makeOverdue.makeExpiredEmailSent.makeDueForDeletion,
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "does not find an Expired application still in the grace period",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterStarted.makeOverdue.makeExpired,
+      expectedFound = false
+    )
+  )
