@@ -32,7 +32,7 @@ import uk.gov.hmrc.agentregistration.shared.individual.IndividualProvidedDetails
 import uk.gov.hmrc.agentregistration.shared.risking.*
 import uk.gov.hmrc.agentregistration.shared.util.Errors.getOrThrowExpectedDataMissing
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.=!=
-import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
 import uk.gov.hmrc.agentregistration.shared.risking.updates.UpdateApplicationStateSentToMinervaRequest
 import uk.gov.hmrc.internalauth.client.*

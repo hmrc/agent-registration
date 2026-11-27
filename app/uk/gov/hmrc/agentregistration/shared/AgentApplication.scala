@@ -51,6 +51,9 @@ sealed trait AgentApplication:
   def submittedAt: Option[Instant] // only populated when the application is submitted, not during the registration journey
   def postExpiryGracePeriodEndsAt: Option[Instant]
   def expiredAt: Option[Instant]
+  def expiryReminderEmailSentAt: Option[Instant]
+  def expiredEmailSentAt: Option[Instant]
+  def deletionEmailSentAt: Option[Instant]
   def applicationState: ApplicationState
   def businessType: BusinessType
   def userRole: Option[UserRole]
@@ -176,6 +179,9 @@ final case class AgentApplicationSoleTrader(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsSoleTrader],
@@ -218,6 +224,9 @@ final case class AgentApplicationLlp(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsLlp],
@@ -256,6 +265,9 @@ final case class AgentApplicationLimitedCompany(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsLimitedCompany],
@@ -294,6 +306,9 @@ final case class AgentApplicationGeneralPartnership(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsGeneralPartnership],
@@ -331,6 +346,9 @@ final case class AgentApplicationLimitedPartnership(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsPartnership],
@@ -367,6 +385,9 @@ final case class AgentApplicationScottishLimitedPartnership(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsPartnership],
@@ -403,6 +424,9 @@ final case class AgentApplicationScottishPartnership(
   override val submittedAt: Option[Instant],
   override val postExpiryGracePeriodEndsAt: Option[Instant],
   override val expiredAt: Option[Instant],
+  override val expiryReminderEmailSentAt: Option[Instant],
+  override val expiredEmailSentAt: Option[Instant],
+  override val deletionEmailSentAt: Option[Instant],
   override val applicationState: ApplicationState,
   override val userRole: Option[UserRole],
   businessDetails: Option[BusinessDetailsScottishPartnership],

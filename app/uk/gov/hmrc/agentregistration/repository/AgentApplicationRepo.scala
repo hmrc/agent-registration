@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.agentregistration.repository
 
+import org.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonDateTime
-import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
-import org.mongodb.scala.model.Projections
 import org.mongodb.scala.model.Updates
+import uk.gov.hmrc.agentregistration.config.AppConfig
 import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
 import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.repository.Repo.IdExtractor
@@ -37,18 +37,22 @@ import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.jdk.DurationConverters.*
 import AgentApplicationRepoHelp.given
 
 @Singleton
 final class AgentApplicationRepo @Inject() (
   mongoComponent: MongoComponent,
   agentApplicationMongoFormats: AgentApplicationMongoFormats,
-  hasher: Hasher
+  hasher: Hasher,
+  clock: Clock,
+  appConfig: AppConfig
 )(using ec: ExecutionContext)
 extends Repo[AgentApplicationId, AgentApplication](
   collectionName = AgentApplicationRepo.collectionName,
@@ -89,40 +93,92 @@ extends Repo[AgentApplicationId, AgentApplication](
     .toFuture()
     .map(_ => ())
 
-  def updateManyToExpiredForUnsubmitted(
-    now: Instant,
-    postExpiryGracePeriodEndsAt: Instant
-  ): Future[Long] = collection
-    .updateMany(
-      filter = Filters.and(
-        Filters.in(
-          FieldNames.applicationState,
-          ApplicationState.Started.toString,
-          ApplicationState.GrsDataReceived.toString
+  def expireUnsubmittedApplications(): Future[Long] =
+    val now: Instant = Instant.now(clock)
+    val postExpiryGracePeriodEndsAt: Instant = now.plus(appConfig.postExpiryGracePeriod.toJava)
+    collection
+      .updateMany(
+        filter = Filters.and(
+          Filters.in(
+            FieldNames.applicationState,
+            ApplicationState.Started.toString,
+            ApplicationState.GrsDataReceived.toString
+          ),
+          Filters.lt(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli))
         ),
-        Filters.lt(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli))
-      ),
-      update = Updates.combine(
-        Updates.set(FieldNames.applicationState, ApplicationState.Expired.toString),
-        Updates.set(FieldNames.expiredAt, BsonDateTime(now.toEpochMilli)),
-        Updates.set(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
-        Updates.unset(FieldNames.applicationExpiresAt)
+        update = Updates.combine(
+          Updates.set(FieldNames.applicationState, ApplicationState.Expired.toString),
+          Updates.set(FieldNames.expiredAt, BsonDateTime(now.toEpochMilli)),
+          Updates.set(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(postExpiryGracePeriodEndsAt.toEpochMilli)),
+          Updates.unset(FieldNames.applicationExpiresAt)
+        )
       )
-    )
-    .toFuture()
-    .map(_.getModifiedCount)
+      .toFuture()
+      .map(_.getModifiedCount)
 
-  def findIdsOfExpiredWithPostExpiryGracePeriodEnded(now: Instant): Future[Seq[AgentApplicationId]] = collection
-    .withDocumentClass[BsonDocument]()
-    .find(
-      filter = Filters.and(
-        Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
-        Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
+  def findUnsubmittedApplicationsForExpiryReminderEmail(): Future[Seq[AgentApplication]] =
+    val now: Instant = Instant.now(clock)
+    val expiryReminderPeriodEndsAt: Instant = now.plus(appConfig.expiryReminderPeriod.toJava)
+    collection
+      .find(
+        filter = Filters.and(
+          Filters.in(
+            FieldNames.applicationState,
+            ApplicationState.Started.toString,
+            ApplicationState.GrsDataReceived.toString
+          ),
+          Filters.gte(FieldNames.applicationExpiresAt, BsonDateTime(now.toEpochMilli)),
+          Filters.lte(FieldNames.applicationExpiresAt, BsonDateTime(expiryReminderPeriodEndsAt.toEpochMilli)),
+          Filters.exists(FieldNames.expiryReminderEmailSentAt, false),
+          hasVerifiedEmailAddress
+        )
       )
+      .toFuture()
+
+  def findExpiredReadyForExpiredEmail(): Future[Seq[AgentApplication]] =
+    val now: Instant = Instant.now(clock)
+    collection
+      .find(
+        filter = Filters.and(
+          Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+          Filters.gte(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+          Filters.exists(FieldNames.expiredEmailSentAt, false),
+          hasVerifiedEmailAddress
+        )
+      )
+      .toFuture()
+
+  def findExpiredReadyForDeletionEmail(): Future[Seq[AgentApplication]] =
+    val now: Instant = Instant.now(clock)
+    collection
+      .find(
+        filter = Filters.and(
+          Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli)),
+          Filters.exists(FieldNames.deletionEmailSentAt, false),
+          hasVerifiedEmailAddress
+        )
+      )
+      .toFuture()
+
+  def findExpiredDueForDeletion(): Future[Seq[AgentApplication]] =
+    val now: Instant = Instant.now(clock)
+    collection
+      .find(
+        filter = Filters.and(
+          Filters.eq(FieldNames.applicationState, ApplicationState.Expired.toString),
+          Filters.lt(FieldNames.postExpiryGracePeriodEndsAt, BsonDateTime(now.toEpochMilli))
+        )
+      )
+      .toFuture()
+
+  private val hasVerifiedEmailAddress: Bson = Filters.and(
+    Filters.exists(FieldNames.applicantContactDetails),
+    Filters.or(
+      Filters.eq(FieldNames.agentEmailAddressIsVerified, true),
+      Filters.eq(FieldNames.applicantEmailAddressIsVerified, true)
     )
-    .projection(Projections.include(FieldNames._id))
-    .toFuture()
-    .map(_.map(bsonDocument => AgentApplicationId(bsonDocument.getString(FieldNames._id).getValue)))
+  )
 
 object AgentApplicationRepo:
   val collectionName = "agent-application"
@@ -157,5 +213,21 @@ object AgentApplicationRepoHelp:
       IndexOptions()
         .unique(true)
         .name(FieldNames.applicationReference)
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.applicationExpiresAt
+      ),
+      IndexOptions()
+        .name("applicationState_applicationExpiresAt_index")
+    ),
+    IndexModel(
+      keys = Indexes.ascending(
+        FieldNames.applicationState,
+        FieldNames.postExpiryGracePeriodEndsAt
+      ),
+      IndexOptions()
+        .name("applicationState_postExpiryGracePeriodEndsAt_index")
     )
   )

@@ -22,12 +22,14 @@ import uk.gov.hmrc.agentregistration.shared.*
 import uk.gov.hmrc.agentregistration.shared.testdata.TdTime.now
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.DataIntegrityAssertion.assertDataIntegrity
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.TdAgentApplicationTime.daysToSubmitApplication
+import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.TdAgentApplicationTime.expiryReminderPeriod
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.TdAgentApplicationTime.postExpiryGracePeriod
 import uk.gov.hmrc.agentregistration.shared.util.SafeEquals.*
 
-/** Makes any application fixture overdue, expired or due for deletion:
+/** Makes any application fixture overdue, expired or due for deletion, or any of those with its emails sent:
   * {{{
   * agentApplicationLlp.afterStarted.makeLongOverdue.makeExpired.makeDueForDeletion
+  * agentApplicationLlp.afterStarted.makeOverdue.makeExpiredEmailSent.makeDeletionEmailSent
   * }}}
   */
 object ExpiryTransformations:
@@ -37,6 +39,30 @@ object ExpiryTransformations:
   private val postExpiryGracePeriodEndedBy: Duration = Duration.ofSeconds(60)
 
   extension [A <: AgentApplication](agentApplication: A)
+
+    def makeExpiringIn(timeLeft: Duration): A =
+      require(
+        agentApplication.applicationExpiresAt.isDefined,
+        s"only an application that still has a deadline can be expiring, and this one is ${agentApplication.applicationState} with none"
+      )
+      require(!timeLeft.isNegative, s"an application still expiring has time left, so `timeLeft` cannot be negative, not $timeLeft - call makeOverdueBy")
+      val expiresAt: Instant = now.plus(timeLeft)
+      agentApplication
+        .withTimes(
+          createdAt = expiresAt.minus(daysToSubmitApplication),
+          applicationExpiresAt = Some(expiresAt)
+        )
+        .assertDataIntegrity()
+
+    /** In the window `EmailServiceForExpiryReminders` queries: the deadline between now and the end of the reminder period. */
+    def makeDueForExpiry: A = agentApplication.makeExpiringIn(expiryReminderPeriod)
+
+    def makeExpiryReminderEmailSent: A = agentApplication
+      .makeDueForExpiry
+      .withTimes(
+        expiryReminderEmailSentAt = Some(now)
+      )
+      .assertDataIntegrity()
 
     def makeOverdueBy(by: Duration): A =
       require(
@@ -48,13 +74,21 @@ object ExpiryTransformations:
       agentApplication
         .withTimes(
           createdAt = expiresAt.minus(daysToSubmitApplication),
-          applicationExpiresAt = Some(expiresAt)
+          applicationExpiresAt = Some(expiresAt),
+          expiryReminderEmailSentAt = agentApplication.expiryReminderEmailSentAt.map(_ => expiresAt.minus(expiryReminderPeriod))
         )
         .assertDataIntegrity()
 
-    def makeOverdue: A = agentApplication.makeOverdueBy(overdueBy)
+    /** The reminder job ran while the deadline was still ahead, so the reminder went out the reminder period before it. */
+    def makeOverdue: A =
+      val overdue: A = agentApplication.makeOverdueBy(overdueBy)
+      overdue
+        .withTimes(
+          expiryReminderEmailSentAt = overdue.applicationExpiresAt.map(_.minus(expiryReminderPeriod))
+        )
+        .assertDataIntegrity()
 
-    /** Overdue beyond the grace period, as found when the expiry job was first deployed. */
+    /** Overdue beyond the grace period, as found when the expiry job was first deployed. No reminder: the reminder job only picks up deadlines still ahead. */
     def makeLongOverdue: A = agentApplication.makeOverdueBy(postExpiryGracePeriod.plus(overdueBy))
 
     def makeExpired: A =
@@ -71,6 +105,13 @@ object ExpiryTransformations:
         )
         .assertDataIntegrity()
 
+    def makeExpiredEmailSent: A = agentApplication
+      .makeExpired
+      .withTimes(
+        expiredEmailSentAt = Some(now)
+      )
+      .assertDataIntegrity()
+
     def makeDueForDeletion: A =
       require(
         agentApplication.applicationState === ApplicationState.Expired,
@@ -81,9 +122,18 @@ object ExpiryTransformations:
         .withTimes(
           createdAt = expiredAt.minus(daysToSubmitApplication),
           expiredAt = Some(expiredAt),
-          postExpiryGracePeriodEndsAt = Some(expiredAt.plus(postExpiryGracePeriod))
+          postExpiryGracePeriodEndsAt = Some(expiredAt.plus(postExpiryGracePeriod)),
+          expiryReminderEmailSentAt = agentApplication.expiryReminderEmailSentAt.map(_ => expiredAt.minus(expiryReminderPeriod)),
+          expiredEmailSentAt = agentApplication.expiredEmailSentAt.map(_ => expiredAt)
         )
         .assertDataIntegrity()
+
+    def makeDeletionEmailSent: A = agentApplication
+      .makeDueForDeletion
+      .withTimes(
+        deletionEmailSentAt = Some(now)
+      )
+      .assertDataIntegrity()
 
     /** The cast is safe: each branch copies its matched class, preserving the input type. The compiler cannot see this because `copy` returns its own class. */
     @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
@@ -92,6 +142,9 @@ object ExpiryTransformations:
       applicationExpiresAt: Option[Instant] = agentApplication.applicationExpiresAt,
       expiredAt: Option[Instant] = agentApplication.expiredAt,
       postExpiryGracePeriodEndsAt: Option[Instant] = agentApplication.postExpiryGracePeriodEndsAt,
+      expiryReminderEmailSentAt: Option[Instant] = agentApplication.expiryReminderEmailSentAt,
+      expiredEmailSentAt: Option[Instant] = agentApplication.expiredEmailSentAt,
+      deletionEmailSentAt: Option[Instant] = agentApplication.deletionEmailSentAt,
       applicationState: ApplicationState = agentApplication.applicationState
     ): A =
       val withTimesChanged: AgentApplication =
@@ -102,6 +155,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationLlp =>
@@ -110,6 +166,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationLimitedCompany =>
@@ -118,6 +177,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationGeneralPartnership =>
@@ -126,6 +188,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationLimitedPartnership =>
@@ -134,6 +199,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationScottishLimitedPartnership =>
@@ -142,6 +210,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
           case a: AgentApplicationScottishPartnership =>
@@ -150,6 +221,9 @@ object ExpiryTransformations:
               applicationExpiresAt = applicationExpiresAt,
               expiredAt = expiredAt,
               postExpiryGracePeriodEndsAt = postExpiryGracePeriodEndsAt,
+              expiryReminderEmailSentAt = expiryReminderEmailSentAt,
+              expiredEmailSentAt = expiredEmailSentAt,
+              deletionEmailSentAt = deletionEmailSentAt,
               applicationState = applicationState
             )
       withTimesChanged.asInstanceOf[A]

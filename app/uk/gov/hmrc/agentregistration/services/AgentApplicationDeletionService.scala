@@ -20,6 +20,8 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.repository.AgentApplicationRepo
 import uk.gov.hmrc.agentregistration.repository.providedetails.llp.IndividualProvidedDetailsRepo
 import uk.gov.hmrc.agentregistration.shared.AgentApplication
+import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +33,21 @@ class AgentApplicationDeletionService @Inject() (
   agentApplicationRepo: AgentApplicationRepo,
   individualProvidedDetailsRepo: IndividualProvidedDetailsRepo,
   objectStoreService: ObjectStoreService
-)(using ec: ExecutionContext):
+)(using ec: ExecutionContext)
+extends RequestAwareLogging:
+
+  def processDeletions()(using RequestHeader): Future[Unit] =
+    logger.info("Deleting Expired applications: Started...")
+    for
+      agentApplications: Seq[AgentApplication] <- agentApplicationRepo.findExpiredDueForDeletion()
+      _ = logger.info(s"Deleting Expired applications: found ${agentApplications.size}")
+      deletedCount: Int <-
+        ProcessInSequence
+          .processAllInSequence(agentApplications)(deleteWithIndividualsAndAmlsEvidence):
+            case (throwable, agentApplication) =>
+              logger.error(s"Deleting Expired applications: FAILED for ${agentApplication.applicationReference.value}", throwable)
+      _ = logger.info(s"Deleting Expired applications: deleted $deletedCount of ${agentApplications.size} DONE")
+    yield ()
 
   def deleteWithIndividuals(agentApplication: AgentApplication): Future[Unit] =
     for

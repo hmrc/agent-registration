@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentregistration.services
 
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentregistration.shared.amls.AmlsEvidence
-import uk.gov.hmrc.agentregistration.util.ProcessInSequence
+import uk.gov.hmrc.agentregistration.shared.util.ProcessInSequence
 import uk.gov.hmrc.agentregistration.util.RequestAwareLogging
 import uk.gov.hmrc.agentregistration.util.RequestSupport.hc
 import uk.gov.hmrc.objectstore.client.ObjectListing
