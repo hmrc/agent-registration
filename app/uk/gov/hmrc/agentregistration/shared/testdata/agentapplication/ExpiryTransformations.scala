@@ -40,19 +40,22 @@ object ExpiryTransformations:
 
   extension [A <: AgentApplication](agentApplication: A)
 
-    /** In the window `EmailServiceForExpiryReminders` queries: the deadline between now and the end of the reminder period. */
-    def makeDueForExpiry: A =
+    def makeExpiringIn(timeLeft: Duration): A =
       require(
         agentApplication.applicationExpiresAt.isDefined,
-        s"only an application that still has a deadline can be due for expiry, and this one is ${agentApplication.applicationState} with none"
+        s"only an application that still has a deadline can be expiring, and this one is ${agentApplication.applicationState} with none"
       )
-      val expiryReminderPeriodEndsAt: Instant = now.plus(expiryReminderPeriod)
+      require(!timeLeft.isNegative, s"an application still expiring has time left, so `timeLeft` cannot be negative, not $timeLeft - call makeOverdueBy")
+      val expiresAt: Instant = now.plus(timeLeft)
       agentApplication
         .withTimes(
-          createdAt = expiryReminderPeriodEndsAt.minus(daysToSubmitApplication),
-          applicationExpiresAt = Some(expiryReminderPeriodEndsAt)
+          createdAt = expiresAt.minus(daysToSubmitApplication),
+          applicationExpiresAt = Some(expiresAt)
         )
         .assertDataIntegrity()
+
+    /** In the window `EmailServiceForExpiryReminders` queries: the deadline between now and the end of the reminder period. */
+    def makeDueForExpiry: A = agentApplication.makeExpiringIn(expiryReminderPeriod)
 
     def makeExpiryReminderEmailSent: A = agentApplication
       .makeDueForExpiry
@@ -61,7 +64,7 @@ object ExpiryTransformations:
       )
       .assertDataIntegrity()
 
-    private def makeOverdueBy(by: Duration): A =
+    def makeOverdueBy(by: Duration): A =
       require(
         agentApplication.applicationExpiresAt.isDefined,
         s"only an application that still has a deadline can become overdue, and this one is ${agentApplication.applicationState} with none"

@@ -22,9 +22,6 @@ import org.bson.BsonValue
 import org.bson.conversions.Bson
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.model.Filters
-import uk.gov.hmrc.agentregistration.config.AppConfig
-import uk.gov.hmrc.agentregistration.crypto.AgentApplicationMongoFormats
-import uk.gov.hmrc.agentregistration.crypto.Hasher
 import uk.gov.hmrc.agentregistration.services.email.EmailRecipient
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentForRisking
 import uk.gov.hmrc.agentregistration.shared.ApplicationState.SentToMinerva
@@ -37,7 +34,6 @@ import uk.gov.hmrc.agentregistration.shared.LinkId
 import uk.gov.hmrc.agentregistration.shared.testdata.agentapplication.ExpiryTransformations.*
 import uk.gov.hmrc.agentregistration.testsupport.ISpec
 
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -46,15 +42,6 @@ class AgentApplicationRepoSpec
 extends ISpec:
 
   private lazy val repo: AgentApplicationRepo = app.injector.instanceOf[AgentApplicationRepo]
-
-  private def repoWithClockAt(now: Instant): AgentApplicationRepo =
-    new AgentApplicationRepo(
-      mongoComponent = mongoComponent,
-      agentApplicationMongoFormats = app.injector.instanceOf[AgentApplicationMongoFormats],
-      hasher = app.injector.instanceOf[Hasher],
-      clock = Clock.fixed(now, ZoneOffset.UTC),
-      appConfig = app.injector.instanceOf[AppConfig]
-    )
 
   "updateManyApplicationStateByReference should set the state in all selected applications and leave others untouched" in:
     val record: AgentApplication = tdAll.agentApplicationLlp.afterDeclarationSubmitted
@@ -106,22 +93,6 @@ extends ISpec:
 
   "findUnsubmittedApplicationsForExpiryReminderEmail test cases contain all business types" in:
     findUnsubmittedApplicationsForExpiryReminderEmailTestCases.map(_.agentApplication.businessType).toSet shouldBe BusinessType.values.toSet
-
-  "findUnsubmittedApplicationsForExpiryReminderEmail finds an application only while it has 10 days or less left until its expiry date" in:
-    val dueForExpiry: AgentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeDueForExpiry
-    val expiresAt: Instant = dueForExpiry.applicationExpiresAt.value
-    repo.upsert(dueForExpiry).futureValue
-
-    def isReadyForExpiryReminderEmail(now: Instant): Boolean = repoWithClockAt(now)
-      .findUnsubmittedApplicationsForExpiryReminderEmail()
-      .futureValue
-      .contains(dueForExpiry)
-
-    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(11))) shouldBe false withClue "11 days left, too early for a reminder"
-    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(10))) shouldBe true withClue "10 days left, the reminder period starts"
-    isReadyForExpiryReminderEmail(now = expiresAt.minus(Duration.ofDays(3))) shouldBe true withClue "3 days left, inside the reminder period"
-    isReadyForExpiryReminderEmail(now = expiresAt) shouldBe true withClue "expiring now, the last moment of the reminder period"
-    isReadyForExpiryReminderEmail(now = expiresAt.plusSeconds(1)) shouldBe false withClue "expiry date passed, too late for a reminder"
 
   expireUnsubmittedApplicationsTestCases.foreach: testCase =>
     s"expireUnsubmittedApplications ${testCase.description}" in:
@@ -411,14 +382,34 @@ extends ISpec:
       expectedFound = false
     ),
     FindTestCase(
-      description = "does not find an application expiring after the reminder period",
-      agentApplication = tdAll.agentApplicationLimitedCompany.afterContactDetailsComplete,
+      description = "does not find an application with 11 days left until its expiry date, too early for a reminder",
+      agentApplication = tdAll.agentApplicationLimitedCompany.afterContactDetailsComplete.makeExpiringIn(Duration.ofDays(11)),
+      expectedFound = false
+    ),
+    FindTestCase(
+      description = "finds an application with 10 days left until its expiry date, when the reminder period starts",
+      agentApplication = tdAll.agentApplicationGeneralPartnership.afterContactDetailsComplete.makeExpiringIn(Duration.ofDays(10)),
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "finds an application with 3 days left until its expiry date",
+      agentApplication = tdAll.agentApplicationLlp.afterContactDetailsComplete.makeExpiringIn(Duration.ofDays(3)),
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "finds an application expiring now, the last moment of the reminder period",
+      agentApplication = tdAll.agentApplicationLimitedPartnership.afterContactDetailsComplete.makeExpiringIn(Duration.ZERO),
+      expectedFound = true
+    ),
+    FindTestCase(
+      description = "does not find an application whose expiry date passed a second ago, too late for a reminder",
+      agentApplication = tdAll.agentApplicationScottishLimitedPartnership.afterContactDetailsComplete.makeOverdueBy(Duration.ofSeconds(1)),
       expectedFound = false
     ),
     // TODO: confirm with BA whether a long overdue application should be sent the reminder before it expires
     FindTestCase(
-      description = "does not find an application whose expiry date has passed",
-      agentApplication = tdAll.agentApplicationGeneralPartnership.afterContactDetailsComplete.makeLongOverdue,
+      description = "does not find an application whose expiry date passed long ago",
+      agentApplication = tdAll.agentApplicationScottishPartnership.afterContactDetailsComplete.makeLongOverdue,
       expectedFound = false
     )
   )
